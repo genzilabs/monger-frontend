@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { BottomNavbar, BookSwitcher } from '$lib/components/ui';
-	import { CreateBookModal } from '$lib/components/modals';
-	import { authStore, booksStore } from '$lib/stores';
+	import { CreateBookModal, CreateTransactionModal } from '$lib/components/modals';
+	import { authStore, booksStore, uiStore } from '$lib/stores';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
@@ -34,9 +34,10 @@
 
 <div class="min-h-screen bg-background pb-28">
 	<!-- Header -->
-	<header class="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border">
-		<div class="flex-between px-4 py-3">
-			<div class="flex items-center gap-2">
+	<header class="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border">
+		<div class="px-6 py-3 flex items-center justify-between relative">
+			<!-- Left Section: Back Button -->
+			<div class="flex items-center gap-3 min-w-[80px]">
 				{#if showBackButton}
 					<button onclick={goBack} class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface transition-colors" aria-label="Go back">
 						<svg class="w-6 h-6 text-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -44,8 +45,10 @@
 						</svg>
 					</button>
 				{/if}
+			</div>
 
-				<!-- Book Selector -->
+			<!-- Center Section: Book Selector -->
+			<div class="absolute left-1/2 -translate-x-1/2">
 				<button onclick={() => (showBookSwitcher = true)} class="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface hover:bg-border transition-colors">
 					{#if booksStore.activeBook}
 						<div class="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
@@ -75,7 +78,8 @@
 				</button>
 			</div>
 
-			<div class="flex items-center gap-3">
+			<!-- Right Section: User Info -->
+			<div class="flex items-center gap-3 min-w-[80px] justify-end">
 				{#if authStore.user}
 					<span class="text-sm text-secondary animate-fade-in hidden sm:block">{authStore.user.name || authStore.user.email}</span>
 					<button onclick={handleLogout} class="p-2 text-muted hover:text-foreground transition-colors" aria-label="Logout">
@@ -107,3 +111,11 @@
 
 <!-- Create Book Modal -->
 <CreateBookModal open={showCreateBookModal} onClose={() => (showCreateBookModal = false)} />
+
+<!-- Create Transaction Modal (Global) -->
+<CreateTransactionModal
+	open={uiStore.isTransactionModalOpen}
+	onClose={() => uiStore.closeTransactionModal()}
+	defaultType={uiStore.transactionModalDefaultType}
+	defaultPocketId={uiStore.transactionModalPocketId}
+/>

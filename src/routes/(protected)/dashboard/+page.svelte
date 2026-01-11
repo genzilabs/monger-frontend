@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { booksStore } from '$lib/stores';
+	import { goto } from '$app/navigation';
+	import { booksStore, uiStore } from '$lib/stores';
 	import { UserHeader, BalanceHeroCard, PocketCard, QuickActionButton, StatCard } from '$lib/components/dashboard';
 	import { CreatePocketModal } from '$lib/components/modals';
 
@@ -47,7 +48,7 @@
 
 		<!-- Quick Actions -->
 		<div class="grid grid-cols-4 gap-3">
-			<QuickActionButton label="Add" primary onclick={() => (showCreatePocketModal = true)}>
+			<QuickActionButton label="Add" primary onclick={() => uiStore.openTransactionModal('expense')}>
 				{#snippet icon()}
 					<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 						<path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -61,10 +62,10 @@
 					</svg>
 				{/snippet}
 			</QuickActionButton>
-			<QuickActionButton label="Transfer">
+			<QuickActionButton label="Income" onclick={() => uiStore.openTransactionModal('income')}>
 				{#snippet icon()}
 					<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-						<path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+						<path stroke-linecap="round" stroke-linejoin="round" d="M7 11l5-5m0 0l5 5m-5-5v12" />
 					</svg>
 				{/snippet}
 			</QuickActionButton>
@@ -152,6 +153,7 @@
 							{pocket} 
 							currency={booksStore.activeBook?.base_currency} 
 							isHighlighted={i === 0}
+							onclick={() => goto(`/pockets/${pocket.id}`)}
 						/>
 					{/each}
 					<button
@@ -180,7 +182,7 @@
 	{:else}
 		<div class="text-center py-10">
 			<div class="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
-				<svg class="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+				<svg class="w-8 h-8 text-primary" fill="none" viewBox="0 0 0 24" stroke="currentColor" stroke-width="2">
 					<path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
 				</svg>
 			</div>

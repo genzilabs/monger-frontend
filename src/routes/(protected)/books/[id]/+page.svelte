@@ -123,7 +123,7 @@
 				</div>
 			{:else}
 				{#each booksStore.pockets as pocket}
-					<button class="group w-full flex flex-col gap-4 p-4 rounded-2xl bg-surface border border-border hover:border-muted transition-colors text-left">
+					<a href="/pockets/{pocket.id}" class="group w-full flex flex-col gap-4 p-4 rounded-2xl bg-surface border border-border hover:border-muted transition-colors text-left block">
 						<div class="flex items-center justify-between">
 							<div class="flex items-center gap-3">
 								<div class="flex items-center justify-center w-12 h-12 rounded-xl text-2xl" style="background: {pocket.color}20">
@@ -141,7 +141,7 @@
 						<div class="w-full h-1.5 bg-border rounded-full overflow-hidden">
 							<div class="h-full rounded-full" style="background: {pocket.color}; width: 45%"></div>
 						</div>
-					</button>
+					</a>
 				{/each}
 			{/if}
 

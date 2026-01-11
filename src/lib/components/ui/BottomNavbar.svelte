@@ -3,6 +3,7 @@
 	 * BottomNavbar - Mobile bottom navigation with floating add button
 	 */
 	import { page } from '$app/stores';
+	import { uiStore } from '$lib/stores';
 
 	type NavItem = {
 		id: string;
@@ -24,14 +25,15 @@
 <nav class="fixed bottom-0 left-0 right-0 z-50">
 	<!-- Floating Add Button (above the bar) -->
 	<div class="absolute left-1/2 -translate-x-1/2 -top-7 z-10">
-		<a
-			href="/add"
-			class="flex items-center justify-center w-16 h-16 bg-indigo-500 hover:bg-indigo-600 text-white rounded-full shadow-lg transition-colors"
+		<button
+			onclick={() => uiStore.openTransactionModal('expense')}
+			class="flex items-center justify-center w-16 h-16 bg-indigo-500 hover:bg-indigo-600 text-white rounded-full shadow-lg transition-colors cursor-pointer"
+			aria-label="Add Transaction"
 		>
 			<svg class="w-9 h-9" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
 				<path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
 			</svg>
-		</a>
+		</button>
 	</div>
 
 	<!-- Navigation Bar -->
