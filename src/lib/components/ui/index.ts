@@ -127,6 +127,10 @@ export { IconButton } from './icon-button';
 export { default as BottomNavbar } from './BottomNavbar.svelte';
 export { default as BookSwitcher } from './BookSwitcher.svelte';
 export { default as BottomSheet } from './BottomSheet.svelte';
+export { default as Sidebar } from './Sidebar.svelte';
+export { default as SidePanel } from './SidePanel.svelte';
+export { default as ResponsiveModal } from './ResponsiveModal.svelte';
+export { default as AppLayout } from './AppLayout.svelte';
 
 // Form Components
 export { default as OTPInput } from './OTPInput.svelte';
