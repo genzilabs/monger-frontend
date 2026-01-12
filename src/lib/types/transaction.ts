@@ -12,8 +12,14 @@ export interface Transaction {
 	category_id?: string;
 	subcategory_id?: string;
 	transfer_id?: string;
+	related_transaction_id?: string;
+	is_source?: boolean;
 	fee_cents?: number;
+	transfer_fee_cents?: number;
+	transfer_amount_cents?: number;
 	related_pocket_id?: string;
+	source_pocket?: Pocket;
+	dest_pocket?: Pocket;
 	created_at: string;
 	updated_at: string;
 	// Populated for display (optional)
@@ -41,6 +47,9 @@ export interface UpdateTransactionRequest {
 	description?: string;
 	category_id?: string;
 	subcategory_id?: string;
+	fee_cents?: number;
+	related_pocket_id?: string;
+	pocket_id?: string;
 }
 
 export interface CreateTransferRequest {

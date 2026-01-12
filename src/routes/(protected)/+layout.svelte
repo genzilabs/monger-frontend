@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { BottomNavbar, BookSwitcher } from '$lib/components/ui';
-	import { CreateBookModal, CreateTransactionModal } from '$lib/components/modals';
 	import { authStore, booksStore, uiStore } from '$lib/stores';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
@@ -11,11 +10,28 @@
 	let showBookSwitcher = $state(false);
 	let showCreateBookModal = $state(false);
 
+	// Lazy load modals only when needed
+	let CreateBookModal: any = $state(null);
+	let CreateTransactionModal: any = $state(null);
+
 	const showBackButton = $derived($page.url.pathname !== '/dashboard');
 
-	onMount(() => {
-		if (!authStore.isInitialized) authStore.initialize();
+	onMount(async () => {
+		// Initialize auth first (blocking - needed for protected routes)
+		if (!authStore.isInitialized) await authStore.initialize();
+		
+		// Initialize books after auth (non-blocking)
 		if (!booksStore.isInitialized) booksStore.initialize();
+		
+		// Lazy load modals after initial render
+		requestIdleCallback(async () => {
+			const [bookModal, txModal] = await Promise.all([
+				import('$lib/components/modals/CreateBookModal.svelte'),
+				import('$lib/components/modals/CreateTransactionModal.svelte')
+			]);
+			CreateBookModal = bookModal.default;
+			CreateTransactionModal = txModal.default;
+		}, { timeout: 2000 });
 	});
 
 	function goBack() {
@@ -109,13 +125,17 @@
 	onCreate={() => { showBookSwitcher = false; showCreateBookModal = true; }}
 />
 
-<!-- Create Book Modal -->
-<CreateBookModal open={showCreateBookModal} onClose={() => (showCreateBookModal = false)} />
+<!-- Lazy-loaded Modals -->
+{#if CreateBookModal}
+	<svelte:component this={CreateBookModal} open={showCreateBookModal} onClose={() => (showCreateBookModal = false)} />
+{/if}
 
-<!-- Create Transaction Modal (Global) -->
-<CreateTransactionModal
-	open={uiStore.isTransactionModalOpen}
-	onClose={() => uiStore.closeTransactionModal()}
-	defaultType={uiStore.transactionModalDefaultType}
-	defaultPocketId={uiStore.transactionModalPocketId}
-/>
+{#if CreateTransactionModal}
+	<svelte:component 
+		this={CreateTransactionModal}
+		open={uiStore.isTransactionModalOpen}
+		onClose={() => uiStore.closeTransactionModal()}
+		defaultType={uiStore.transactionModalDefaultType}
+		defaultPocketId={uiStore.transactionModalPocketId}
+	/>
+{/if}

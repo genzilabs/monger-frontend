@@ -72,7 +72,14 @@
 			</p>
 		</div>
 	</div>
-	<span class="text-sm font-semibold ml-2 shrink-0 {amountClass}">
-		{isIncome ? '+' : isTransfer ? '' : '-'}{formatCurrency(transaction.amount_cents, currency)}
-	</span>
+	<div class="text-right shrink-0 ml-2">
+		<span class="text-sm font-semibold {amountClass}">
+			{isIncome ? '+' : isTransfer ? '' : '-'}{formatCurrency(transaction.amount_cents, currency)}
+		</span>
+		{#if transaction.fee_cents && transaction.fee_cents > 0}
+			<p class="text-xs text-muted">
+				Fee: {formatCurrency(transaction.fee_cents, currency)}
+			</p>
+		{/if}
+	</div>
 </button>

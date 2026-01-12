@@ -1,10 +1,9 @@
 <script lang="ts">
-	import { Button } from '$lib/components/ui';
+	import { Button, Combobox, type ComboboxOption } from '$lib/components/ui';
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
-	import { booksStore, transactionsStore } from '$lib/stores';
-	import { categoriesApi } from '$lib/api/categories';
+	import { booksStore, transactionsStore, categoriesStore } from '$lib/stores';
 	import type { Category, Subcategory } from '$lib/types/category';
-	import { onMount, untrack } from 'svelte';
+	import { untrack } from 'svelte';
 
 	interface Props {
 		open: boolean;
@@ -23,10 +22,6 @@
 	let categoryId = $state('');
 	let subcategoryId = $state('');
 	
-	// Categories state
-	let categories = $state<Category[]>([]);
-	let isLoadingCategories = $state(false);
-	
 	function getLocalDateTime() {
 		const now = new Date();
 		now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
@@ -37,26 +32,15 @@
 
 	let isSubmitting = $state(false);
 
-	// Load categories when component mounts or opens
-	async function loadCategories() {
-		if (categories.length > 0) return; // Already loaded
-		isLoadingCategories = true;
-		try {
-			const response = await categoriesApi.list();
-			if (response.data?.categories) {
-				categories = response.data.categories;
-			}
-		} catch (e) {
-			console.error('Failed to load categories', e);
-		}
-		isLoadingCategories = false;
-	}
+	// Use categories from the store (with caching)
+	const categories = $derived(categoriesStore.categories);
+	const isLoadingCategories = $derived(categoriesStore.isLoading);
 
 	// Reset form when opening
 	$effect(() => {
 		if (open) {
-			loadCategories();
 			untrack(() => {
+				categoriesStore.load(); // Uses caching
 				type = defaultType;
 				// Default to first pocket if available and none selected
 				if (defaultPocketId) {
@@ -83,6 +67,15 @@
 			? [] 
 			: categories.filter(c => c.type === type)
 	);
+
+	// Transform categories to ComboboxOption format
+	const categoryOptions = $derived<ComboboxOption[]>(
+		filteredCategories.map(c => ({
+			value: c.id,
+			label: c.name,
+			icon: c.icon
+		}))
+	);
 	
 	// Get subcategories for selected category
 	const selectedCategory = $derived(
@@ -91,6 +84,23 @@
 	
 	const subcategories = $derived(
 		selectedCategory?.subcategories || []
+	);
+
+	// Transform subcategories to ComboboxOption format  
+	const subcategoryOptions = $derived<ComboboxOption[]>(
+		subcategories.map(s => ({
+			value: s.id,
+			label: s.name
+		}))
+	);
+
+	// Transform pockets to ComboboxOption format
+	const pocketOptions = $derived<ComboboxOption[]>(
+		booksStore.pockets.map(p => ({
+			value: p.id,
+			label: p.name,
+			icon: '💰'
+		}))
 	);
 
 	// Reset category when type changes
@@ -108,11 +118,16 @@
 		}
 	});
 
+	// Fee Logic
+	let includeFee = $state(false);
+	let fee = $state('');
+
 	async function handleSubmit() {
 		if (!name || !amount) return;
 
 		isSubmitting = true;
 		const amountCents = Math.round(parseFloat(amount) * 100);
+		const feeCents = includeFee && fee ? Math.round(parseFloat(fee) * 100) : 0;
 
 		let success = false;
 		const isoDate = new Date(date).toISOString();
@@ -127,6 +142,7 @@
 				to_pocket_id: toPocketId,
 				name: name,
 				amount_cents: amountCents,
+				fee_cents: feeCents,
 				date: isoDate,
 				description: ''
 			});
@@ -154,6 +170,8 @@
 			if (booksStore.activeBook) {
 				await booksStore.loadPockets(booksStore.activeBook.id);
 			}
+			// Refresh transaction list
+			await transactionsStore.refresh();
 			resetForm();
 			onClose();
 		}
@@ -166,10 +184,10 @@
 		toPocketId = '';
 		categoryId = '';
 		subcategoryId = '';
+		includeFee = false;
+		fee = '';
 		date = getLocalDateTime();
 	}
-
-	const pocketOptions = $derived(booksStore.pockets);
 </script>
 
 <BottomSheet {open} onClose={onClose} title={type === 'transfer' ? 'New Transfer' : 'New Transaction'}>
@@ -211,6 +229,35 @@
 			</div>
 		</div>
 
+		<!-- Transfer Fee -->
+		{#if type === 'transfer'}
+			<div class="bg-surface border border-border rounded-xl p-4">
+				<div class="flex items-center justify-between">
+					<span class="text-sm font-medium text-foreground">Transaction Fee</span>
+					<button 
+						type="button"
+						role="switch" 
+						aria-checked={includeFee}
+						class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 {includeFee ? 'bg-primary' : 'bg-muted'}"
+						onclick={() => includeFee = !includeFee}
+					>
+						<span class="{includeFee ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform" />
+					</button>
+				</div>
+				{#if includeFee}
+					<div class="mt-3 relative">
+						<span class="absolute left-4 top-1/2 -translate-y-1/2 text-muted font-medium">Rp</span>
+						<input
+							type="number"
+							bind:value={fee}
+							placeholder="0"
+							class="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-lg text-foreground text-sm font-semibold placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary"
+						/>
+					</div>
+				{/if}
+			</div>
+		{/if}
+
 		<!-- Name -->
 		<div>
 			<label for="name" class="block text-sm font-medium text-secondary mb-1.5">Description</label>
@@ -225,57 +272,38 @@
 
 		<!-- Category Selector (only for income/expense) -->
 		{#if type !== 'transfer'}
-			<div class="grid grid-cols-2 gap-3">
-				<div>
-					<label for="category" class="block text-sm font-medium text-secondary mb-1.5">Category</label>
-					<select
-						id="category"
-						bind:value={categoryId}
-						onchange={() => subcategoryId = ''}
-						class="w-full px-4 py-3 bg-surface border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
-					>
-						<option value="">Select category</option>
-						{#each filteredCategories as cat}
-							<option value={cat.id}>{cat.icon} {cat.name}</option>
-						{/each}
-					</select>
-				</div>
-				<div>
-					<label for="subcategory" class="block text-sm font-medium text-secondary mb-1.5">Subcategory</label>
-					<select
-						id="subcategory"
-						bind:value={subcategoryId}
-						disabled={!categoryId || subcategories.length === 0}
-						class="w-full px-4 py-3 bg-surface border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary appearance-none disabled:opacity-50"
-					>
-						<option value="">Optional</option>
-						{#each subcategories as sub}
-							<option value={sub.id}>{sub.name}</option>
-						{/each}
-					</select>
-				</div>
+			<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+				<Combobox
+					label="Category"
+					options={categoryOptions}
+					bind:value={categoryId}
+					onValueChange={() => subcategoryId = ''}
+					placeholder="Select category"
+					searchPlaceholder="Search..."
+					emptyMessage="No categories"
+				/>
+				<Combobox
+					label="Subcategory"
+					options={subcategoryOptions}
+					bind:value={subcategoryId}
+					placeholder="Optional"
+					searchPlaceholder="Search..."
+					emptyMessage="No subcategories"
+					disabled={!categoryId || subcategoryOptions.length === 0}
+				/>
 			</div>
 		{/if}
 
 		<!-- Pocket Selector(s) -->
 		<div class="grid grid-cols-1 gap-4">
-			<div>
-				<label for="pocket" class="block text-sm font-medium text-secondary mb-1.5">
-					{type === 'transfer' ? 'From Pocket' : 'Pocket'}
-				</label>
-				<select
-					id="pocket"
-					bind:value={pocketId}
-					class="w-full px-4 py-3 bg-surface border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
-				>
-					{#if pocketOptions.length === 0}
-						<option value="" disabled>No pockets found</option>
-					{/if}
-					{#each pocketOptions as pocket}
-						<option value={pocket.id}>{pocket.name}</option>
-					{/each}
-				</select>
-			</div>
+			<Combobox
+				label={type === 'transfer' ? 'From Pocket' : 'Pocket'}
+				options={pocketOptions}
+				bind:value={pocketId}
+				placeholder="Select pocket"
+				searchPlaceholder="Search..."
+				emptyMessage="No pockets found"
+			/>
 
 			{#if type === 'transfer'}
 				<!-- Swap Button -->
@@ -296,23 +324,14 @@
 					</button>
 				</div>
 
-				<div>
-					<label for="toPocket" class="block text-sm font-medium text-secondary mb-1.5">
-						To Pocket
-					</label>
-					<select
-						id="toPocket"
-						bind:value={toPocketId}
-						class="w-full px-4 py-3 bg-surface border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
-					>
-						{#if pocketOptions.length === 0}
-							<option value="" disabled>No pockets found</option>
-						{/if}
-						{#each pocketOptions as pocket}
-							<option value={pocket.id}>{pocket.name}</option>
-						{/each}
-					</select>
-				</div>
+				<Combobox
+					label="To Pocket"
+					options={pocketOptions}
+					bind:value={toPocketId}
+					placeholder="Select pocket"
+					searchPlaceholder="Search..."
+					emptyMessage="No pockets found"
+				/>
 			{/if}
 		</div>
 

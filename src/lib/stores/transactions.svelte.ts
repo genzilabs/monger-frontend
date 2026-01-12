@@ -1,42 +1,285 @@
-import { transactionsApi } from '$lib/api';
-import type { CreateTransactionRequest, CreateTransferRequest } from '$lib/types/transaction';
+/**
+ * Transactions Store - Enterprise-grade state management
+ * 
+ * Features:
+ * - Optimistic updates
+ * - Error handling with rollback
+ * - Loading states per operation
+ * - Transaction list management
+ */
+
+import { transactionsApi, type ListByBookOptions } from '$lib/api/transactions';
+import type { 
+	Transaction, 
+	CreateTransactionRequest, 
+	CreateTransferRequest
+} from '$lib/types/transaction';
+
+interface TransactionsState {
+	transactions: Transaction[];
+	isLoading: boolean;
+	isCreating: boolean;
+	error: string | null;
+	offset: number;
+	limit: number;
+	hasMore: boolean;
+	activeContext: { type: 'book' | 'pocket'; id: string } | null;
+}
 
 function createTransactionsStore() {
-    let _isLoading = $state(false);
-    let _error = $state<string | null>(null);
+	let state = $state<TransactionsState>({
+		transactions: [],
+		isLoading: false,
+		isCreating: false,
+		error: null,
+		offset: 0,
+		limit: 20,
+		hasMore: true,
+		activeContext: null
+	});
 
-    	return {
-		get isLoading() { return _isLoading; },
-		get error() { return _error; },
+	return {
+		// Getters
+		get transactions() { return state.transactions; },
+		get isLoading() { return state.isLoading; },
+		get isCreating() { return state.isCreating; },
+		get error() { return state.error; },
+		get hasMore() { return state.hasMore; },
 
-		async createTransaction(data: CreateTransactionRequest) {
-			_isLoading = true;
-			_error = null;
+		/**
+		 * Load transactions for a pocket
+		 */
+		async loadByPocket(pocketId: string, reset = true) {
+			state.isLoading = true;
+			state.error = null;
+			state.activeContext = { type: 'pocket', id: pocketId };
+
+			if (reset) {
+				state.offset = 0;
+				state.transactions = [];
+			}
+
 			try {
-				const result = await transactionsApi.create(data);
-				if (result.error) throw new Error(result.error.error);
-				return result.data;
+				const result = await transactionsApi.listByPocket(
+					pocketId, 
+					state.limit, 
+					state.offset
+				);
+
+				if (result.error) {
+					throw new Error(result.error.error || 'Failed to load transactions');
+				}
+
+				if (result.data) {
+					const newTransactions = result.data;
+					
+					if (reset) {
+						state.transactions = newTransactions;
+					} else {
+						state.transactions = [...state.transactions, ...newTransactions];
+					}
+
+					state.hasMore = newTransactions.length >= state.limit;
+					state.offset += newTransactions.length;
+				}
+
+				return state.transactions;
 			} catch (e: any) {
-				_error = e.message;
-				return null;
+				state.error = e.message || 'Failed to load transactions';
+				return [];
 			} finally {
-				_isLoading = false;
+				state.isLoading = false;
 			}
 		},
 
+		/**
+		 * Load transactions for a book
+		 */
+		async loadByBook(bookId: string, options: ListByBookOptions = {}, reset = true) {
+			state.isLoading = true;
+			state.error = null;
+			state.activeContext = { type: 'book', id: bookId };
+
+			if (reset) {
+				state.offset = 0;
+				state.transactions = [];
+			}
+
+			try {
+				const result = await transactionsApi.listByBook(bookId, {
+					limit: state.limit,
+					offset: state.offset,
+					...options
+				});
+
+				if (result.error) {
+					throw new Error(result.error.error || 'Failed to load transactions');
+				}
+
+				if (result.data) {
+					const newTransactions = result.data;
+					
+					if (reset) {
+						state.transactions = newTransactions;
+					} else {
+						state.transactions = [...state.transactions, ...newTransactions];
+					}
+
+					state.hasMore = newTransactions.length >= state.limit;
+					state.offset += newTransactions.length;
+				}
+
+				return state.transactions;
+			} catch (e: any) {
+				state.error = e.message || 'Failed to load transactions';
+				return [];
+			} finally {
+				state.isLoading = false;
+			}
+		},
+
+		/**
+		 * Refresh current transaction list
+		 */
+		async refresh() {
+			if (!state.activeContext) return;
+
+			if (state.activeContext.type === 'pocket') {
+				return this.loadByPocket(state.activeContext.id, true);
+			} else {
+				// For book, we might lose filters if not stored, 
+				// but for now simple refresh is better than nothing.
+				// Ideally we should store active filters too.
+				return this.loadByBook(state.activeContext.id, {}, true);
+			}
+		},
+
+		/**
+		 * Load more transactions (pagination)
+		 */
+		async loadMoreByPocket(pocketId: string) {
+			if (!state.hasMore || state.isLoading) return;
+			return this.loadByPocket(pocketId, false);
+		},
+
+		/**
+		 * Create transaction with optimistic update
+		 */
+		async createTransaction(data: CreateTransactionRequest) {
+			state.isCreating = true;
+			state.error = null;
+
+			// Create optimistic transaction
+			const optimisticId = `temp-${Date.now()}`;
+			const optimisticTx: Transaction = {
+				id: optimisticId,
+				pocket_id: data.pocket_id,
+				name: data.name,
+				amount_cents: data.amount_cents,
+				type: data.type,
+				date: data.date || new Date().toISOString(),
+				category_id: data.category_id,
+				subcategory_id: data.subcategory_id,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
+			};
+
+			// Optimistically add to list
+			state.transactions = [optimisticTx, ...state.transactions];
+
+			try {
+				const result = await transactionsApi.create(data);
+				
+				if (result.error) {
+					throw new Error(result.error.error || 'Failed to create transaction');
+				}
+
+				// Replace optimistic with real transaction
+				if (result.data) {
+					state.transactions = state.transactions.map(tx =>
+						tx.id === optimisticId ? result.data! : tx
+					);
+					return result.data;
+				}
+
+				return null;
+			} catch (e: any) {
+				// Rollback optimistic update
+				state.transactions = state.transactions.filter(tx => tx.id !== optimisticId);
+				state.error = e.message || 'Failed to create transaction';
+				return null;
+			} finally {
+				state.isCreating = false;
+			}
+		},
+
+		/**
+		 * Create transfer between pockets
+		 */
 		async createTransfer(data: CreateTransferRequest) {
-			_isLoading = true;
-			_error = null;
+			state.isCreating = true;
+			state.error = null;
+
 			try {
 				const result = await transactionsApi.transfer(data);
-				if (result.error) throw new Error(result.error.error);
+				
+				if (result.error) {
+					throw new Error(result.error.error || 'Failed to create transfer');
+				}
+
 				return true;
 			} catch (e: any) {
-				_error = e.message;
+				state.error = e.message || 'Failed to create transfer';
 				return false;
 			} finally {
-				_isLoading = false;
+				state.isCreating = false;
 			}
+		},
+
+		/**
+		 * Delete transaction with optimistic update
+		 */
+		async deleteTransaction(id: string) {
+			// Store for rollback
+			const previousTransactions = [...state.transactions];
+			
+			// Optimistically remove
+			state.transactions = state.transactions.filter(tx => tx.id !== id);
+
+			try {
+				const result = await transactionsApi.delete(id);
+				
+				if (result.error) {
+					throw new Error(result.error.error || 'Failed to delete transaction');
+				}
+
+				return true;
+			} catch (e: any) {
+				// Rollback
+				state.transactions = previousTransactions;
+				state.error = e.message || 'Failed to delete transaction';
+				return false;
+			}
+		},
+
+		/**
+		 * Clear error
+		 */
+		clearError() {
+			state.error = null;
+		},
+
+		/**
+		 * Reset store state
+		 */
+		reset() {
+			state.transactions = [];
+			state.isLoading = false;
+			state.isCreating = false;
+			state.error = null;
+			state.offset = 0;
+			state.hasMore = true;
+			state.activeContext = null;
 		}
 	};
 }

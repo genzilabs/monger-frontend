@@ -137,18 +137,22 @@
 					<div class="flex items-start gap-3">
 						<div class="w-10 h-10 rounded-full bg-surface flex items-center justify-center shrink-0">
 							<svg class="w-5 h-5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-								<path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+								<path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
 							</svg>
 						</div>
 						<div class="flex-1 min-w-0">
-							<p class="text-xs text-muted">Transfer To</p>
+							{#if transaction.fee_cents && transaction.fee_cents > 0}
+								<p class="text-xs text-muted">Transfer To</p>
+							{:else}
+								<p class="text-xs text-muted">Connected Pocket</p>
+							{/if}
 							<p class="text-sm font-medium text-foreground">{transaction.related_pocket.name}</p>
 						</div>
 					</div>
 				{/if}
 
 				<!-- Fee (if transfer with fee) -->
-				{#if isTransfer && transaction.fee_cents && transaction.fee_cents > 0}
+				{#if isTransfer && (transaction.transfer_fee_cents || transaction.fee_cents)}
 					<div class="flex items-start gap-3">
 						<div class="w-10 h-10 rounded-full bg-surface flex items-center justify-center shrink-0">
 							<svg class="w-5 h-5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -157,7 +161,7 @@
 						</div>
 						<div class="flex-1 min-w-0">
 							<p class="text-xs text-muted">Transfer Fee</p>
-							<p class="text-sm font-medium text-red-500">{formatCurrency(transaction.fee_cents, currency)}</p>
+							<p class="text-sm font-medium text-red-500">{formatCurrency(transaction.transfer_fee_cents || transaction.fee_cents || 0, currency)}</p>
 						</div>
 					</div>
 				{/if}

@@ -2,9 +2,12 @@
  * Auth store using Svelte 5 runes for reactive state management
  */
 
-import { authApi } from '$lib/api';
+import { authApi } from '$lib/api/auth';
 import type { User } from '$lib/types';
 import { tokenStorage } from '$lib/utils/storage';
+import { booksStore } from './books.svelte';
+import { categoriesStore } from './categories.svelte';
+import { transactionsStore } from './transactions.svelte';
 
 interface AuthState {
 	user: User | null;
@@ -95,6 +98,12 @@ function createAuthStore() {
 			} finally {
 				state.user = null;
 				tokenStorage.clearAll();
+				
+				// Reset all other stores to prevent data persistence
+				booksStore.reset();
+				categoriesStore.reset();
+				transactionsStore.reset();
+
 				state.isLoading = false;
 			}
 		},

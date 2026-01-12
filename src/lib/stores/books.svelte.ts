@@ -3,7 +3,8 @@
  * Persists active book to localStorage for session continuity
  */
 
-import { booksApi, pocketsApi } from '$lib/api';
+import { booksApi } from '$lib/api/books';
+import { pocketsApi } from '$lib/api/pockets';
 import type { Book, Pocket } from '$lib/types';
 
 const ACTIVE_BOOK_KEY = 'monger_active_book_id';
