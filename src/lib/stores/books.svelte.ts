@@ -6,6 +6,7 @@
 import { booksApi } from '$lib/api/books';
 import { pocketsApi } from '$lib/api/pockets';
 import type { Book, Pocket } from '$lib/types';
+import { toastStore } from './toast.svelte';
 
 const ACTIVE_BOOK_KEY = 'monger_active_book_id';
 
@@ -165,12 +166,15 @@ function createBooksStore() {
 				const result = await booksApi.create(data);
 				if (result.data) {
 					state.books = [...state.books, result.data];
+					toastStore.success('Buku berhasil dibuat!');
 					return result.data;
 				} else if (result.error) {
 					state.error = result.error.error;
+					toastStore.error(result.error.error);
 				}
 			} catch {
 				state.error = 'Failed to create book';
+				toastStore.error('Gagal membuat buku');
 			} finally {
 				state.isLoading = false;
 			}
@@ -194,12 +198,15 @@ function createBooksStore() {
 							localStorage.removeItem(ACTIVE_BOOK_KEY);
 						}
 					}
+					toastStore.success('Buku berhasil dihapus');
 					return true;
 				} else {
 					state.error = result.error.error;
+					toastStore.error(result.error.error);
 				}
 			} catch {
 				state.error = 'Failed to delete book';
+				toastStore.error('Gagal menghapus buku');
 			} finally {
 				state.isLoading = false;
 			}
@@ -216,12 +223,15 @@ function createBooksStore() {
 				const result = await pocketsApi.create(bookId, data);
 				if (result.data) {
 					state.pockets = [...state.pockets, result.data];
+					toastStore.success('Kantong berhasil dibuat!');
 					return result.data;
 				} else if (result.error) {
 					state.error = result.error.error;
+					toastStore.error(result.error.error);
 				}
 			} catch {
 				state.error = 'Failed to create pocket';
+				toastStore.error('Gagal membuat kantong');
 			} finally {
 				state.isLoading = false;
 			}

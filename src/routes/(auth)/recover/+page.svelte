@@ -7,6 +7,7 @@
     IconBox,
   } from "$lib/components/ui";
   import { authApi } from "$lib/api";
+  import { toastStore } from "$lib/stores";
   import { goto } from "$app/navigation";
   import { isValidIdentifier } from "$lib/utils/validation";
 
@@ -42,9 +43,11 @@
         recover: "true",
       });
 
+      toastStore.success('Kode pemulihan dikirim!');
       goto(`/verify?${params.toString()}`);
     } catch {
       error = "Ada kendala. Coba lagi sebentar ya.";
+      toastStore.error(error);
     } finally {
       isLoading = false;
     }

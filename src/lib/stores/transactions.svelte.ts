@@ -14,6 +14,7 @@ import type {
 	CreateTransactionRequest, 
 	CreateTransferRequest
 } from '$lib/types/transaction';
+import { toastStore } from './toast.svelte';
 
 interface TransactionsState {
 	transactions: Transaction[];
@@ -194,11 +195,11 @@ function createTransactionsStore() {
 					throw new Error(result.error.error || 'Failed to create transaction');
 				}
 
-				// Replace optimistic with real transaction
 				if (result.data) {
 					state.transactions = state.transactions.map(tx =>
 						tx.id === optimisticId ? result.data! : tx
 					);
+					toastStore.success('Transaksi berhasil dibuat!');
 					return result.data;
 				}
 
@@ -207,6 +208,7 @@ function createTransactionsStore() {
 				// Rollback optimistic update
 				state.transactions = state.transactions.filter(tx => tx.id !== optimisticId);
 				state.error = e.message || 'Failed to create transaction';
+				toastStore.error('Gagal membuat transaksi');
 				return null;
 			} finally {
 				state.isCreating = false;
@@ -227,9 +229,11 @@ function createTransactionsStore() {
 					throw new Error(result.error.error || 'Failed to create transfer');
 				}
 
+				toastStore.success('Transfer berhasil!');
 				return true;
 			} catch (e: any) {
 				state.error = e.message || 'Failed to create transfer';
+				toastStore.error('Gagal melakukan transfer');
 				return false;
 			} finally {
 				state.isCreating = false;
@@ -253,11 +257,13 @@ function createTransactionsStore() {
 					throw new Error(result.error.error || 'Failed to delete transaction');
 				}
 
+				toastStore.success('Transaksi dihapus');
 				return true;
 			} catch (e: any) {
 				// Rollback
 				state.transactions = previousTransactions;
 				state.error = e.message || 'Failed to delete transaction';
+				toastStore.error('Gagal menghapus transaksi');
 				return false;
 			}
 		},

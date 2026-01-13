@@ -2,12 +2,17 @@
   import {
     Button,
     Combobox,
-    type ComboboxOption,
     ResponsiveModal,
+    BookSelector
   } from "$lib/components/ui";
-  import { booksStore, transactionsStore, categoriesStore } from "$lib/stores";
+  import type { ComboboxOption } from "$lib/components/ui";
+  import { booksStore, transactionsStore, categoriesStore, toastStore } from "$lib/stores";
   import type { Category, Subcategory } from "$lib/types/category";
   import { untrack } from "svelte";
+  import type { Pocket } from "$lib/types";
+  import { pocketsApi } from "$lib/api";
+
+  import { p2pApi } from "$lib/api/p2p";
 
   interface Props {
     open: boolean;
@@ -30,6 +35,21 @@
   let toPocketId = $state(""); // "To Pocket" for transfers
   let categoryId = $state("");
   let subcategoryId = $state("");
+  
+  // Cross-book transfer state
+  let isCrossBook = $state(false);
+  let fromBookId = $state("");
+  let toBookId = $state("");
+  
+  let fromBookPockets = $state<Pocket[]>([]);
+  let isLoadingFromPockets = $state(false);
+  
+  let toBookPockets = $state<Pocket[]>([]);
+  let isLoadingToPockets = $state(false);
+
+  // P2P State
+  let isP2P = $state(false);
+  let recipientEmail = $state("");
 
   function getLocalDateTime() {
     const now = new Date();
@@ -51,12 +71,20 @@
       untrack(() => {
         categoriesStore.load(); // Uses caching
         type = defaultType;
+        
+        // Reset book selection
+        if (booksStore.activeBook) {
+          fromBookId = booksStore.activeBook.id;
+          toBookId = booksStore.activeBook.id;
+        }
+
         // Default to first pocket if available and none selected
         if (defaultPocketId) {
           pocketId = defaultPocketId;
         } else if (!pocketId && booksStore.pockets.length > 0) {
           pocketId = booksStore.pockets[0].id;
         }
+        
         // Default destination pocket (try to pick a different one if possible)
         if (booksStore.pockets.length > 1 && !toPocketId) {
           const other = booksStore.pockets.find((p) => p.id !== pocketId);
@@ -64,8 +92,70 @@
         } else if (booksStore.pockets.length > 0 && !toPocketId) {
           toPocketId = booksStore.pockets[0].id;
         }
+        
         // update date to now
         if (!date) date = getLocalDateTime();
+      });
+    }
+  });
+
+  // Load pockets when toBookId changes
+  $effect(() => {
+    if (type === 'transfer' && toBookId) {
+      untrack(async () => {
+        // If same book as active, use store pockets
+        if (booksStore.activeBook && toBookId === booksStore.activeBook.id) {
+          toBookPockets = booksStore.pockets;
+          return;
+        }
+        
+        // Otherwise fetch pockets for that book
+        isLoadingToPockets = true;
+        try {
+          const result = await pocketsApi.listByBook(toBookId);
+          if (result.data) {
+            toBookPockets = result.data.pockets;
+            // Clear selection if not in new list
+            if (!toBookPockets.find(p => p.id === toPocketId)) {
+              toPocketId = "";
+            }
+          }
+        } catch (e) {
+          console.error("Failed to load pockets for To Book", e);
+          toastStore.error("Failed to load pockets for selected book");
+        } finally {
+          isLoadingToPockets = false;
+        }
+      });
+    }
+  });
+
+  // Load pockets when fromBookId changes
+  $effect(() => {
+    if (type === 'transfer' && fromBookId) {
+      untrack(async () => {
+        // If same book as active, use store pockets
+        if (booksStore.activeBook && fromBookId === booksStore.activeBook.id) {
+          fromBookPockets = booksStore.pockets;
+          return;
+        }
+        
+        // Otherwise fetch pockets for that book
+        isLoadingFromPockets = true;
+        try {
+          const result = await pocketsApi.listByBook(fromBookId);
+          if (result.data) {
+            fromBookPockets = result.data.pockets;
+            // Clear selection if not in new list
+            if (!fromBookPockets.find(p => p.id === pocketId)) {
+              pocketId = "";
+            }
+          }
+        } catch (e) {
+          console.error("Failed to load pockets for From Book", e);
+        } finally {
+          isLoadingFromPockets = false;
+        }
       });
     }
   });
@@ -99,9 +189,18 @@
     }))
   );
 
-  // Transform pockets to ComboboxOption format
+  // Transform pockets to ComboboxOption format (for FROM pocket)
   const pocketOptions = $derived<ComboboxOption[]>(
-    booksStore.pockets.map((p) => ({
+    (isCrossBook && fromBookId && fromBookId !== booksStore.activeBook?.id ? fromBookPockets : booksStore.pockets).map((p) => ({
+      value: p.id,
+      label: p.name,
+      icon: "💰",
+    }))
+  );
+
+  // Transform TO pockets options (depends on selected book)
+  const toPocketOptions = $derived<ComboboxOption[]>(
+    toBookPockets.map((p) => ({
       value: p.id,
       label: p.name,
       icon: "💰",
@@ -138,19 +237,43 @@
     const isoDate = new Date(date).toISOString();
 
     if (type === "transfer") {
-      if (!pocketId || !toPocketId) {
+      if (!pocketId) {
         isSubmitting = false;
         return;
       }
-      success = await transactionsStore.createTransfer({
-        from_pocket_id: pocketId,
-        to_pocket_id: toPocketId,
-        name: name,
-        amount_cents: amountCents,
-        fee_cents: feeCents,
-        date: isoDate,
-        description: "",
-      });
+      
+      if (isP2P) {
+         if (!recipientEmail) return;
+         try {
+             await p2pApi.create({
+                 sender_pocket_id: pocketId,
+                 recipient_email: recipientEmail,
+                 amount_cents: amountCents,
+                 fee_cents: feeCents,
+                 name: name,
+                 description: "",
+             });
+             success = true;
+         } catch(e) {
+             console.error(e);
+             toastStore.error("Failed to send transfer request");
+             success = false;
+         }
+      } else {
+        if (!toPocketId) {
+            isSubmitting = false;
+            return;
+        }
+        success = await transactionsStore.createTransfer({
+            from_pocket_id: pocketId,
+            to_pocket_id: toPocketId,
+            name: name,
+            amount_cents: amountCents,
+            fee_cents: feeCents,
+            date: isoDate,
+            description: "",
+        });
+      }
     } else {
       if (!pocketId) {
         isSubmitting = false;
@@ -191,6 +314,11 @@
     subcategoryId = "";
     includeFee = false;
     fee = "";
+    isCrossBook = false;
+    isP2P = false;
+    recipientEmail = "";
+    fromBookId = booksStore.activeBook?.id || "";
+    toBookId = booksStore.activeBook?.id || "";
     date = getLocalDateTime();
   }
 </script>
@@ -329,58 +457,154 @@
           disabled={!categoryId || subcategoryOptions.length === 0}
         />
       </div>
-    {/if}
 
-    <!-- Pocket Selector(s) -->
-    <div class="grid grid-cols-1 gap-4">
-      <Combobox
-        label={type === "transfer" ? "From Pocket" : "Pocket"}
-        options={pocketOptions}
-        bind:value={pocketId}
-        placeholder="Select pocket"
-        searchPlaceholder="Search..."
-        emptyMessage="No pockets found"
-      />
-
-      {#if type === "transfer"}
-        <!-- Swap Button -->
-        <div class="flex justify-center -my-2">
-          <button
-            type="button"
-            class="p-2 bg-surface border border-border rounded-full hover:bg-border transition-colors"
-            onclick={() => {
-              const temp = pocketId;
-              pocketId = toPocketId;
-              toPocketId = temp;
-            }}
-            aria-label="Swap pockets"
-          >
-            <svg
-              class="w-5 h-5 text-muted"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
-              />
-            </svg>
-          </button>
-        </div>
-
+    <!-- Pocket Selector(s) (non-transfer) -->
+      <div class="grid grid-cols-1 gap-4">
         <Combobox
-          label="To Pocket"
+          label="Pocket"
           options={pocketOptions}
-          bind:value={toPocketId}
+          bind:value={pocketId}
           placeholder="Select pocket"
           searchPlaceholder="Search..."
           emptyMessage="No pockets found"
         />
-      {/if}
-    </div>
+      </div>
+    {/if}
+
+    <!-- Transfer Specific Logic -->
+    {#if type === "transfer"}
+        <div class="space-y-4">
+          <!-- Mode Toggle (Cross-Book vs P2P) -->
+          <div class="flex gap-2 p-1 bg-muted rounded-lg">
+             <button 
+                class="flex-1 py-1.5 text-xs font-medium rounded { !isP2P ? 'bg-surface shadow-sm text-foreground' : 'text-muted hover:text-foreground' }"
+                onclick={() => isP2P = false}
+             >
+                Internal / Cross-Book
+             </button>
+             <button 
+                class="flex-1 py-1.5 text-xs font-medium rounded { isP2P ? 'bg-surface shadow-sm text-foreground' : 'text-muted hover:text-foreground' }"
+                onclick={() => isP2P = true}
+             >
+                Send to User (P2P)
+             </button>
+          </div>
+
+          {#if !isP2P}
+            <!-- Cross-Book Toggle -->
+            <div class="flex items-center justify-between">
+                <span class="text-sm font-medium text-secondary">Cross-book Transfer</span>
+                <button
+                type="button"
+                role="switch"
+                aria-checked={isCrossBook}
+                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 {isCrossBook
+                    ? 'bg-primary'
+                    : 'bg-muted'}"
+                onclick={() => (isCrossBook = !isCrossBook)}
+                >
+                <span
+                    class="{isCrossBook
+                    ? 'translate-x-6'
+                    : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+                />
+                </button>
+            </div>
+          {/if}
+
+          <div class="grid grid-cols-1 gap-4">
+            <!-- From Section -->
+            <div class="space-y-3 p-4 bg-muted/30 rounded-xl border border-border/50">
+               {#if isCrossBook && !isP2P}
+                  <BookSelector
+                    label="From Book"
+                    bind:value={fromBookId}
+                    onValueChange={(val) => {
+                        fromBookId = val;
+                    }}
+                  />
+               {/if}
+                
+                <Combobox
+                  label="From Pocket"
+                  options={pocketOptions}
+                  bind:value={pocketId}
+                  placeholder="Select pocket"
+                  searchPlaceholder="Search..."
+                  emptyMessage="No pockets found"
+                />
+            </div>
+
+            <!-- Swap Button (Only for Internal) -->
+            {#if !isP2P}
+                <div class="flex justify-center -my-2 relative z-10">
+                <button
+                    type="button"
+                    class="p-2 bg-surface border border-border rounded-full hover:bg-border transition-colors"
+                    title="Swap pockets"
+                    onclick={() => {
+                    const tempPocket = pocketId;
+                    pocketId = toPocketId;
+                    toPocketId = tempPocket;
+                    
+                    if (isCrossBook) {
+                        const tempBook = fromBookId;
+                        fromBookId = toBookId;
+                        toBookId = tempBook;
+                    }
+                    }}
+                    aria-label="Swap pockets"
+                >
+                    <svg
+                    class="w-5 h-5 text-muted"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+                    />
+                    </svg>
+                </button>
+                </div>
+            {/if}
+
+            <!-- To Section -->
+            <div class="space-y-3 p-4 bg-muted/30 rounded-xl border border-border/50">
+               {#if isP2P}
+                    <label for="recipient" class="block text-sm font-medium text-secondary">Recipient Email</label>
+                    <input
+                        id="recipient"
+                        type="email"
+                        bind:value={recipientEmail}
+                        placeholder="user@example.com"
+                        class="w-full px-4 py-3 bg-surface border border-border rounded-xl text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+               {:else}
+                   {#if isCrossBook}
+                      <BookSelector 
+                        label="To Book" 
+                        bind:value={toBookId} 
+                      />
+                   {/if}
+                    
+                    <Combobox
+                      label="To Pocket"
+                      options={toPocketOptions}
+                      bind:value={toPocketId}
+                      placeholder={isLoadingToPockets ? "Loading pockets..." : "Select pocket"}
+                      searchPlaceholder="Search pockets..."
+                      emptyMessage={isLoadingToPockets ? "Loading..." : "No pockets found"}
+                      disabled={isLoadingToPockets || (!isCrossBook ? false : !toBookId)}
+                    />
+               {/if}
+            </div>
+          </div>
+        </div>
+    {/if}
 
     <!-- Date -->
     <div>

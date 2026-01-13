@@ -13,6 +13,7 @@
     PlusIcon,
     PanelLeftCloseIcon,
     PanelLeftOpenIcon,
+    BellIcon,
   } from "$lib/icons";
   import { uiStore } from "$lib/stores";
   import logoText from "$lib/assets/Logo/logo-text.webp";
@@ -35,6 +36,7 @@
     },
     { id: "pockets", label: "Kantong", href: "/pockets", icon: WalletIcon },
     { id: "books", label: "Buku", href: "/books", icon: BookIcon },
+    { id: "invitations", label: "Undangan", href: "/invitations", icon: BellIcon },
     { id: "profile", label: "Profil", href: "/account", icon: UserIcon },
   ];
 

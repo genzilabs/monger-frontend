@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Transaction } from '$lib/types/transaction';
 	import { formatCurrency } from '$lib/utils/currency';
+	import { authStore } from '$lib/stores/auth.svelte';
 
 	interface Props {
 		transaction: Transaction;
@@ -12,6 +13,14 @@
 
 	const isIncome = $derived(transaction.type === 'income');
 	const isTransfer = $derived(transaction.type === 'transfer');
+	
+	// Check if created by someone else
+	const createdByOther = $derived(
+		transaction.creator_id && 
+		authStore.user?.id && 
+		transaction.creator_id !== '00000000-0000-0000-0000-000000000000' &&
+		transaction.creator_id !== authStore.user.id
+	);
 	
 	// Get icon color based on type
 	const iconClass = $derived(
@@ -64,6 +73,9 @@
 			</div>
 			<p class="text-xs text-muted truncate">
 				{new Date(transaction.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+				{#if createdByOther}
+					• <span class="text-primary font-medium">by {transaction.creator_name}</span>
+				{/if}
 				{#if isTransfer && transaction.related_pocket}
 					• → {transaction.related_pocket.name}
 				{:else if transaction.pocket}

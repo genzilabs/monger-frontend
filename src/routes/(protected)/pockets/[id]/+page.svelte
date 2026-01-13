@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { transactionsApi } from '$lib/api';
-	import { booksStore, uiStore } from '$lib/stores';
+	import { booksStore, uiStore, transactionsStore } from '$lib/stores';
 	import { formatCurrency } from '$lib/utils/currency';
 	import { TransactionList } from '$lib/components/dashboard';
 	import type { Transaction, Pocket } from '$lib/types';
@@ -9,8 +8,10 @@
 
 	let pocketId = $derived($page.params.id);
 	let pocket = $state<Pocket | null>(null);
-	let transactions = $state<Transaction[]>([]);
-	let isLoading = $state(true);
+	
+	// Use derived state from store for reactivity
+	const transactions = $derived(transactionsStore.transactions);
+	const isLoading = $derived(transactionsStore.isLoading);
 
 	onMount(async () => {
 		if (!pocketId) return;
@@ -18,7 +19,6 @@
 	});
 
 	async function loadData() {
-		isLoading = true;
 		try {
 			// Find pocket in store first to show immediate data
 			const storedPocket = booksStore.pockets.find(p => p.id === pocketId);
@@ -34,17 +34,12 @@
 				if (found) pocket = found;
 			}
 
-			// Fetch transactions
+			// Load transactions into store
 			if (pocketId) {
-				const result = await transactionsApi.listByPocket(pocketId);
-				if (result.data) {
-					transactions = result.data || [];
-				}
+				await transactionsStore.loadByPocket(pocketId);
 			}
 		} catch (e) {
 			console.error(e);
-		} finally {
-			isLoading = false;
 		}
 	}
 </script>

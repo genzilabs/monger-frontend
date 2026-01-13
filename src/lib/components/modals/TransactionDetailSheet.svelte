@@ -4,6 +4,7 @@
   import { formatCurrency } from "$lib/utils/currency";
   import { transactionsApi } from "$lib/api/transactions";
   import { booksStore } from "$lib/stores";
+  import { authStore } from "$lib/stores/auth.svelte";
 
   interface Props {
     transaction: Transaction | null;
@@ -28,6 +29,13 @@
 
   const isIncome = $derived(transaction?.type === "income");
   const isTransfer = $derived(transaction?.type === "transfer");
+
+  	const createdByOther = $derived(
+		transaction?.creator_id && 
+		authStore.user?.id && 
+		transaction.creator_id !== '00000000-0000-0000-0000-000000000000' &&
+		transaction.creator_id !== authStore.user.id
+	);
 
   const typeColor = $derived(
     isTransfer
@@ -175,6 +183,9 @@
             <p class="text-sm font-medium text-foreground">
               {transaction.name}
             </p>
+            {#if createdByOther}
+              <p class="text-xs text-primary mt-0.5">Created by {transaction.creator_name}</p>
+            {/if}
           </div>
         </div>
 

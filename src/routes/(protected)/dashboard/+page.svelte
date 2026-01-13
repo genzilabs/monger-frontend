@@ -7,6 +7,7 @@
     PocketCard,
     QuickActionButton,
     StatCard,
+    PendingTransfers,
   } from "$lib/components/dashboard";
   import { CreatePocketModal } from "$lib/components/modals";
 
@@ -43,6 +44,9 @@
   {:else if booksStore.activeBook}
     <!-- User Header -->
     <UserHeader />
+
+    <!-- Pending Transfers -->
+    <PendingTransfers />
 
     <!-- Balance Hero Card -->
     <BalanceHeroCard

@@ -9,7 +9,7 @@
   } from "$lib/components/ui";
   import { AuthHeader, AuthTabs, AuthFooterLink } from "$lib/components/auth";
   import { authApi } from "$lib/api";
-  import { authStore } from "$lib/stores";
+  import { authStore, toastStore } from "$lib/stores";
   import { goto } from "$app/navigation";
   import { isValidEmail, isValidPhone } from "$lib/utils/validation";
 
@@ -61,10 +61,12 @@
           result.data.access_token,
           result.data.refresh_token
         );
+        toastStore.success('Berhasil masuk! Selamat datang kembali.');
         goto("/dashboard");
       }
     } catch {
       error = "Ada kendala. Coba lagi sebentar ya.";
+      toastStore.error(error);
     } finally {
       isLoading = false;
     }

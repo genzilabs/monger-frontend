@@ -9,7 +9,7 @@
   } from "$lib/components/ui";
   import { AuthHeader, AuthFooterLink } from "$lib/components/auth";
   import { authApi } from "$lib/api";
-  import { authStore } from "$lib/stores";
+  import { authStore, toastStore } from "$lib/stores";
   import { goto } from "$app/navigation";
   import { browser } from "$app/environment";
   import { isValidEmail, isValidPhone } from "$lib/utils/validation";
@@ -90,6 +90,8 @@
         if (browser) {
           localStorage.removeItem("hasCompletedOnboarding");
         }
+        
+        toastStore.success('Akun berhasil dibuat! Silakan verifikasi email.');
 
         const otpResult = await authApi.sendOTP(email.trim());
         const params = new URLSearchParams({
@@ -101,6 +103,7 @@
       }
     } catch {
       error = "Ada kendala. Coba lagi sebentar ya.";
+      toastStore.error(error);
     } finally {
       isLoading = false;
     }

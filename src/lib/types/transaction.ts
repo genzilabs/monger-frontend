@@ -14,6 +14,7 @@ export interface Transaction {
 	transfer_id?: string;
 	related_transaction_id?: string;
 	is_source?: boolean;
+	exclude_from_analytics?: boolean;
 	fee_cents?: number;
 	transfer_fee_cents?: number;
 	transfer_amount_cents?: number;
@@ -27,6 +28,10 @@ export interface Transaction {
 	subcategory?: Subcategory;
 	related_pocket?: Pocket;
 	pocket?: Pocket;
+	pocket_book_owner_name?: string;
+	related_pocket_book_owner_name?: string;
+	creator_id?: string;
+	creator_name?: string;
 }
 
 export interface CreateTransactionRequest {
@@ -50,6 +55,7 @@ export interface UpdateTransactionRequest {
 	fee_cents?: number;
 	related_pocket_id?: string;
 	pocket_id?: string;
+	exclude_from_analytics?: boolean;
 }
 
 export interface CreateTransferRequest {
@@ -60,4 +66,19 @@ export interface CreateTransferRequest {
 	fee_cents?: number;
 	date: string;
 	description?: string;
+}
+
+export interface PendingTransfer {
+  id: string;
+  sender_name?: string;
+  sender_email?: string;
+  sender_pocket_name?: string;
+  recipient_email?: string;
+  amount_cents: number;
+  fee_cents: number;
+  name: string;
+  description?: string;
+  status: 'pending' | 'accepted' | 'rejected' | 'cancelled' | 'expired';
+  created_at: string;
+  expires_at?: string;
 }

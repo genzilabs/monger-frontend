@@ -1,6 +1,7 @@
 <script lang="ts">
   import "../app.css";
   import { authStore } from "$lib/stores";
+  import { ToastContainer } from "$lib/components/ui";
   import { onMount } from "svelte";
   import { browser } from "$app/environment";
 
@@ -52,3 +53,4 @@
 </svelte:head>
 
 {@render children()}
+<ToastContainer />
