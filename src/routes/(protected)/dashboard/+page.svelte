@@ -6,6 +6,7 @@
     BalanceHeroCard,
     PocketCard,
     PendingTransfers,
+    PendingInvitations,
     RecentTransactions,
   } from "$lib/components/dashboard";
   import { CreatePocketModal } from "$lib/components/modals";
@@ -67,7 +68,8 @@
       expense={totalExpense}
     />
 
-    <!-- 3. Pending Transfers -->
+    <!-- 3. Invitations & Transfers -->
+    <PendingInvitations />
     <PendingTransfers />
 
     <!-- 4. Your Pockets -->
@@ -84,14 +86,12 @@
         class="grid grid-cols-2 gap-3 md:flex md:overflow-x-auto md:pb-4 md:-mx-6 md:px-6 md:gap-4 md:no-scrollbar"
       >
         {#each booksStore.pockets as pocket, i}
-          <div class="md:w-[280px] md:shrink-0">
-            <PocketCard
-              {pocket}
-              currency={booksStore.activeBook?.base_currency}
-              isHighlighted={false}
-              onclick={() => goto(`/pockets/${pocket.id}`)}
-            />
-          </div>
+          <PocketCard
+            {pocket}
+            currency={booksStore.activeBook?.base_currency}
+            isHighlighted={false}
+            onclick={() => goto(`/pockets/${pocket.id}`)}
+          />
         {/each}
 
         <!-- Add Pocket Button -->
@@ -181,10 +181,10 @@
 />
 
 <style>
-  .no-scrollbar::-webkit-scrollbar {
+  :global(.no-scrollbar::-webkit-scrollbar) {
     display: none;
   }
-  .no-scrollbar {
+  :global(.no-scrollbar) {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }

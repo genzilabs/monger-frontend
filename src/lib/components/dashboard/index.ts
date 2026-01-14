@@ -8,3 +8,4 @@ export { default as TransactionList } from './TransactionList.svelte';
 export { default as RecentTransactions } from './RecentTransactions.svelte';
 
 export { default as PendingTransfers } from './PendingTransfers.svelte';
+export { default as PendingInvitations } from './PendingInvitations.svelte';
