@@ -5,4 +5,6 @@ export { default as StatCard } from './StatCard.svelte';
 export { default as PocketCard } from './PocketCard.svelte';
 export { default as TransactionItem } from './TransactionItem.svelte';
 export { default as TransactionList } from './TransactionList.svelte';
+export { default as RecentTransactions } from './RecentTransactions.svelte';
+
 export { default as PendingTransfers } from './PendingTransfers.svelte';

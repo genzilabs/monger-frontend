@@ -1,13 +1,12 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
-  import { booksStore, uiStore } from "$lib/stores";
+  import { booksStore, uiStore, transactionsStore } from "$lib/stores";
   import {
     UserHeader,
     BalanceHeroCard,
     PocketCard,
-    QuickActionButton,
-    StatCard,
     PendingTransfers,
+    RecentTransactions,
   } from "$lib/components/dashboard";
   import { CreatePocketModal } from "$lib/components/modals";
 
@@ -15,16 +14,30 @@
   let showCreatePocketModal = $state(false);
 
   // Computed values
-  function getTotalBalance() {
-    return booksStore.pockets.reduce((sum, p) => sum + p.balance_cents, 0);
-  }
+  // Fix: Use $derived for reactivity
+  let totalBalance = $derived(
+    booksStore.pockets.reduce((sum, p) => sum + p.balance_cents, 0),
+  );
+
+  // Calculate income/expense from *loaded* transactions (approximate for now)
+  let totalIncome = $derived(
+    transactionsStore.transactions
+      .filter((t) => t.type === "income")
+      .reduce((sum, t) => sum + t.amount_cents, 0),
+  );
+
+  let totalExpense = $derived(
+    transactionsStore.transactions
+      .filter((t) => t.type === "expense")
+      .reduce((sum, t) => sum + t.amount_cents, 0),
+  );
 </script>
 
 <svelte:head>
   <title>Dashboard - Monger</title>
 </svelte:head>
 
-<div class="animate-fade-in space-y-5">
+<div class="animate-fade-in space-y-6">
   {#if !booksStore.isInitialized || (booksStore.isLoading && booksStore.books.length === 0)}
     <!-- Loading Skeleton -->
     <div class="space-y-4">
@@ -42,250 +55,55 @@
       </div>
     </div>
   {:else if booksStore.activeBook}
-    <!-- User Header -->
+    <!-- 1. User Header (responsive inside) -->
     <UserHeader />
 
-    <!-- Pending Transfers -->
-    <PendingTransfers />
-
-    <!-- Balance Hero Card -->
+    <!-- 2. Total Net Worth Card -->
     <BalanceHeroCard
-      balance={getTotalBalance()}
+      balance={totalBalance}
       currency={booksStore.activeBook.base_currency}
       bookName={booksStore.activeBook.name}
+      income={totalIncome}
+      expense={totalExpense}
     />
 
-    <!-- Quick Actions - Mobile Only -->
-    <div class="grid grid-cols-4 gap-3 md:hidden">
-      <QuickActionButton
-        label="Tambah"
-        primary
-        onclick={() => uiStore.openTransactionModal("expense")}
-      >
-        {#snippet icon()}
-          <svg
-            class="w-6 h-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-            />
-          </svg>
-        {/snippet}
-      </QuickActionButton>
-      <QuickActionButton
-        label="Kantong"
-        onclick={() => (showCreatePocketModal = true)}
-      >
-        {#snippet icon()}
-          <svg
-            class="w-6 h-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-            />
-          </svg>
-        {/snippet}
-      </QuickActionButton>
-      <QuickActionButton
-        label="Pemasukan"
-        onclick={() => uiStore.openTransactionModal("income")}
-      >
-        {#snippet icon()}
-          <svg
-            class="w-6 h-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M7 11l5-5m0 0l5 5m-5-5v12"
-            />
-          </svg>
-        {/snippet}
-      </QuickActionButton>
-      <QuickActionButton label="Lainnya">
-        {#snippet icon()}
-          <svg
-            class="w-6 h-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"
-            />
-          </svg>
-        {/snippet}
-      </QuickActionButton>
-    </div>
+    <!-- 3. Pending Transfers -->
+    <PendingTransfers />
 
-    <!-- Bento Grid Stats -->
-    <div class="grid grid-cols-2 gap-4">
-      <StatCard title="Pengeluaran">
-        {#snippet icon()}
-          <svg
-            class="w-4 h-4 text-muted"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"
-            />
-          </svg>
-        {/snippet}
-        <div class="flex items-center justify-center py-2 relative">
-          <svg
-            class="rotate-[-90deg]"
-            height="80"
-            viewBox="0 0 80 80"
-            width="80"
-          >
-            <circle
-              cx="40"
-              cy="40"
-              fill="none"
-              r="32"
-              stroke="var(--color-border)"
-              stroke-width="8"
-            ></circle>
-            <circle
-              cx="40"
-              cy="40"
-              fill="none"
-              r="32"
-              stroke="var(--color-primary)"
-              stroke-dasharray="140 200"
-              stroke-linecap="round"
-              stroke-width="8"
-            ></circle>
-          </svg>
-          <div
-            class="absolute inset-0 flex items-center justify-center flex-col"
-          >
-            <span class="text-[10px] text-muted">Total</span>
-            <span class="text-sm font-bold text-foreground"
-              >{booksStore.pockets.length}</span
-            >
-          </div>
-        </div>
-      </StatCard>
-
-      <StatCard title="Ringkasan">
-        {#snippet icon()}
-          <svg
-            class="w-4 h-4 text-muted"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-            />
-          </svg>
-        {/snippet}
-        <div class="space-y-3">
-          <div>
-            <div class="flex justify-between text-xs mb-1">
-              <span class="text-foreground font-medium">Kantong</span>
-              <span class="text-muted">{booksStore.pockets.length}</span>
-            </div>
-            <div class="h-2 w-full bg-border rounded-full overflow-hidden">
-              <div class="h-full bg-yellow-500 w-[72%] rounded-full"></div>
-            </div>
-          </div>
-          <div>
-            <div class="flex justify-between text-xs mb-1">
-              <span class="text-foreground font-medium">Kondisi</span>
-              <span class="text-muted">Baik</span>
-            </div>
-            <div class="h-2 w-full bg-border rounded-full overflow-hidden">
-              <div class="h-full bg-emerald-500 w-[85%] rounded-full"></div>
-            </div>
-          </div>
-        </div>
-      </StatCard>
-    </div>
-
-    <!-- Pockets Carousel -->
+    <!-- 4. Your Pockets -->
     <div class="space-y-3">
       <div class="flex justify-between items-center">
         <h3 class="text-sm font-semibold text-foreground">Kantong Kamu</h3>
-        <svg
-          class="w-5 h-5 text-muted"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="2"
+        <button class="text-xs text-primary font-medium md:block hidden"
+          >Lihat Semua</button
         >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M9 5l7 7-7 7"
-          />
-        </svg>
       </div>
 
-      <div class="flex overflow-x-auto gap-4 pb-2 no-scrollbar -mx-6 px-6">
-        {#if booksStore.pockets.length === 0}
-          <button
-            onclick={() => (showCreatePocketModal = true)}
-            class="min-w-[160px] h-32 bg-surface border border-dashed border-border rounded-2xl p-4 flex flex-col items-center justify-center gap-2 hover:border-muted transition-colors"
-          >
-            <svg
-              class="w-6 h-6 text-muted"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-              />
-            </svg>
-            <span class="text-xs text-muted">Tambah Kantong</span>
-          </button>
-        {:else}
-          {#each booksStore.pockets as pocket, i}
+      <!-- Mobile: Grid, Desktop: Carousel -->
+      <div
+        class="grid grid-cols-2 gap-3 md:flex md:overflow-x-auto md:pb-4 md:-mx-6 md:px-6 md:gap-4 md:no-scrollbar"
+      >
+        {#each booksStore.pockets as pocket, i}
+          <div class="md:w-[280px] md:shrink-0">
             <PocketCard
               {pocket}
               currency={booksStore.activeBook?.base_currency}
-              isHighlighted={i === 0}
+              isHighlighted={false}
               onclick={() => goto(`/pockets/${pocket.id}`)}
             />
-          {/each}
-          <button
-            onclick={() => (showCreatePocketModal = true)}
-            class="min-w-[120px] h-32 bg-surface border border-dashed border-border rounded-2xl p-4 flex flex-col items-center justify-center gap-2 hover:border-muted transition-colors shrink-0"
+          </div>
+        {/each}
+
+        <!-- Add Pocket Button -->
+        <button
+          onclick={() => (showCreatePocketModal = true)}
+          class="min-h-[120px] bg-surface border border-dashed border-border rounded-2xl p-4 flex flex-col items-center justify-center gap-2 hover:border-muted transition-colors md:w-[120px] md:shrink-0 md:h-auto"
+        >
+          <div
+            class="w-10 h-10 rounded-full bg-surface border border-border flex items-center justify-center"
           >
             <svg
-              class="w-6 h-6 text-muted"
+              class="w-5 h-5 text-muted"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -294,14 +112,17 @@
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                d="M12 4v16m8-8H4"
               />
             </svg>
-            <span class="text-xs text-muted">Tambah</span>
-          </button>
-        {/if}
+          </div>
+          <span class="text-xs font-medium text-muted">Tambah</span>
+        </button>
       </div>
     </div>
+
+    <!-- 5. Recent Transactions -->
+    <RecentTransactions />
   {:else if booksStore.books.length > 0}
     <div class="text-center py-10">
       <div
@@ -332,7 +153,7 @@
         <svg
           class="w-8 h-8 text-primary"
           fill="none"
-          viewBox="0 0 0 24"
+          viewBox="0 0 24 24"
           stroke="currentColor"
           stroke-width="2"
         >

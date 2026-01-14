@@ -29,6 +29,7 @@ export { Label } from './label';
 // ============================================
 // LAYOUT COMPONENTS
 // ============================================
+export { default as Header } from "./Header.svelte";
 
 // Card
 export {
