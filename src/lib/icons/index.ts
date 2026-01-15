@@ -27,5 +27,6 @@ export { default as BankIcon } from './BankIcon.svelte';
 export { default as CashIcon } from './CashIcon.svelte';
 export { default as CreditCardIcon } from './CreditCardIcon.svelte';
 export { default as SmartphoneIcon } from './SmartphoneIcon.svelte';
+export { default as ShieldIcon } from './ShieldIcon.svelte';
 export { default as XIcon } from './XIcon.svelte';
 export { default as UserIcon } from './UserIcon.svelte';

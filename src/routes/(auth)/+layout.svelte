@@ -45,24 +45,9 @@
   <!-- Right Panel - Auth Content - EXACT 50% on desktop, vertically centered -->
   <div class="w-full md:w-1/2 flex flex-col min-h-screen bg-background">
     <!-- Header - MOBILE ONLY -->
-    <header class="md:hidden flex items-center justify-between px-6 py-4">
-      {#if showBackButton}
-        <a
-          href="/auth"
-          class="p-2 -ml-2 text-secondary hover:text-foreground transition-colors"
-          aria-label="Kembali"
-        >
-          <ChevronLeftIcon size={24} />
-        </a>
-      {:else}
-        <div class="w-10"></div>
-      {/if}
-      <div class="w-10"></div>
-    </header>
-
-    <!-- Main Content - flex-1 with vertical centering on desktop -->
+    <!-- Main Content - Vertically centered on all screens -->
     <main
-      class="flex-1 flex flex-col px-6 pb-8 md:px-12 md:justify-center md:items-center"
+      class="flex-1 flex flex-col px-6 justify-center items-center md:px-12"
     >
       <div class="w-full md:max-w-md">
         <!-- Logo at top of content (desktop only) -->

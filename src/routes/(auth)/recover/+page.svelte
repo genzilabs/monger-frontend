@@ -1,15 +1,10 @@
 <script lang="ts">
-  import {
-    Button,
-    Input,
-    ProgressSteps,
-    Card,
-    IconBox,
-  } from "$lib/components/ui";
+  import { Button, Input, Card, IconBox } from "$lib/components/ui";
   import { authApi } from "$lib/api";
   import { toastStore } from "$lib/stores";
   import { goto } from "$app/navigation";
   import { isValidIdentifier } from "$lib/utils/validation";
+  import logoOnly from "$lib/assets/Logo/logo-only.webp";
 
   let identifier = $state("");
   let isLoading = $state(false);
@@ -43,7 +38,7 @@
         recover: "true",
       });
 
-      toastStore.success('Kode pemulihan dikirim!');
+      toastStore.success("Kode pemulihan dikirim!");
       goto(`/verify?${params.toString()}`);
     } catch {
       error = "Ada kendala. Coba lagi sebentar ya.";
@@ -58,44 +53,20 @@
   <title>Pulihkan Akun - Monger</title>
 </svelte:head>
 
-<div class="flex-1 flex flex-col animate-fade-in">
-  <!-- Progress Steps -->
-  <div class="mb-6">
-    <ProgressSteps currentStep={1} totalSteps={3} label="IDENTITAS" />
-  </div>
+<div class="w-full animate-fade-in flex flex-col items-center">
+  <!-- Logo (Mobile) -->
+  <img src={logoOnly} alt="Monger" class="w-16 h-16 mb-6 md:hidden" />
 
-  <!-- Header Card -->
-  <Card class="mb-6">
-    <div class="flex items-center gap-3 mb-4">
-      <IconBox size="lg">
-        <svg
-          class="w-5 h-5 text-primary"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-          />
-        </svg>
-      </IconBox>
-    </div>
+  <h1 class="text-2xl font-bold text-foreground mb-2 text-center">
+    Kita bantu masuk lagi.
+  </h1>
 
-    <h1 class="text-2xl font-bold text-foreground mb-2">
-      Kita bantu masuk lagi.
-    </h1>
+  <p class="text-secondary text-center mb-8 max-w-xs">
+    Masukkan email atau nomor telepon yang terdaftar di Monger untuk menerima
+    kode pemulihan.
+  </p>
 
-    <p class="text-secondary">
-      Masukkan email atau nomor telepon yang terdaftar di Monger untuk menerima
-      kode pemulihan.
-    </p>
-  </Card>
-
-  <!-- Input Card -->
-  <Card class="mb-6">
+  <div class="w-full mb-6">
     <Input
       type="text"
       placeholder="Email atau Nomor Telepon"
@@ -118,9 +89,7 @@
         </svg>
       {/snippet}
     </Input>
-  </Card>
-
-  <div class="flex-1"></div>
+  </div>
 
   <Button
     variant="primary"
@@ -146,10 +115,11 @@
   </Button>
 
   <button
-    class="mt-4 flex-center gap-2 py-3 text-muted hover:text-secondary transition-colors"
+    class="mt-6 flex items-center justify-center gap-2 py-3 text-muted hover:text-secondary transition-colors w-full"
+    onclick={() => goto("/login")}
   >
     <svg
-      class="w-5 h-5"
+      class="w-4 h-4"
       fill="none"
       viewBox="0 0 24 24"
       stroke="currentColor"
@@ -158,9 +128,9 @@
       <path
         stroke-linecap="round"
         stroke-linejoin="round"
-        d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+        d="M10 19l-7-7m0 0l7-7m-7 7h18"
       />
     </svg>
-    <span class="text-sm">Tidak punya akses ke email ini?</span>
+    <span class="text-sm">Kembali ke Masuk</span>
   </button>
 </div>

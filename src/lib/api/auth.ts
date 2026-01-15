@@ -11,7 +11,12 @@ import type {
 	RegisterRequest,
 	UpdateProfileRequest,
 	User,
-	VerifyOTPRequest
+	VerifyOTPRequest,
+	PINStatusResponse,
+	SetPINRequest,
+	VerifyPINRequest,
+	ChangePINRequest,
+	UpdatePINSettingsRequest
 } from '$lib/types';
 
 export const authApi = {
@@ -69,5 +74,40 @@ export const authApi = {
 	 */
 	updateProfile(data: UpdateProfileRequest) {
 		return apiClient.patch<User>('/auth/profile', data, true);
+	},
+
+	/**
+	 * Get PIN status
+	 */
+	getPINStatus() {
+		return apiClient.get<PINStatusResponse>('/auth/pin', true);
+	},
+
+	/**
+	 * Set new PIN
+	 */
+	setPIN(data: SetPINRequest) {
+		return apiClient.post<MessageResponse>('/auth/pin', data, true);
+	},
+
+	/**
+	 * Verify PIN (for sensitive actions)
+	 */
+	verifyPIN(data: VerifyPINRequest) {
+		return apiClient.post<{ valid: boolean }>('/auth/pin/verify', data, true);
+	},
+
+	/**
+	 * Change existing PIN
+	 */
+	changePIN(data: ChangePINRequest) {
+		return apiClient.put<MessageResponse>('/auth/pin', data, true);
+	},
+
+	/**
+	 * Update PIN settings (enable/disable, timeout)
+	 */
+	updatePINSettings(data: UpdatePINSettingsRequest) {
+		return apiClient.patch<User>('/auth/pin/settings', data, true);
 	}
 };

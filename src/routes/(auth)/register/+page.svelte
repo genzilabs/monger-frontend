@@ -7,12 +7,13 @@
     SocialButtons,
     ErrorAlert,
   } from "$lib/components/ui";
-  import { AuthHeader, AuthFooterLink } from "$lib/components/auth";
+  import { AuthFooterLink } from "$lib/components/auth";
   import { authApi } from "$lib/api";
   import { authStore, toastStore } from "$lib/stores";
   import { goto } from "$app/navigation";
   import { browser } from "$app/environment";
   import { isValidEmail, isValidPhone } from "$lib/utils/validation";
+  import logoOnly from "$lib/assets/Logo/logo-only.webp";
 
   let email = $state("");
   let phone = $state("");
@@ -90,8 +91,8 @@
         if (browser) {
           localStorage.removeItem("hasCompletedOnboarding");
         }
-        
-        toastStore.success('Akun berhasil dibuat! Silakan verifikasi email.');
+
+        toastStore.success("Akun berhasil dibuat! Silakan verifikasi email.");
 
         const otpResult = await authApi.sendOTP(email.trim());
         const params = new URLSearchParams({
@@ -114,13 +115,18 @@
   <title>Daftar - Monger</title>
 </svelte:head>
 
-<div class="flex-1 flex flex-col animate-fade-in">
-  <AuthHeader
-    title="Mulai di sini"
-    description="Buat akun untuk mulai mencatat keuanganmu."
-  />
+<div class="w-full animate-fade-in flex flex-col items-center">
+  <!-- Logo (Mobile) -->
+  <img src={logoOnly} alt="Monger" class="w-16 h-16 mb-6 md:hidden" />
 
-  <Card class="space-y-4">
+  <h1 class="text-2xl font-bold text-foreground mb-2 text-center">
+    Mulai di sini
+  </h1>
+  <p class="text-secondary text-center mb-8">
+    Buat akun untuk mulai mencatat keuanganmu.
+  </p>
+
+  <Card class="space-y-4 w-full">
     <Input
       type="text"
       label="Nama Lengkap"
@@ -232,7 +238,7 @@
 
   <AuthFooterLink href="/login" text="Sudah punya akun?" linkText="Masuk" />
 
-  <div class="mt-6 space-y-4">
+  <div class="mt-6 space-y-4 w-full">
     <Divider text="ATAU LANJUTKAN DENGAN" />
     <SocialButtons />
   </div>

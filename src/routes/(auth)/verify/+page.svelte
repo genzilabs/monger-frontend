@@ -7,6 +7,7 @@
   import { browser } from "$app/environment";
   import { onMount } from "svelte";
   import { maskIdentifier, isValidOTP } from "$lib/utils/validation";
+  import logoOnly from "$lib/assets/Logo/logo-only.webp";
 
   const identifier = $derived($page.url.searchParams.get("identifier") || "");
   const initialCooldown = $derived(
@@ -155,11 +156,14 @@
   <title>Verifikasi - Monger</title>
 </svelte:head>
 
-<div class="flex-1 flex flex-col animate-fade-in">
+<div class="w-full animate-fade-in flex flex-col items-center">
+  <!-- Logo (Mobile) -->
+  <img src={logoOnly} alt="Monger" class="w-16 h-16 mb-6 md:hidden" />
+
   <!-- Expired Error State -->
   {#if errorType === "expired"}
     <div
-      class="bg-red-50 border border-red-200 rounded-2xl p-6 mb-6 text-center"
+      class="bg-red-50 border border-red-200 rounded-2xl p-6 mb-6 text-center w-full"
     >
       <div class="flex-center w-12 h-12 mx-auto mb-4 bg-red-100 rounded-full">
         <svg
@@ -183,24 +187,20 @@
     </div>
   {/if}
 
-  <!-- Header Card -->
-  <Card class="mb-6">
-    <h1 class="text-xl font-semibold text-center text-foreground mb-2">
-      {errorType === "expired" ? "Minta Kode Baru" : "Masukkan Kode Verifikasi"}
-    </h1>
+  <h1 class="text-xl font-semibold text-center text-foreground mb-2">
+    {errorType === "expired" ? "Minta Kode Baru" : "Masukkan Kode Verifikasi"}
+  </h1>
 
-    <p class="text-center text-secondary text-sm">
-      {#if errorType === "expired"}
-        Klik tombol di bawah untuk menerima kode baru.
-      {:else}
-        Kami kirim kode 6 digit ke<br />
-        <span class="font-medium text-foreground">{maskedIdentifier}</span>
-      {/if}
-    </p>
-  </Card>
+  <p class="text-center text-secondary text-sm mb-6">
+    {#if errorType === "expired"}
+      Klik tombol di bawah untuk menerima kode baru.
+    {:else}
+      Kami kirim kode 6 digit ke<br />
+      <span class="font-medium text-foreground">{maskedIdentifier}</span>
+    {/if}
+  </p>
 
-  <!-- OTP Input Card -->
-  <Card class="space-y-6">
+  <div class="space-y-6 w-full mb-6">
     <div class="flex-between text-sm">
       <span class="text-label">Masukkan 6 digit kode</span>
       {#if error && errorType === "invalid"}
@@ -218,10 +218,10 @@
     <p class="text-xs text-center text-muted">
       Mencoba isi otomatis dari pesan...
     </p>
-  </Card>
+  </div>
 
   <!-- Actions -->
-  <div class="mt-6 space-y-3">
+  <div class="w-full mt-auto space-y-3">
     <div class="flex gap-3">
       <div class="flex-1 flex-center gap-2 py-3 bg-surface rounded-xl">
         <svg

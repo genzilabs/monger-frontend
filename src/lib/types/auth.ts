@@ -63,9 +63,14 @@ export interface RefreshTokenRequest {
 
 export interface UpdateProfileRequest {
 	name?: string;
+	email?: string;
+	phone?: string;
 	avatar_url?: string;
 	locale?: string;
 	base_currency?: string;
+	current_password?: string;
+	password?: string;
+	confirm_password?: string;
 }
 
 // PIN types

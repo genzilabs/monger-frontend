@@ -9,7 +9,7 @@
     id: string;
     label: string;
     href: string;
-    icon: "home" | "transaction" | "settle" | "other";
+    icon: "home" | "transaction" | "pocket" | "account";
   };
 
   const navItems: NavItem[] = [
@@ -20,8 +20,8 @@
       href: "/transactions",
       icon: "transaction",
     },
-    { id: "settle", label: "Tagihan", href: "/settle", icon: "settle" },
-    { id: "other", label: "Lainnya", href: "/settings", icon: "other" },
+    { id: "pocket", label: "Kantong", href: "/pockets", icon: "pocket" },
+    { id: "account", label: "Profil", href: "/account", icon: "account" },
   ];
 
   const isActive = (href: string) => $page.url.pathname === href;

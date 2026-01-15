@@ -7,11 +7,12 @@
     SocialButtons,
     ErrorAlert,
   } from "$lib/components/ui";
-  import { AuthHeader, AuthTabs, AuthFooterLink } from "$lib/components/auth";
+  import { AuthTabs, AuthFooterLink } from "$lib/components/auth";
   import { authApi } from "$lib/api";
   import { authStore, toastStore } from "$lib/stores";
   import { goto } from "$app/navigation";
   import { isValidEmail, isValidPhone } from "$lib/utils/validation";
+  import logoOnly from "$lib/assets/Logo/logo-only.webp";
 
   let loginMethod = $state<"password" | "otp">("password");
   let identifier = $state("");
@@ -61,7 +62,7 @@
           result.data.access_token,
           result.data.refresh_token
         );
-        toastStore.success('Berhasil masuk! Selamat datang kembali.');
+        toastStore.success("Berhasil masuk! Selamat datang kembali.");
         goto("/dashboard");
       }
     } catch {
@@ -104,16 +105,22 @@
   <title>Masuk - Monger</title>
 </svelte:head>
 
-<div class="flex-1 flex flex-col animate-fade-in">
-  <AuthHeader title="Halo lagi 👋" description="Masuk ke Buku dan Kantongmu." />
+<div class="w-full animate-fade-in flex flex-col items-center">
+  <!-- Logo (Mobile) -->
+  <img src={logoOnly} alt="Monger" class="w-16 h-16 mb-6 md:hidden" />
 
-  <AuthTabs
-    tabs={loginTabs}
-    active={loginMethod}
-    onchange={(id) => (loginMethod = id as "password" | "otp")}
-  />
+  <h1 class="text-2xl font-bold text-foreground mb-2 text-center">Halo lagi</h1>
+  <p class="text-secondary text-center mb-8">Masuk ke Buku dan Kantongmu.</p>
 
-  <Card class="space-y-4">
+  <div class="w-full">
+    <AuthTabs
+      tabs={loginTabs}
+      active={loginMethod}
+      onchange={(id) => (loginMethod = id as "password" | "otp")}
+    />
+  </div>
+
+  <Card class="space-y-4 w-full">
     <Input
       type="text"
       label="Email atau Telepon"
@@ -188,7 +195,7 @@
 
   <AuthFooterLink href="/register" text="Belum punya akun?" linkText="Daftar" />
 
-  <div class="mt-6 space-y-4">
+  <div class="mt-6 space-y-4 w-full">
     <Divider text="ATAU LANJUTKAN DENGAN" />
     <SocialButtons />
   </div>
