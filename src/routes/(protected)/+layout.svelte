@@ -14,10 +14,12 @@
 
   let showBookSwitcher = $state(false);
   let showCreateBookModal = $state(false);
+  let showNotificationModal = $state(false);
 
   // Lazy load modals only when needed
   let CreateBookModal: any = $state(null);
   let CreateTransactionModal: any = $state(null);
+  let NotificationModal: any = $state(null);
 
   onMount(async () => {
     // Initialize auth first (blocking - needed for protected routes)
@@ -29,14 +31,16 @@
     // Lazy load modals after initial render
     requestIdleCallback(
       async () => {
-        const [bookModal, txModal] = await Promise.all([
+        const [bookModal, txModal, notifModal] = await Promise.all([
           import("$lib/components/modals/CreateBookModal.svelte"),
           import("$lib/components/modals/CreateTransactionModal.svelte"),
+          import("$lib/components/modals/NotificationModal.svelte"),
         ]);
         CreateBookModal = bookModal.default;
         CreateTransactionModal = txModal.default;
+        NotificationModal = notifModal.default;
       },
-      { timeout: 2000 },
+      { timeout: 2000 }
     );
   });
 </script>
@@ -47,7 +51,10 @@
 
   <!-- Main Content Area -->
   <div class="flex-1 flex flex-col min-w-0">
-    <Header bind:showBookSwitcher />
+    <Header
+      bind:showBookSwitcher
+      onNotificationClick={() => (showNotificationModal = true)}
+    />
 
     <!-- Main Content -->
     <main class="flex-1 p-6 pb-28 md:pb-6">
@@ -73,19 +80,24 @@
 
 <!-- Lazy-loaded Modals -->
 {#if CreateBookModal}
-  <svelte:component
-    this={CreateBookModal}
+  <CreateBookModal
     open={showCreateBookModal}
     onClose={() => (showCreateBookModal = false)}
   />
 {/if}
 
 {#if CreateTransactionModal}
-  <svelte:component
-    this={CreateTransactionModal}
+  <CreateTransactionModal
     open={uiStore.isTransactionModalOpen}
     onClose={() => uiStore.closeTransactionModal()}
     defaultType={uiStore.transactionModalDefaultType}
     defaultPocketId={uiStore.transactionModalPocketId}
+  />
+{/if}
+
+{#if NotificationModal}
+  <NotificationModal
+    open={showNotificationModal}
+    onClose={() => (showNotificationModal = false)}
   />
 {/if}

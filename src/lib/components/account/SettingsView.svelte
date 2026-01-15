@@ -41,20 +41,4 @@
       </div>
     </div>
   </Card>
-
-  <div class="pt-4">
-    <Button
-      variant="outline"
-      size="lg"
-      fullWidth
-      onclick={handleLogout}
-      class="text-red-500 border-red-200 hover:bg-red-50"
-    >
-      <LogOutIcon size={20} class="mr-2" />
-      Keluar dari Akun
-    </Button>
-    <p class="text-center text-xs text-muted mt-4">
-      Versi 1.0.0 • Genzi Meraih Mimpi
-    </p>
-  </div>
 </div>
