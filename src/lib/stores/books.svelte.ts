@@ -63,10 +63,8 @@ function createBooksStore() {
 			state.isLoading = true;
 			state.error = null;
 			try {
-				const [booksResult, typesResult] = await Promise.all([
-					booksApi.list(),
-					pocketTypesApi.list()
-				]);
+
+				const booksResult = await booksApi.list();
 
 				if (booksResult.data) {
 					state.books = booksResult.data.books || [];
@@ -78,26 +76,31 @@ function createBooksStore() {
 							const book = state.books.find(b => b.id === savedBookId);
 							if (book) {
 								state.activeBook = book;
-								await this.loadPockets(book.id);
+								await Promise.all([
+									this.loadPockets(book.id),
+									this.loadPocketTypes(book.id)
+								]);
 							} else if (state.books.length > 0) {
 								// Saved book not found, use first book
 								state.activeBook = state.books[0];
 								localStorage.setItem(ACTIVE_BOOK_KEY, state.books[0].id);
-								await this.loadPockets(state.books[0].id);
+								await Promise.all([
+									this.loadPockets(state.books[0].id),
+									this.loadPocketTypes(state.books[0].id)
+								]);
 							}
 						} else if (state.books.length > 0) {
 							// No saved book, use first book
 							state.activeBook = state.books[0];
 							localStorage.setItem(ACTIVE_BOOK_KEY, state.books[0].id);
-							await this.loadPockets(state.books[0].id);
+							await Promise.all([
+								this.loadPockets(state.books[0].id),
+								this.loadPocketTypes(state.books[0].id)
+							]);
 						}
 					}
 				} else if (booksResult.error) {
 					state.error = booksResult.error.error;
-				}
-
-				if (typesResult.data) {
-					state.pocketTypes = typesResult.data.types || [];
 				}
 			} catch {
 				state.error = 'Failed to load initial data';
@@ -143,9 +146,13 @@ function createBooksStore() {
 			}
 			
 			if (book) {
-				await this.loadPockets(book.id);
+				await Promise.all([
+					this.loadPockets(book.id),
+					this.loadPocketTypes(book.id)
+				]);
 			} else {
 				state.pockets = [];
+				state.pocketTypes = [];
 			}
 		},
 
@@ -172,9 +179,9 @@ function createBooksStore() {
 		/**
 		 * Load pocket types
 		 */
-		async loadPocketTypes() {
+		async loadPocketTypes(bookId: string) {
 			try {
-				const result = await pocketTypesApi.list();
+				const result = await pocketTypesApi.list(bookId);
 				if (result.data) {
 					state.pocketTypes = result.data.types || [];
 				}
@@ -186,10 +193,10 @@ function createBooksStore() {
 		/**
 		 * Create a new pocket type
 		 */
-		async createPocketType(data: { name: string; slug: string; icon_slug: string }) {
+		async createPocketType(bookId: string, data: { name: string; slug: string; icon_slug: string }) {
 			state.isLoading = true;
 			try {
-				const result = await pocketTypesApi.create(data);
+				const result = await pocketTypesApi.create(bookId, data);
 				if (result.data) {
 					state.pocketTypes = [...state.pocketTypes, result.data];
 					toastStore.success('Tipe dompet berhasil dibuat!');

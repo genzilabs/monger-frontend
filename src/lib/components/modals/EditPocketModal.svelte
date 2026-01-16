@@ -40,7 +40,9 @@
   ];
 
   onMount(() => {
-    booksStore.loadPocketTypes();
+    if (booksStore.activeBook) {
+      booksStore.loadPocketTypes(booksStore.activeBook.id);
+    }
   });
 
   // Initialize form when pocket changes

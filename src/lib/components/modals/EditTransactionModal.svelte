@@ -63,7 +63,8 @@
     if (categories.length > 0 || isLoadingCategories) return;
     isLoadingCategories = true;
     try {
-      const response = await categoriesApi.list();
+      if (!booksStore.activeBook) return;
+      const response = await categoriesApi.list(booksStore.activeBook.id);
       if (response.data?.categories) {
         categories = response.data.categories;
       }

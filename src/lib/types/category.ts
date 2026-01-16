@@ -1,6 +1,7 @@
 export interface Category {
 	id: string;
-	user_id: string;
+	user_id?: string;
+	book_id: string;
 	name: string;
 	icon?: string;
 	type: 'income' | 'expense';

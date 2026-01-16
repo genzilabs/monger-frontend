@@ -4,6 +4,7 @@
   import type { Category, CreateCategoryRequest } from '$lib/types';
   import { categoriesApi } from '$lib/api';
   import { toastStore } from '$lib/stores';
+  import { booksStore } from '$lib/stores/books.svelte';
   import { EditIcon, PlusIcon, TrashIcon, CheckIcon, XIcon } from '$lib/icons';
   import type { Subcategory } from '$lib/types/category';
 
@@ -56,13 +57,18 @@
       return;
     }
 
+    if (!categoryToEdit && !booksStore.activeBook) {
+        toastStore.error('Tidak ada buku yang aktif');
+        return;
+    }
+
     isLoading = true;
     try {
       if (categoryToEdit) {
         await categoriesApi.update(categoryToEdit.id, formData);
         toastStore.success('Kategori berhasil diperbarui');
-      } else {
-        await categoriesApi.create(formData);
+      } else if (booksStore.activeBook) {
+        await categoriesApi.create(booksStore.activeBook.id, formData);
         toastStore.success('Kategori berhasil dibuat');
       }
       isOpen = false;

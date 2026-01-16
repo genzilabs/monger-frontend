@@ -70,17 +70,17 @@ export const pocketsApi = {
 
 export const pocketTypesApi = {
 	/**
-	 * List all pocket types
+	 * List all pocket types for a book
 	 */
-	list() {
-		return apiClient.get<PocketTypeListResponse>('/pockets/types', true);
+	list(bookId: string) {
+		return apiClient.get<PocketTypeListResponse>(`/books/${bookId}/pocket-types`, true);
 	},
 
 	/**
 	 * Create a new pocket type
 	 */
-	create(data: CreatePocketTypeRequest) {
-		return apiClient.post<PocketType>('/pockets/types', data, true);
+	create(bookId: string, data: CreatePocketTypeRequest) {
+		return apiClient.post<PocketType>(`/books/${bookId}/pocket-types`, data, true);
 	},
 
 	/**

@@ -6,6 +6,8 @@
   import type { Category } from "$lib/types/category";
   import ManageCategoryModal from "$lib/components/modals/ManageCategoryModal.svelte";
 
+  import { booksStore } from "$lib/stores/books.svelte";
+
   let categories = $state<Category[]>([]);
   let isLoading = $state(true);
   let error = $state<string | null>(null);
@@ -14,10 +16,12 @@
   let editingCategory = $state<Category | null>(null);
 
   async function loadCategories() {
+    if (!booksStore.activeBook) return;
+    
     isLoading = true;
     error = null;
     try {
-      const res = await categoriesApi.list();
+      const res = await categoriesApi.list(booksStore.activeBook.id);
       if (res.data) {
         categories = res.data.categories;
       } else {
@@ -31,8 +35,10 @@
     }
   }
 
-  onMount(() => {
-    loadCategories();
+  $effect(() => {
+      if (booksStore.activeBook) {
+          loadCategories();
+      }
   });
 
   function openCreateModal() {

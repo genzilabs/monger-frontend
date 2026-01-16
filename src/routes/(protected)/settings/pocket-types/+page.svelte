@@ -21,7 +21,9 @@
 	});
 
 	onMount(() => {
-		booksStore.loadPocketTypes();
+		if (booksStore.activeBook) {
+			booksStore.loadPocketTypes(booksStore.activeBook.id);
+		}
 	});
 
 	function handleBack() {
@@ -57,10 +59,15 @@
 			return;
 		}
 
+        if (!booksStore.activeBook) {
+            toastStore.error('No active book selected');
+            return;
+        }
+
 		if (editingType) {
 			await booksStore.updatePocketType(editingType.id, formData);
 		} else {
-			await booksStore.createPocketType(formData);
+			await booksStore.createPocketType(booksStore.activeBook.id, formData);
 		}
 		isEditing = false;
 	}

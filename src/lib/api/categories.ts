@@ -12,17 +12,17 @@ interface CategoriesResponse {
 }
 
 export const categoriesApi = {
-	// List all categories for the current user
-	list: () => 
-		client.get<CategoriesResponse>('/categories', true),
+	// List all categories for a book
+	list: (bookId: string) => 
+		client.get<CategoriesResponse>(`/books/${bookId}/categories`, true),
 
 	// List categories by type
-	listByType: (type: 'income' | 'expense') =>
-		client.get<CategoriesResponse>(`/categories/by-type?type=${type}`, true),
+	listByType: (bookId: string, type: 'income' | 'expense') =>
+		client.get<CategoriesResponse>(`/books/${bookId}/categories/by-type?type=${type}`, true),
 
 	// Create a new category
-	create: (data: CreateCategoryRequest) =>
-		client.post<Category>('/categories', data, true),
+	create: (bookId: string, data: CreateCategoryRequest) =>
+		client.post<Category>(`/books/${bookId}/categories`, data, true),
 
 	// Update a category
 	update: (id: string, data: UpdateCategoryRequest) =>
