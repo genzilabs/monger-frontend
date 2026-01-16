@@ -13,25 +13,24 @@
       id: "awareness",
       title: "Mulai dari yang kecil.",
       description:
-        "Bukan soal berapa banyak uangmu, tapi seberapa kenal kamu dengan alurnya. Sadar adalah langkah pertama.",
+        "Bukan soal nominal, tapi soal kenal. Sadar adalah langkah pertama untuk kendali.",
     },
     {
       id: "habit",
       title: "Sedikit demi sedikit.",
       description:
-        "Catat pengeluaran tiap hari. Bangun kebiasaan baik tanpa rasa terbebani. Santai saja.",
+        "Catat pelan-pelan. Bangun kebiasaan baik tanpa rasa terbebani. Santai saja.",
     },
     {
       id: "mission",
       title: "Bagian dari perjalananmu.",
       description:
-        "Monger adalah teman seperjalanan dari Genzi Meraih Mimpi. Tumbuh perlahan, tapi pasti.",
+        "Teman seperjalanan dari Genzi Meraih Mimpi. Tumbuh perlahan, tapi pasti.",
     },
     {
       id: "start",
       title: "Siap melangkah?",
-      description:
-        "Perjalanan keuangan yang lebih tenang dimulai dari satu ketukan.",
+      description: "Perjalanan keuangan yang lebih tenang dimulai dari sini.",
     },
   ];
 

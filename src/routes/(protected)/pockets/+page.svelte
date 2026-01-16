@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Button, Card } from "$lib/components/ui";
+  import { Button, Card, EmptyState } from "$lib/components/ui";
   import { booksStore, uiStore } from "$lib/stores";
   import { goto } from "$app/navigation";
   import { WalletIcon, PlusIcon, ChevronRightIcon } from "$lib/icons";
@@ -26,29 +26,23 @@
 
   <!-- Pockets List -->
   {#if !booksStore.activeBook}
-    <Card class="p-8 text-center bg-surface border border-border">
-      <div
-        class="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center"
-      >
+    <EmptyState
+      title="Pilih Buku Dulu"
+      description="Pilih buku di sidebar dulu ya."
+    >
+      {#snippet icon()}
         <WalletIcon size={32} class="text-primary" />
-      </div>
-      <h2 class="text-lg font-semibold text-foreground mb-2">
-        Pilih Buku Dulu
-      </h2>
-      <p class="text-secondary">Pilih buku di sidebar untuk melihat kantong.</p>
-    </Card>
+      {/snippet}
+    </EmptyState>
   {:else if booksStore.pockets.length === 0}
-    <Card class="p-8 text-center bg-surface border border-border">
-      <div
-        class="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center"
-      >
+    <EmptyState
+      title="Belum Ada Kantong"
+      description="Yuk, buat kantong pertamamu."
+    >
+      {#snippet icon()}
         <WalletIcon size={32} class="text-primary" />
-      </div>
-      <h2 class="text-lg font-semibold text-foreground mb-2">
-        Belum Ada Kantong
-      </h2>
-      <p class="text-secondary mb-4">Mulai dengan membuat kantong pertamamu.</p>
-      <div class="flex justify-center">
+      {/snippet}
+      {#snippet action()}
         <Button
           variant="primary"
           onclick={() => (showCreatePocketModal = true)}
@@ -56,8 +50,8 @@
           <PlusIcon size={20} class="mr-2" />
           Tambah Kantong
         </Button>
-      </div>
-    </Card>
+      {/snippet}
+    </EmptyState>
   {:else}
     <div class="space-y-3">
       {#each booksStore.pockets as pocket (pocket.id)}
@@ -71,7 +65,7 @@
       <!-- Add New Pocket Card (Content Area) -->
       <button
         onclick={() => (showCreatePocketModal = true)}
-        class="w-full border-2 border-dashed border-border rounded-xl p-4 hover:border-primary/50 transition-colors flex items-center justify-center gap-2 group min-h-[60px]"
+        class="w-full border-2 border-dashed border-border rounded-xl p-4 hover:border-primary/50 transition-colors flex items-center justify-center gap-2 group min-h-15"
       >
         <div
           class="w-8 h-8 rounded-full bg-surface-elevated group-hover:bg-primary/10 flex items-center justify-center transition-colors"

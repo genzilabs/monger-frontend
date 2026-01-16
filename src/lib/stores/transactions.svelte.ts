@@ -50,7 +50,7 @@ function createTransactionsStore() {
 		/**
 		 * Load transactions for a pocket
 		 */
-		async loadByPocket(pocketId: string, reset = true) {
+		async loadByPocket(pocketId: string, options: ListByBookOptions = {}, reset = true) {
 			state.isLoading = true;
 			state.error = null;
 			state.activeContext = { type: 'pocket', id: pocketId };
@@ -61,11 +61,11 @@ function createTransactionsStore() {
 			}
 
 			try {
-				const result = await transactionsApi.listByPocket(
-					pocketId, 
-					state.limit, 
-					state.offset
-				);
+				const result = await transactionsApi.listByPocket(pocketId, {
+					limit: state.limit,
+					offset: state.offset,
+					...options
+				});
 
 				if (result.error) {
 					throw new Error(result.error.error || 'Failed to load transactions');
@@ -146,7 +146,7 @@ function createTransactionsStore() {
 			if (!state.activeContext) return;
 
 			if (state.activeContext.type === 'pocket') {
-				return this.loadByPocket(state.activeContext.id, true);
+				return this.loadByPocket(state.activeContext.id, {}, true);
 			} else {
 				// For book, we might lose filters if not stored, 
 				// but for now simple refresh is better than nothing.
@@ -160,7 +160,7 @@ function createTransactionsStore() {
 		 */
 		async loadMoreByPocket(pocketId: string) {
 			if (!state.hasMore || state.isLoading) return;
-			return this.loadByPocket(pocketId, false);
+			return this.loadByPocket(pocketId, {}, false);
 		},
 
 		/**

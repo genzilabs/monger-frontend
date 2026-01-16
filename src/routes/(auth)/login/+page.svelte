@@ -27,15 +27,15 @@
 
   function validateForm(): boolean {
     if (!identifier.trim()) {
-      error = "Masukkan email atau nomor teleponmu";
+      error = "Tolong isi email atau nomor HP dulu ya";
       return false;
     }
     if (!isValidEmail(identifier) && !isValidPhone(identifier)) {
-      error = "Hmm, formatnya belum sesuai. Coba cek lagi ya.";
+      error = "Formatnya belum pas nih. Coba cek lagi ya.";
       return false;
     }
     if (loginMethod === "password" && !password) {
-      error = "Jangan lupa kata sandinya";
+      error = "Kata sandinya belum diisi";
       return false;
     }
     error = "";
@@ -62,11 +62,11 @@
           result.data.access_token,
           result.data.refresh_token
         );
-        toastStore.success("Berhasil masuk! Selamat datang kembali.");
+        toastStore.success("Selamat datang kembali.");
         goto("/dashboard");
       }
     } catch {
-      error = "Ada kendala. Coba lagi sebentar ya.";
+      error = "Ada gangguan sebentar. Coba lagi nanti ya.";
       toastStore.error(error);
     } finally {
       isLoading = false;
@@ -90,7 +90,7 @@
       });
       goto(`/verify?${params.toString()}`);
     } catch {
-      error = "Ada kendala. Coba lagi sebentar ya.";
+      error = "Ada gangguan sebentar. Coba lagi nanti ya.";
     } finally {
       isLoading = false;
     }
@@ -123,8 +123,8 @@
   <Card class="space-y-4 w-full">
     <Input
       type="text"
-      label="Email atau Telepon"
-      placeholder="email@contoh.com atau +62..."
+      label="Email atau Nomor HP"
+      placeholder="email@contoh.com atau 08..."
       bind:value={identifier}
       autocomplete="email"
     >
@@ -149,7 +149,7 @@
       <Input
         type="password"
         label="Kata Sandi"
-        placeholder="Masukkan kata sandimu"
+        placeholder="Tulis kata sandimu"
         bind:value={password}
         autocomplete="current-password"
       >

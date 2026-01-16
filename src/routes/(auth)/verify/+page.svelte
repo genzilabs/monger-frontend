@@ -65,7 +65,7 @@
 
   async function handleVerify() {
     if (!isValidOTP(otp)) {
-      error = "Masukkan 6 digit kode yang valid";
+      error = "Kode belum pas. Pastikan 6 digit ya.";
       errorType = "invalid";
       return;
     }
@@ -81,7 +81,7 @@
         const errorMsg = result.error.error.toLowerCase();
         if (errorMsg.includes("expired")) {
           errorType = "expired";
-          error = "Kode verifikasi sudah kedaluwarsa.";
+          error = "Kodenya sudah kedaluwarsa. Minta baru yuk.";
         } else {
           errorType = "invalid";
           error = result.error.error;
@@ -106,7 +106,7 @@
         }
       }
     } catch {
-      error = "Ada kendala. Coba lagi sebentar ya.";
+      error = "Ada gangguan sebentar. Coba lagi nanti ya.";
       errorType = "invalid";
     } finally {
       isLoading = false;
@@ -132,7 +132,7 @@
       cooldown = result.data?.cooldown_seconds || 60;
       startCooldownTimer();
     } catch {
-      error = "Gagal mengirim ulang kode. Coba lagi ya.";
+      error = "Gagal kirim ulang. Coba lagi ya.";
     } finally {
       isLoading = false;
     }
@@ -182,13 +182,13 @@
       </div>
       <h2 class="text-lg font-semibold text-red-800 mb-1">Kode Kedaluwarsa</h2>
       <p class="text-sm text-red-600">
-        Kode verifikasi ke {maskedIdentifier} sudah tidak berlaku.
+        Kode untuk {maskedIdentifier} sudah ga berlaku.
       </p>
     </div>
   {/if}
 
   <h1 class="text-xl font-semibold text-center text-foreground mb-2">
-    {errorType === "expired" ? "Minta Kode Baru" : "Masukkan Kode Verifikasi"}
+    {errorType === "expired" ? "Minta Kode Baru" : "Isi Kode Verifikasi"}
   </h1>
 
   <p class="text-center text-secondary text-sm mb-6">
@@ -204,7 +204,7 @@
     <div class="flex-between text-sm">
       <span class="text-label">Masukkan 6 digit kode</span>
       {#if error && errorType === "invalid"}
-        <span class="text-red-500">Tidak valid</span>
+        <span class="text-red-500">Kodenya salah</span>
       {/if}
     </div>
 
@@ -215,9 +215,7 @@
       onchange={handleOTPChange}
     />
 
-    <p class="text-xs text-center text-muted">
-      Mencoba isi otomatis dari pesan...
-    </p>
+    <p class="text-xs text-center text-muted">Mecoba isi otomatis...</p>
   </div>
 
   <!-- Actions -->

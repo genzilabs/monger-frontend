@@ -24,8 +24,14 @@ export const transactionsApi = {
 	transfer: (data: CreateTransferRequest) =>
 		client.post<{ message: string }>('/transfers', data, true),
 
-	listByPocket: (pocketId: string, limit = 20, offset = 0) =>
-		client.get<Transaction[]>(`/pockets/${pocketId}/transactions?limit=${limit}&offset=${offset}`, true),
+	listByPocket: (pocketId: string, options: ListByBookOptions = {}) => {
+		const params = new URLSearchParams();
+		params.set('limit', String(options.limit ?? 20));
+		params.set('offset', String(options.offset ?? 0));
+		if (options.search) params.set('search', options.search);
+		if (options.type) params.set('type', options.type);
+		return client.get<Transaction[]>(`/pockets/${pocketId}/transactions?${params.toString()}`, true);
+	},
 
 	listByBook: (bookId: string, options: ListByBookOptions = {}) => {
 		const params = new URLSearchParams();

@@ -4,12 +4,14 @@
   import {
     UserHeader,
     BalanceHeroCard,
-    PocketCard,
     PendingTransfers,
     PendingInvitations,
     RecentTransactions,
   } from "$lib/components/dashboard";
+  import PocketListItem from "$lib/components/pockets/PocketListItem.svelte";
+  import { PlusIcon } from "$lib/icons";
   import { CreatePocketModal } from "$lib/components/modals";
+  import { EmptyState } from "$lib/components/ui";
 
   // Modal state
   let showCreatePocketModal = $state(false);
@@ -17,20 +19,20 @@
   // Computed values
   // Fix: Use $derived for reactivity
   let totalBalance = $derived(
-    booksStore.pockets.reduce((sum, p) => sum + p.balance_cents, 0),
+    booksStore.pockets.reduce((sum, p) => sum + p.balance_cents, 0)
   );
 
   // Calculate income/expense from *loaded* transactions (approximate for now)
   let totalIncome = $derived(
     transactionsStore.transactions
       .filter((t) => t.type === "income")
-      .reduce((sum, t) => sum + t.amount_cents, 0),
+      .reduce((sum, t) => sum + t.amount_cents, 0)
   );
 
   let totalExpense = $derived(
     transactionsStore.transactions
       .filter((t) => t.type === "expense")
-      .reduce((sum, t) => sum + t.amount_cents, 0),
+      .reduce((sum, t) => sum + t.amount_cents, 0)
   );
 </script>
 
@@ -57,7 +59,7 @@
     </div>
   {:else if booksStore.activeBook}
     <!-- 1. User Header (responsive inside) -->
-    <UserHeader />
+    <UserHeader loading={booksStore.isLoading} />
 
     <!-- 2. Total Net Worth Card -->
     <BalanceHeroCard
@@ -66,6 +68,7 @@
       bookName={booksStore.activeBook.name}
       income={totalIncome}
       expense={totalExpense}
+      loading={booksStore.isLoading}
     />
 
     <!-- 3. Invitations & Transfers -->
@@ -81,53 +84,54 @@
         >
       </div>
 
-      <!-- Mobile: Grid, Desktop: Carousel -->
-      <div
-        class="grid grid-cols-2 gap-3 md:flex md:overflow-x-auto md:pb-4 md:-mx-6 md:px-6 md:gap-4 md:no-scrollbar"
-      >
-        {#each booksStore.pockets as pocket, i}
-          <PocketCard
-            {pocket}
-            currency={booksStore.activeBook?.base_currency}
-            isHighlighted={false}
-            onclick={() => goto(`/pockets/${pocket.id}`)}
-          />
-        {/each}
-
-        <!-- Add Pocket Button -->
-        <button
-          onclick={() => (showCreatePocketModal = true)}
-          class="min-h-[120px] bg-surface border border-dashed border-border rounded-2xl p-4 flex flex-col items-center justify-center gap-2 hover:border-muted transition-colors md:w-[120px] md:shrink-0 md:h-auto"
-        >
-          <div
-            class="w-10 h-10 rounded-full bg-surface border border-border flex items-center justify-center"
-          >
-            <svg
-              class="w-5 h-5 text-muted"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
+      <!-- Pocket List (Vertical Stack) -->
+      <div class="space-y-3">
+        {#if booksStore.isLoading && booksStore.pockets.length === 0}
+          <!-- Skeletons -->
+          {#each Array(3) as _}
+            <div
+              class="w-full h-20 bg-surface border border-border rounded-2xl p-4 flex items-center gap-4 animate-pulse"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-          </div>
-          <span class="text-xs font-medium text-muted">Tambah</span>
-        </button>
+              <div class="w-12 h-12 rounded-xl bg-border"></div>
+              <div class="space-y-2 flex-1">
+                <div class="h-4 w-32 bg-border rounded"></div>
+                <div class="h-4 w-24 bg-border rounded"></div>
+              </div>
+            </div>
+          {/each}
+        {:else}
+          {#each booksStore.pockets as pocket (pocket.id)}
+            <PocketListItem
+              {pocket}
+              currency={booksStore.activeBook?.base_currency}
+              onclick={() => goto(`/pockets/${pocket.id}`)}
+            />
+          {/each}
+
+          <!-- Add Pocket Button (Full Width) -->
+          <button
+            onclick={() => (showCreatePocketModal = true)}
+            class="w-full border-2 border-dashed border-border rounded-xl p-4 hover:border-primary/50 transition-colors flex items-center justify-center gap-2 group min-h-15"
+          >
+            <div
+              class="w-8 h-8 rounded-full bg-surface-elevated group-hover:bg-primary/10 flex items-center justify-center transition-colors"
+            >
+              <PlusIcon size={18} class="text-muted group-hover:text-primary" />
+            </div>
+            <span
+              class="text-sm font-semibold text-muted group-hover:text-primary transition-colors"
+              >Tambah Kantong Baru</span
+            >
+          </button>
+        {/if}
       </div>
     </div>
 
     <!-- 5. Recent Transactions -->
     <RecentTransactions />
   {:else if booksStore.books.length > 0}
-    <div class="text-center py-10">
-      <div
-        class="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center"
-      >
+    <EmptyState title="Pilih Buku" description="Pilih buku di atas dulu ya.">
+      {#snippet icon()}
         <svg
           class="w-8 h-8 text-primary"
           fill="none"
@@ -141,15 +145,14 @@
             d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
           />
         </svg>
-      </div>
-      <h2 class="text-lg font-semibold text-foreground mb-2">Pilih Buku</h2>
-      <p class="text-secondary">Ketuk pemilih buku di atas untuk memilih.</p>
-    </div>
+      {/snippet}
+    </EmptyState>
   {:else}
-    <div class="text-center py-10">
-      <div
-        class="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center"
-      >
+    <EmptyState
+      title="Mulai Perjalanan Keuanganmu"
+      description="Buat buku pertamamu di atas."
+    >
+      {#snippet icon()}
         <svg
           class="w-8 h-8 text-primary"
           fill="none"
@@ -163,14 +166,8 @@
             d="M12 6v6m0 0v6m0-6h6m-6 0H6"
           />
         </svg>
-      </div>
-      <h2 class="text-lg font-semibold text-foreground mb-2">
-        Mulai Perjalanan Keuanganmu
-      </h2>
-      <p class="text-secondary">
-        Ketuk pemilih buku untuk membuat buku pertamamu.
-      </p>
-    </div>
+      {/snippet}
+    </EmptyState>
   {/if}
 </div>
 

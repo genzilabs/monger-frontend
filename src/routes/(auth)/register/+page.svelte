@@ -25,35 +25,35 @@
 
   function validateForm(): boolean {
     if (!name.trim()) {
-      error = "Siapa namamu?";
+      error = "Nama diisi dulu ya";
       return false;
     }
     if (name.trim().length < 2) {
-      error = "Nama minimal 2 karakter ya";
+      error = "Namanya terlalu pendek nih";
       return false;
     }
     if (!email.trim()) {
-      error = "Email-nya diisi dulu";
+      error = "Email-nya belum diisi";
       return false;
     }
     if (!isValidEmail(email)) {
-      error = "Format email-nya belum sesuai";
+      error = "Format email belum pas";
       return false;
     }
     if (phone.trim() && !isValidPhone(phone)) {
-      error = "Format nomor teleponnya belum sesuai";
+      error = "Format nomor HP belum pas";
       return false;
     }
     if (!password) {
-      error = "Buat kata sandi dulu";
+      error = "Kata sandi belum dibuat";
       return false;
     }
     if (password.length < 8) {
-      error = "Kata sandi minimal 8 karakter";
+      error = "Kata sandi minimal 8 karakter ya";
       return false;
     }
     if (password !== confirmPassword) {
-      error = "Kata sandinya belum sama";
+      error = "Kata sandinya beda nih";
       return false;
     }
     error = "";
@@ -103,7 +103,7 @@
         goto(`/verify?${params.toString()}`);
       }
     } catch {
-      error = "Ada kendala. Coba lagi sebentar ya.";
+      error = "Ada gangguan sebentar. Coba lagi nanti ya.";
       toastStore.error(error);
     } finally {
       isLoading = false;

@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Transaction } from "$lib/types/transaction";
   import TransactionItem from "./TransactionItem.svelte";
+  import { EmptyState } from "$lib/components/ui";
 
   interface Props {
     transactions: Transaction[];
@@ -32,9 +33,26 @@
       </div>
     {/each}
   {:else if transactions.length === 0}
-    <div class="py-10 text-center">
-      <p class="text-muted text-sm">Belum ada transaksi.</p>
-    </div>
+    <EmptyState
+      title="Belum Ada Transaksi"
+      description="Belum ada transaksi di sini."
+    >
+      {#snippet icon()}
+        <svg
+          class="w-8 h-8 text-muted"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+          />
+        </svg>
+      {/snippet}
+    </EmptyState>
   {:else}
     {#each transactions as tx (tx.id)}
       <TransactionItem

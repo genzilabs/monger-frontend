@@ -96,8 +96,8 @@
    ======================================== */
 @layer base {
   html {
-    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-      Oxygen, Ubuntu, sans-serif;
+    font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont,
+      "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     @apply bg-background text-foreground;
@@ -157,7 +157,7 @@
    Text Utilities
    ======================================== */
 @utility text-gradient {
-  @apply bg-gradient-to-br from-primary to-primary-dark bg-clip-text text-transparent;
+  @apply bg-linear-to-br from-primary to-primary-dark bg-clip-text text-transparent;
 }
 
 @utility text-label {

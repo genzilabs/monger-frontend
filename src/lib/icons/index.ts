@@ -30,3 +30,5 @@ export { default as SmartphoneIcon } from './SmartphoneIcon.svelte';
 export { default as ShieldIcon } from './ShieldIcon.svelte';
 export { default as XIcon } from './XIcon.svelte';
 export { default as UserIcon } from './UserIcon.svelte';
+export { default as EyeIcon } from './EyeIcon.svelte';
+export { default as EyeOffIcon } from './EyeOffIcon.svelte';
