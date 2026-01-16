@@ -1,6 +1,8 @@
 <script lang="ts">
   import { Button, ResponsiveModal } from "$lib/components/ui";
+  import DynamicIcon from "$lib/components/ui/DynamicIcon.svelte";
   import { booksStore } from "$lib/stores";
+  import { onMount } from "svelte";
 
   interface Props {
     open: boolean;
@@ -16,12 +18,10 @@
   let balance = $state("");
   let isCreating = $state(false);
 
-  const pocketTypes = [
-    { slug: "cash", name: "Cash", icon: "💵" },
-    { slug: "bank", name: "Bank Account", icon: "🏦" },
-    { slug: "e-wallet", name: "E-Wallet", icon: "📱" },
-    { slug: "credit", name: "Credit Card", icon: "💳" },
-  ];
+  let pocketTypes = $derived(booksStore.pocketTypes.length > 0 ? booksStore.pocketTypes : [
+    { slug: "cash", name: "Cash", icon_slug: "cash" },
+    { slug: "bank", name: "Bank Account", icon_slug: "bank" },
+  ]); // Fallback if store is empty
 
   const colors = [
     "#448AFF",
@@ -32,13 +32,20 @@
     "#00BCD4",
   ];
 
+  onMount(() => {
+    booksStore.loadPocketTypes();
+  });
+
   async function handleSubmit() {
     if (!name.trim() || !booksStore.activeBook) return;
 
     isCreating = true;
+    const type = pocketTypes.find(t => t.slug === typeSlug);
+
     const pocket = await booksStore.createPocket(booksStore.activeBook.id, {
       name: name.trim(),
       type_slug: typeSlug,
+      icon_slug: type?.icon_slug,
       color,
       balance: balance ? Math.round(parseFloat(balance) * 100) : 0,
     });
@@ -49,7 +56,6 @@
     }
     isCreating = false;
   }
-
   function resetForm() {
     name = "";
     typeSlug = "cash";
@@ -81,12 +87,10 @@
         class="w-full px-4 py-3 bg-surface border border-border rounded-xl text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary"
       />
     </div>
-
     <!-- Type -->
     <div>
-      <label class="block text-sm font-medium text-secondary mb-1.5">Type</label
-      >
-      <div class="grid grid-cols-2 gap-2">
+      <label class="block text-sm font-medium text-secondary mb-1.5">Type</label>
+      <div class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
         {#each pocketTypes as type}
           <button
             type="button"
@@ -96,7 +100,7 @@
               : 'border-border'}"
             onclick={() => (typeSlug = type.slug)}
           >
-            <span class="text-xl">{type.icon}</span>
+            <DynamicIcon name={type.icon_slug} size={20} />
             <span class="text-sm text-foreground">{type.name}</span>
           </button>
         {/each}

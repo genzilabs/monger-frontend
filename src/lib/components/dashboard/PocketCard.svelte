@@ -1,11 +1,6 @@
 <script lang="ts">
 	import type { Pocket } from "$lib/types";
-	import {
-		CashIcon,
-		BankIcon,
-		SmartphoneIcon,
-		CreditCardIcon,
-	} from "$lib/icons";
+	import DynamicIcon from "$lib/components/ui/DynamicIcon.svelte";
 
 	interface Props {
 		pocket: Pocket;
@@ -21,13 +16,6 @@
 		onclick,
 	}: Props = $props();
 
-	const pocketIcons: Record<string, any> = {
-		cash: CashIcon,
-		bank: BankIcon,
-		"e-wallet": SmartphoneIcon,
-		credit: CreditCardIcon,
-	};
-
 	function formatBalance(cents: number) {
 		return new Intl.NumberFormat("id-ID", {
 			style: "currency",
@@ -35,8 +23,6 @@
 			minimumFractionDigits: 0,
 		}).format(cents / 100);
 	}
-
-	const Icon = pocketIcons[pocket.type_slug] || CashIcon;
 </script>
 
 <button
@@ -49,7 +35,7 @@
 	<div
 		class="absolute right-[-24px] top-[-24px] opacity-10 text-foreground transition-transform group-hover:scale-110"
 	>
-		<Icon size={120} />
+		<DynamicIcon name={pocket.icon_slug} size={120} />
 	</div>
 
 	<!-- Content -->
@@ -59,7 +45,7 @@
 				? 'text-white'
 				: 'text-primary'}"
 		>
-			<Icon size={20} />
+			<DynamicIcon name={pocket.icon_slug} size={20} />
 		</div>
 		<p
 			class="text-xs {isHighlighted

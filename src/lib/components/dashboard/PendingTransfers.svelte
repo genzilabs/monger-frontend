@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { p2pApi } from "$lib/api/p2p";
-  import type { PendingTransfer } from "$lib/types/transaction";
+  import type { PendingTransfer } from "$lib/types";
   import { Button, Combobox, ResponsiveModal } from "$lib/components/ui";
   import { toastStore, booksStore } from "$lib/stores";
 

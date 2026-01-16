@@ -1,12 +1,7 @@
 <script lang="ts">
   import type { Pocket } from "$lib/types";
-  import {
-    CashIcon,
-    BankIcon,
-    SmartphoneIcon,
-    CreditCardIcon,
-    ChevronRightIcon,
-  } from "$lib/icons";
+  import { ChevronRightIcon } from "$lib/icons";
+  import DynamicIcon from "$lib/components/ui/DynamicIcon.svelte";
   import { formatCurrency } from "$lib/utils/currency";
 
   interface Props {
@@ -16,15 +11,6 @@
   }
 
   let { pocket, currency = "IDR", onclick }: Props = $props();
-
-  const pocketIcons: Record<string, any> = {
-    cash: CashIcon,
-    bank: BankIcon,
-    "e-wallet": SmartphoneIcon,
-    credit: CreditCardIcon,
-  };
-
-  const Icon = pocketIcons[pocket.type_slug] || CashIcon;
 </script>
 
 <button
@@ -37,7 +23,7 @@
       class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
       style="background-color: {pocket.color}20; color: {pocket.color}"
     >
-      <Icon size={24} />
+      <DynamicIcon name={pocket.icon_slug} size={24} />
     </div>
 
     <!-- Content -->

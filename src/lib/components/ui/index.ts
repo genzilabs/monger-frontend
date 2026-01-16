@@ -146,6 +146,7 @@ export { default as BookSelector } from './BookSelector.svelte';
 // Display Components
 export { default as Divider } from './Divider.svelte';
 export { default as IconBox } from './IconBox.svelte';
+export { default as DynamicIcon } from './DynamicIcon.svelte';
 export { default as Logo } from './Logo.svelte';
 export { default as TabSwitcher } from './TabSwitcher.svelte';
 

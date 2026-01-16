@@ -1,5 +1,5 @@
 import { apiClient as api } from "./client";
-import type { PendingTransfer } from "$lib/types/transaction";
+import type { PendingTransfer } from "$lib/types";
 
 export const p2pApi = {
   create: (data: {

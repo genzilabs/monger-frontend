@@ -5,6 +5,8 @@
   import { ShieldIcon, TrashIcon } from "$lib/icons";
   import { pocketsApi } from "$lib/api/pockets";
   import { goto } from "$app/navigation";
+  import DynamicIcon from "$lib/components/ui/DynamicIcon.svelte";
+  import { onMount } from "svelte";
 
   interface Props {
     open: boolean;
@@ -23,12 +25,10 @@
   let isDeleting = $state(false);
   let showDeleteConfirm = $state(false);
 
-  const pocketTypes = [
-    { slug: "cash", name: "Cash", icon: "💵" },
-    { slug: "bank", name: "Bank Account", icon: "🏦" },
-    { slug: "e-wallet", name: "E-Wallet", icon: "📱" },
-    { slug: "credit", name: "Credit Card", icon: "💳" },
-  ];
+  let pocketTypes = $derived(booksStore.pocketTypes.length > 0 ? booksStore.pocketTypes : [
+    { slug: "cash", name: "Cash", icon_slug: "cash" },
+    { slug: "bank", name: "Bank Account", icon_slug: "bank" },
+  ]);
 
   const colors = [
     "#448AFF",
@@ -38,6 +38,10 @@
     "#F44336",
     "#00BCD4",
   ];
+
+  onMount(() => {
+    booksStore.loadPocketTypes();
+  });
 
   // Initialize form when pocket changes
   $effect(() => {
@@ -54,9 +58,12 @@
 
     isSaving = true;
     try {
+      const type = pocketTypes.find(t => t.slug === typeSlug);
+      
       const res = await pocketsApi.update(pocket.id, {
         name: name.trim(),
         type_slug: typeSlug,
+        icon_slug: type?.icon_slug,
         color,
       });
 
@@ -164,7 +171,7 @@
                 : 'border-border'}"
               onclick={() => (typeSlug = type.slug)}
             >
-              <span class="text-xl">{type.icon}</span>
+              <DynamicIcon name={type.icon_slug} size={20} />
               <span class="text-sm text-foreground">{type.name}</span>
             </button>
           {/each}

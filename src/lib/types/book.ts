@@ -29,10 +29,20 @@ export interface Pocket {
 	icon_slug: string;
 	color: string;
 	balance_cents: number;
-	vault?: Vault;
 	is_frozen: boolean;
+	role: "owner" | "editor" | "viewer";
 	created_at: string;
 	updated_at: string;
+	vault?: Vault;
+}
+
+export interface PocketType {
+  id: string;
+  user_id?: string;
+  name: string;
+  slug: string;
+  icon_slug: string;
+  is_system: boolean;
 }
 
 // Request types
@@ -87,4 +97,20 @@ export interface BookListResponse {
 export interface PocketListResponse {
 	pockets: Pocket[];
 	total: number;
+}
+
+export interface CreatePocketTypeRequest {
+  name: string;
+  slug: string;
+  icon_slug: string;
+}
+
+export interface UpdatePocketTypeRequest {
+  name: string;
+  slug: string;
+  icon_slug: string;
+}
+
+export interface PocketTypeListResponse {
+  types: PocketType[];
 }

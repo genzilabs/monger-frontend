@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { page } from "$app/stores";
+  
   import {
     Menu,
     ProfileView,
@@ -29,7 +31,15 @@
     currentView = "menu";
   }
 
+
+
   onMount(async () => {
+    // Check for view param
+    const viewParam = $page.url.searchParams.get("view");
+    if (viewParam && ["profile", "security", "settings"].includes(viewParam)) {
+      currentView = viewParam as View;
+    }
+
     // Refresh profile on mount to ensure freshness
     try {
       const res = await authApi.getProfile();

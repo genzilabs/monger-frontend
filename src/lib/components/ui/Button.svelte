@@ -14,6 +14,7 @@
 		onclick?: () => void;
 		children: Snippet;
 		icon?: Snippet;
+		class?: string;
 	}
 
 	let {
@@ -25,7 +26,8 @@
 		fullWidth = false,
 		onclick,
 		children,
-		icon
+		icon,
+		class: className = ''
 	}: Props = $props();
 
 	const baseClasses = `
@@ -73,7 +75,7 @@
 	{type}
 	disabled={disabled || loading}
 	onclick={onclick}
-	class="{baseClasses} {variantClasses[variant]} {sizeClasses[size]} {fullWidth ? 'w-full' : ''}"
+	class="{baseClasses} {variantClasses[variant]} {sizeClasses[size]} {fullWidth ? 'w-full' : ''} {className}"
 >
 	{#if loading}
 		<svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">

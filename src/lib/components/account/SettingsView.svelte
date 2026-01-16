@@ -41,4 +41,23 @@
       </div>
     </div>
   </Card>
+
+  <h3 class="text-sm font-bold text-muted uppercase tracking-widest px-1">
+    Pengaturan Dompet
+  </h3>
+
+  <Card class="divide-y divide-border">
+    <button
+      class="w-full p-4 flex items-center justify-between hover:bg-surface-elevated transition-colors text-left"
+      onclick={() => goto("/settings/pocket-types")}
+    >
+      <div>
+        <p class="font-medium text-foreground">Tipe Dompet</p>
+        <p class="text-xs text-secondary">Kelola kategori dompet kustom</p>
+      </div>
+      <div class="text-muted">
+        <ChevronLeftIcon size={16} class="rotate-180" />
+      </div>
+    </button>
+  </Card>
 </div>

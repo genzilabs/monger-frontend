@@ -32,3 +32,4 @@ export { default as XIcon } from './XIcon.svelte';
 export { default as UserIcon } from './UserIcon.svelte';
 export { default as EyeIcon } from './EyeIcon.svelte';
 export { default as EyeOffIcon } from './EyeOffIcon.svelte';
+export { default as TagIcon } from './TagIcon.svelte';

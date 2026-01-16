@@ -10,7 +10,11 @@ import type {
 	UpdatePocketRequest,
 	SetVaultRequest,
 	ReconcileRequest,
-	MessageResponse
+	MessageResponse,
+	PocketType,
+	PocketTypeListResponse,
+	CreatePocketTypeRequest,
+	UpdatePocketTypeRequest
 } from '$lib/types';
 
 export const pocketsApi = {
@@ -61,5 +65,35 @@ export const pocketsApi = {
 	 */
 	reconcile(id: string, data: ReconcileRequest) {
 		return apiClient.post<MessageResponse>(`/pockets/${id}/reconcile`, data, true);
+	}
+};
+
+export const pocketTypesApi = {
+	/**
+	 * List all pocket types
+	 */
+	list() {
+		return apiClient.get<PocketTypeListResponse>('/pockets/types', true);
+	},
+
+	/**
+	 * Create a new pocket type
+	 */
+	create(data: CreatePocketTypeRequest) {
+		return apiClient.post<PocketType>('/pockets/types', data, true);
+	},
+
+	/**
+	 * Update a pocket type
+	 */
+	update(id: string, data: UpdatePocketTypeRequest) {
+		return apiClient.put<PocketType>(`/pockets/types/${id}`, data, true);
+	},
+
+	/**
+	 * Delete a pocket type
+	 */
+	delete(id: string) {
+		return apiClient.delete(`/pockets/types/${id}`, true);
 	}
 };

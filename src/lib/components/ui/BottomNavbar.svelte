@@ -9,7 +9,7 @@
     id: string;
     label: string;
     href: string;
-    icon: "home" | "transaction" | "pocket" | "account";
+    icon: "home" | "transaction" | "pocket" | "account" | "menu";
   };
 
   const navItems: NavItem[] = [
@@ -21,7 +21,7 @@
       icon: "transaction",
     },
     { id: "pocket", label: "Kantong", href: "/pockets", icon: "pocket" },
-    { id: "account", label: "Profil", href: "/account", icon: "account" },
+    { id: "menu", label: "Lainnya", href: "/menu", icon: "menu" },
   ];
 
   const isActive = (href: string) => $page.url.pathname === href;
@@ -123,7 +123,7 @@
         <span class="text-xs font-medium">{navItems[2].label}</span>
       </a>
 
-      <!-- Other -->
+      <!-- Menu -->
       <a
         href={navItems[3].href}
         class="flex flex-col items-center justify-center gap-0.5 flex-1 py-2
@@ -131,7 +131,7 @@
       >
         <svg
           class="w-6 h-6"
-          fill="none"
+          fill={isActive(navItems[3].href) ? "currentColor" : "none"}
           viewBox="0 0 24 24"
           stroke="currentColor"
           stroke-width="2"
@@ -139,7 +139,7 @@
           <path
             stroke-linecap="round"
             stroke-linejoin="round"
-            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+            d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
           />
         </svg>
         <span class="text-xs font-medium">{navItems[3].label}</span>

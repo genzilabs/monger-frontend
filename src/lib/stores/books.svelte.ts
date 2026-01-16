@@ -4,8 +4,8 @@
  */
 
 import { booksApi } from '$lib/api/books';
-import { pocketsApi } from '$lib/api/pockets';
-import type { Book, Pocket } from '$lib/types';
+import { pocketsApi, pocketTypesApi } from '$lib/api/pockets';
+import type { Book, Pocket, PocketType } from '$lib/types';
 import { toastStore } from './toast.svelte';
 
 const ACTIVE_BOOK_KEY = 'monger_active_book_id';
@@ -17,6 +17,7 @@ interface BooksState {
 	isLoading: boolean;
 	error: string | null;
 	isInitialized: boolean;
+	pocketTypes: PocketType[];
 }
 
 function createBooksStore() {
@@ -26,7 +27,8 @@ function createBooksStore() {
 		pockets: [],
 		isLoading: false,
 		error: null,
-		isInitialized: false
+		isInitialized: false,
+		pocketTypes: []
 	});
 
 	return {
@@ -38,6 +40,9 @@ function createBooksStore() {
 		},
 		get pockets() {
 			return state.pockets;
+		},
+		get pocketTypes() {
+			return state.pocketTypes;
 		},
 		get isLoading() {
 			return state.isLoading;
@@ -58,9 +63,13 @@ function createBooksStore() {
 			state.isLoading = true;
 			state.error = null;
 			try {
-				const result = await booksApi.list();
-				if (result.data) {
-					state.books = result.data.books || [];
+				const [booksResult, typesResult] = await Promise.all([
+					booksApi.list(),
+					pocketTypesApi.list()
+				]);
+
+				if (booksResult.data) {
+					state.books = booksResult.data.books || [];
 					
 					// Restore active book from localStorage
 					if (typeof window !== 'undefined') {
@@ -83,11 +92,15 @@ function createBooksStore() {
 							await this.loadPockets(state.books[0].id);
 						}
 					}
-				} else if (result.error) {
-					state.error = result.error.error;
+				} else if (booksResult.error) {
+					state.error = booksResult.error.error;
+				}
+
+				if (typesResult.data) {
+					state.pocketTypes = typesResult.data.types || [];
 				}
 			} catch {
-				state.error = 'Failed to load books';
+				state.error = 'Failed to load initial data';
 			} finally {
 				state.isLoading = false;
 				state.isInitialized = true;
@@ -157,6 +170,86 @@ function createBooksStore() {
 		},
 
 		/**
+		 * Load pocket types
+		 */
+		async loadPocketTypes() {
+			try {
+				const result = await pocketTypesApi.list();
+				if (result.data) {
+					state.pocketTypes = result.data.types || [];
+				}
+			} catch (e) {
+				console.error("Failed to load pocket types", e);
+			}
+		},
+
+		/**
+		 * Create a new pocket type
+		 */
+		async createPocketType(data: { name: string; slug: string; icon_slug: string }) {
+			state.isLoading = true;
+			try {
+				const result = await pocketTypesApi.create(data);
+				if (result.data) {
+					state.pocketTypes = [...state.pocketTypes, result.data];
+					toastStore.success('Tipe dompet berhasil dibuat!');
+					return result.data;
+				} else if (result.error) {
+					toastStore.error(result.error.error);
+				}
+			} catch {
+				toastStore.error('Gagal membuat tipe dompet');
+			} finally {
+				state.isLoading = false;
+			}
+			return null;
+		},
+
+		/**
+		 * Update a pocket type
+		 */
+		async updatePocketType(id: string, data: { name: string; slug: string; icon_slug: string }) {
+			state.isLoading = true;
+			try {
+				const result = await pocketTypesApi.update(id, data);
+				if (result.data) {
+					state.pocketTypes = state.pocketTypes.map(t => t.id === id ? result.data! : t);
+					toastStore.success('Tipe dompet berhasil diperbarui!');
+					return result.data;
+				} else if (result.error) {
+					toastStore.error(result.error.error);
+				}
+			} catch {
+				toastStore.error('Gagal memperbarui tipe dompet');
+			} finally {
+				state.isLoading = false;
+			}
+			return null;
+		},
+
+		/**
+		 * Delete a pocket type
+		 */
+		async deletePocketType(id: string) {
+			state.isLoading = true;
+			try {
+				const result = await pocketTypesApi.delete(id);
+				if (!result.error) {
+					state.pocketTypes = state.pocketTypes.filter(t => t.id !== id);
+					toastStore.success('Tipe dompet berhasil dihapus!');
+					return true;
+				} else {
+					toastStore.error(result.error.error);
+				}
+			} catch {
+				toastStore.error('Gagal menghapus tipe dompet');
+			} finally {
+				state.isLoading = false;
+			}
+			return false;
+		},
+
+		/**
 		 * Create a new book
 		 */
 		async createBook(data: { name: string; description?: string; icon_slug?: string; base_currency?: string }) {
@@ -216,7 +309,7 @@ function createBooksStore() {
 		/**
 		 * Create a new pocket
 		 */
-		async createPocket(bookId: string, data: { name: string; type_slug?: string; color?: string; balance?: number }) {
+		async createPocket(bookId: string, data: { name: string; type_slug?: string; icon_slug?: string; color?: string; balance?: number }) {
 			state.isLoading = true;
 			state.error = null;
 			try {

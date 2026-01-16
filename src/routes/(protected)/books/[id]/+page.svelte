@@ -5,6 +5,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { CreatePocketModal, InviteMemberModal, MembersListModal } from '$lib/components/modals';
+	import DynamicIcon from '$lib/components/ui/DynamicIcon.svelte';
 
 	let bookId = $derived($page.params.id);
 	let showCreatePocketModal = $state(false);
@@ -20,13 +21,6 @@
 		{ id: 'savings', label: 'Savings' },
 		{ id: 'expenses', label: 'Expenses' }
 	];
-
-	const pocketIcons: Record<string, string> = {
-		'cash': '💵',
-		'bank': '🏦',
-		'e-wallet': '📱',
-		'credit': '💳'
-	};
 
 	onMount(async () => {
 		if (!bookId) {
@@ -51,10 +45,6 @@
 
 	function getTotalBalance() {
 		return booksStore.pockets.reduce((sum, p) => sum + p.balance_cents, 0);
-	}
-
-	function getPocketIcon(typeSlug: string) {
-		return pocketIcons[typeSlug] || '💰';
 	}
 
 	function handleInviteFromMembers() {
@@ -140,8 +130,8 @@
 					<a href="/pockets/{pocket.id}" class="group w-full flex flex-col gap-4 p-4 rounded-2xl bg-surface border border-border hover:border-muted transition-colors text-left block">
 						<div class="flex items-center justify-between">
 							<div class="flex items-center gap-3">
-								<div class="flex items-center justify-center w-12 h-12 rounded-xl text-2xl" style="background: {pocket.color}20">
-									{getPocketIcon(pocket.type_slug)}
+								<div class="flex items-center justify-center w-12 h-12 rounded-xl" style="background: {pocket.color}20; color: {pocket.color}">
+									<DynamicIcon name={pocket.icon_slug} size={24} />
 								</div>
 								<div>
 									<h3 class="text-base font-semibold text-foreground">{pocket.name}</h3>
