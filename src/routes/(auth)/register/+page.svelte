@@ -20,6 +20,7 @@
   let name = $state("");
   let password = $state("");
   let confirmPassword = $state("");
+  let agreedToTerms = $state(false);
   let isLoading = $state(false);
   let error = $state("");
 
@@ -54,6 +55,10 @@
     }
     if (password !== confirmPassword) {
       error = "Kata sandinya beda nih";
+      return false;
+    }
+    if (!agreedToTerms) {
+      error = "Kamu perlu menyetujui Ketentuan Layanan dan Kebijakan Privasi";
       return false;
     }
     error = "";
@@ -223,6 +228,26 @@
       {/snippet}
     </Input>
 
+    <!-- Consent Checkbox -->
+    <label class="flex items-start gap-3 cursor-pointer group">
+      <input
+        type="checkbox"
+        bind:checked={agreedToTerms}
+        class="mt-0.5 w-5 h-5 rounded border-border text-primary focus:ring-primary focus:ring-offset-0 cursor-pointer"
+      />
+      <span class="text-sm text-secondary leading-relaxed">
+        Saya setuju dengan
+        <a href="/terms" class="text-primary hover:underline"
+          >Ketentuan Layanan</a
+        >
+        dan
+        <a href="/privacy" class="text-primary hover:underline"
+          >Kebijakan Privasi</a
+        >
+        Monger.
+      </span>
+    </label>
+
     <ErrorAlert message={error} />
 
     <Button
@@ -238,8 +263,8 @@
 
   <AuthFooterLink href="/login" text="Sudah punya akun?" linkText="Masuk" />
 
-  <div class="mt-6 space-y-4 w-full">
+  <!-- <div class="mt-6 space-y-4 w-full">
     <Divider text="ATAU LANJUTKAN DENGAN" />
     <SocialButtons />
-  </div>
+  </div> -->
 </div>

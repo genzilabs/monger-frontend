@@ -1,46 +1,70 @@
 <script lang="ts">
   import { Button, ResponsiveModal } from "$lib/components/ui";
-  import { booksStore } from "$lib/stores";
+  import { booksStore, toastStore } from "$lib/stores";
+  import { booksApi } from "$lib/api";
+  import type { Book } from "$lib/types";
 
   interface Props {
     open: boolean;
+    book: Book | null;
     onClose: () => void;
+    onSuccess?: () => void;
   }
 
-  let { open, onClose }: Props = $props();
+  let { open, book, onClose, onSuccess }: Props = $props();
 
   let name = $state("");
   let description = $state("");
-  let isCreating = $state(false);
+  let isSaving = $state(false);
+
+  // Track if form has changes
+  const hasChanges = $derived(
+    book
+      ? name !== book.name || description !== (book.description || "")
+      : false
+  );
+
+  // Initialize form when book changes or modal opens
+  $effect(() => {
+    if (open && book) {
+      name = book.name;
+      description = book.description || "";
+    }
+  });
 
   async function handleSubmit() {
-    if (!name.trim()) return;
+    if (!book || !name.trim()) return;
 
-    isCreating = true;
-    const book = await booksStore.createBook({
-      name: name.trim(),
-      description: description.trim() || undefined,
-    });
+    isSaving = true;
+    try {
+      const res = await booksApi.update(book.id, {
+        name: name.trim(),
+        description: description.trim() || undefined,
+        version: book.version,
+      });
 
-    if (book) {
-      resetForm();
-      onClose();
+      if (res.data) {
+        toastStore.success("Buku berhasil diperbarui");
+        // Refresh active book
+        await booksStore.setActiveBook(res.data);
+        if (onSuccess) onSuccess();
+        onClose();
+      } else {
+        toastStore.error(res.error?.error || "Gagal memperbarui buku");
+      }
+    } catch (e) {
+      toastStore.error("Terjadi kesalahan");
+    } finally {
+      isSaving = false;
     }
-    isCreating = false;
-  }
-
-  function resetForm() {
-    name = "";
-    description = "";
   }
 
   function handleClose() {
-    resetForm();
     onClose();
   }
 </script>
 
-<ResponsiveModal {open} onClose={handleClose} title="Buat Buku Baru">
+<ResponsiveModal {open} onClose={handleClose} title="Ubah Buku">
   <div class="space-y-4">
     <div>
       <label
@@ -80,8 +104,9 @@
     <Button
       variant="primary"
       fullWidth
-      loading={isCreating}
-      onclick={handleSubmit}>Buat Buku</Button
+      loading={isSaving}
+      disabled={!hasChanges || !name.trim()}
+      onclick={handleSubmit}>Simpan Perubahan</Button
     >
   </div>
 </ResponsiveModal>

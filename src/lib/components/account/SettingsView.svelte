@@ -1,19 +1,9 @@
 <script lang="ts">
-  import { Button, Card } from "$lib/components/ui";
-  import { authStore } from "$lib/stores";
-  import { goto } from "$app/navigation";
-  import { LogOutIcon, ChevronLeftIcon } from "$lib/icons";
-
-  async function handleLogout() {
-    await authStore.logout();
-    goto("/auth");
-  }
-
-  let { onBack } = $props<{ onBack: () => void }>();
+  import { Card } from "$lib/components/ui";
 </script>
 
-<div class="space-y-6 animate-fade-in pt-2">
-  <div class="flex items-center gap-3 mb-6">
+<div class="space-y-6 animate-fade-in">
+  <div class="flex items-center gap-3">
     <h2 class="text-xl font-bold text-foreground">Pengaturan</h2>
   </div>
 
@@ -40,24 +30,5 @@
         IDR
       </div>
     </div>
-  </Card>
-
-  <h3 class="text-sm font-bold text-muted uppercase tracking-widest px-1">
-    Pengaturan Dompet
-  </h3>
-
-  <Card class="divide-y divide-border">
-    <button
-      class="w-full p-4 flex items-center justify-between hover:bg-surface-elevated transition-colors text-left"
-      onclick={() => goto("/settings/pocket-types")}
-    >
-      <div>
-        <p class="font-medium text-foreground">Tipe Dompet</p>
-        <p class="text-xs text-secondary">Kelola kategori dompet kustom</p>
-      </div>
-      <div class="text-muted">
-        <ChevronLeftIcon size={16} class="rotate-180" />
-      </div>
-    </button>
   </Card>
 </div>

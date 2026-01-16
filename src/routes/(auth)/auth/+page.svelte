@@ -61,10 +61,10 @@
   </div>
 
   <!-- Social Login -->
-  <div class="w-full space-y-4">
+  <!-- <div class="w-full space-y-4">
     <Divider text="atau lanjutkan dengan" />
     <SocialButtons />
-  </div>
+  </div> -->
 
   <p class="text-center text-xs text-muted mt-6">
     Dengan melanjutkan, kamu setuju dengan
@@ -72,5 +72,10 @@
     &
     <a href="/privacy" class="text-primary hover:underline">Kebijakan Privasi</a
     >.
+  </p>
+
+  <!-- Version Label -->
+  <p class="text-center text-[10px] text-muted mt-8 tracking-widest opacity-60">
+    Monger<br /> Versi: Alpha<br /> By Genzi Meraih Mimpi
   </p>
 </div>

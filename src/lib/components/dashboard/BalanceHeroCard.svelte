@@ -102,7 +102,7 @@
             class="h-6 w-24 bg-current opacity-20 rounded animate-pulse"
           ></div>
         {:else}
-          <span class="text-lg font-bold text-foreground"
+          <span class="text-sm font-medium text-foreground"
             >{formatMoney(income)}</span
           >
         {/if}
@@ -121,7 +121,7 @@
             class="h-6 w-24 bg-current opacity-20 rounded animate-pulse"
           ></div>
         {:else}
-          <span class="text-lg font-bold text-foreground"
+          <span class="text-sm font-medium text-foreground"
             >{formatMoney(expense)}</span
           >
         {/if}

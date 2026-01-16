@@ -101,7 +101,7 @@
       <!-- Spacer for center button -->
       <div class="flex-1"></div>
 
-      <!-- Settle -->
+      <!-- Kantong -->
       <a
         href={navItems[2].href}
         class="flex flex-col items-center justify-center gap-0.5 flex-1 py-2
@@ -117,7 +117,7 @@
           <path
             stroke-linecap="round"
             stroke-linejoin="round"
-            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+            d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3"
           />
         </svg>
         <span class="text-xs font-medium">{navItems[2].label}</span>

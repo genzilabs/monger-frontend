@@ -195,8 +195,8 @@
 
   <AuthFooterLink href="/register" text="Belum punya akun?" linkText="Daftar" />
 
-  <div class="mt-6 space-y-4 w-full">
+  <!-- <div class="mt-6 space-y-4 w-full">
     <Divider text="ATAU LANJUTKAN DENGAN" />
     <SocialButtons />
-  </div>
+  </div> -->
 </div>

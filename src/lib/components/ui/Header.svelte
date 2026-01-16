@@ -18,13 +18,7 @@
   }>();
 
   // Define root paths where Logo is shown instead of Back button
-  const rootPaths = [
-    "/dashboard",
-    "/transactions",
-    "/pockets",
-    "/account",
-    "/invitations",
-  ];
+  const rootPaths = ["/dashboard", "/transactions", "/pockets", "/menu"];
 
   const isRootPage = $derived(
     rootPaths.some((path) => $page.url.pathname === path) ||
@@ -56,7 +50,7 @@
 >
   <!-- Mobile Header -->
   <div
-    class="px-4 py-3 flex items-center justify-between relative md:hidden h-15"
+    class="px-6 py-3 flex items-center justify-between relative md:hidden h-15"
   >
     <!-- Left Section: Logo or Back Button -->
     <div class="flex items-center min-w-10">

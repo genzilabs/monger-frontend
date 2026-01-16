@@ -14,7 +14,7 @@
   <title>Kantong - Monger</title>
 </svelte:head>
 
-<div class="animate-fade-in space-y-6 pb-20">
+<div class="animate-fade-in space-y-6">
   <!-- Page Header -->
   <div class="flex items-center justify-between">
     <div>
@@ -23,6 +23,22 @@
     </div>
     <!-- Clean Header: No Action Button Here -->
   </div>
+
+  <!-- Add New Pocket Card (Content Area) -->
+  <button
+    onclick={() => (showCreatePocketModal = true)}
+    class="w-full border-2 border-dashed border-border rounded-xl p-4 hover:border-primary/50 transition-colors flex items-center justify-center gap-2 group min-h-15"
+  >
+    <div
+      class="w-8 h-8 rounded-full bg-surface-elevated group-hover:bg-primary/10 flex items-center justify-center transition-colors"
+    >
+      <PlusIcon size={18} class="text-muted group-hover:text-primary" />
+    </div>
+    <span
+      class="text-sm font-semibold text-muted group-hover:text-primary transition-colors"
+      >Tambah Kantong Baru</span
+    >
+  </button>
 
   <!-- Pockets List -->
   {#if !booksStore.activeBook}
@@ -42,7 +58,7 @@
       {#snippet icon()}
         <WalletIcon size={32} class="text-primary" />
       {/snippet}
-      {#snippet action()}
+      <!-- {#snippet action()}
         <Button
           variant="primary"
           onclick={() => (showCreatePocketModal = true)}
@@ -50,7 +66,7 @@
           <PlusIcon size={20} class="mr-2" />
           Tambah Kantong
         </Button>
-      {/snippet}
+      {/snippet} -->
     </EmptyState>
   {:else}
     <div class="space-y-3">
@@ -61,22 +77,6 @@
           onclick={() => goto(`/pockets/${pocket.id}`)}
         />
       {/each}
-
-      <!-- Add New Pocket Card (Content Area) -->
-      <button
-        onclick={() => (showCreatePocketModal = true)}
-        class="w-full border-2 border-dashed border-border rounded-xl p-4 hover:border-primary/50 transition-colors flex items-center justify-center gap-2 group min-h-15"
-      >
-        <div
-          class="w-8 h-8 rounded-full bg-surface-elevated group-hover:bg-primary/10 flex items-center justify-center transition-colors"
-        >
-          <PlusIcon size={18} class="text-muted group-hover:text-primary" />
-        </div>
-        <span
-          class="text-sm font-semibold text-muted group-hover:text-primary transition-colors"
-          >Tambah Kantong Baru</span
-        >
-      </button>
     </div>
   {/if}
 </div>

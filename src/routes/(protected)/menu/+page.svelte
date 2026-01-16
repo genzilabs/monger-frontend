@@ -50,14 +50,14 @@
       color: "text-purple-600",
       bg: "bg-purple-50",
     },
-     {
+    {
       label: "Profil",
       href: "/account?view=profile",
       icon: UserIcon,
       color: "text-indigo-600",
       bg: "bg-indigo-50",
     },
-     {
+    {
       label: "Keamanan",
       href: "/account?view=security",
       icon: ShieldIcon,
@@ -78,10 +78,13 @@
   <title>Menu - Monger</title>
 </svelte:head>
 
-<div class="container max-w-md mx-auto p-6 md:p-8 space-y-6 pb-24 md:pb-6">
-  <div class="space-y-1">
-    <h1 class="text-2xl font-bold text-foreground">Menu</h1>
-    <p class="text-muted-foreground text-sm">Semua fitur dalam satu tempat.</p>
+<div class="container mx-auto space-y-6 pb-24 md:pb-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-foreground">Menu</h1>
+      <p class="text-secondary">Semua fitur dalam satu tempat.</p>
+    </div>
+    <!-- Clean Header: No Action Button Here -->
   </div>
 
   <div class="grid grid-cols-3 gap-4">
@@ -100,41 +103,73 @@
         </span>
       </a>
     {/each}
-    
 
-
-      <!-- Placeholder for Collab (Simulated) -->
-      <button
-        onclick={() => alert('Fitur Kolaborasi akan segera hadir!')}
-        class="flex flex-col items-center justify-center p-4 gap-3 bg-surface rounded-2xl border border-transparent hover:border-border transition-all active:scale-95 text-center group"
+    <!-- Placeholder for Collab (Simulated) -->
+    <button
+      onclick={() => alert("Fitur Kolaborasi akan segera hadir!")}
+      class="flex flex-col items-center justify-center p-4 gap-3 bg-surface rounded-2xl border border-transparent hover:border-border transition-all active:scale-95 text-center group"
+    >
+      <div
+        class="bg-cyan-50 text-cyan-600 w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 shadow-sm"
       >
-        <div
-          class="bg-cyan-50 text-cyan-600 w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 shadow-sm"
+        <!-- Inline Users Icon -->
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          ><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle
+            cx="9"
+            cy="7"
+            r="4"
+          ></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path
+            d="M16 3.13a4 4 0 0 1 0 7.75"
+          ></path></svg
         >
-          <!-- Inline Users Icon -->
-           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-        </div>
-        <span class="text-xs font-medium text-foreground leading-tight">
-          Kolaborasi
-        </span>
-      </button>
+      </div>
+      <span class="text-xs font-medium text-foreground leading-tight">
+        Kolaborasi
+      </span>
+    </button>
   </div>
-  
+
   <div class="pt-6">
-     <button
+    <button
       onclick={() => {
         authStore.logout();
         goto("/auth");
       }}
-      class="w-full flex items-center justify-center gap-2 p-4 rounded-xl bg-red-50 text-red-600 font-medium hover:bg-red-100 transition-colors"
+      class="w-full flex items-center justify-center gap-2 p-4 rounded-xl border-2 border-red-300 text-red-500 font-medium hover:border-red-400 hover:text-red-600 hover:bg-red-50 transition-colors bg-transparent"
     >
       <LogOutIcon size={18} />
       <span>Keluar Aplikasi</span>
     </button>
-     <p
+
+    <!-- Legal Links -->
+    <div class="flex items-center justify-center gap-4 pt-4">
+      <a
+        href="/terms"
+        class="text-sm text-muted hover:text-foreground transition-colors"
+      >
+        Ketentuan Layanan
+      </a>
+      <a
+        href="/privacy"
+        class="text-sm text-muted hover:text-foreground transition-colors"
+      >
+        Kebijakan Privasi
+      </a>
+    </div>
+
+    <p
       class="text-center text-[10px] text-muted-foreground mt-6 tracking-widest opacity-60"
     >
-      Monger Versi Alpha <br />By Genzi Meraih Mimpi
+      Monger<br /> Versi: Alpha<br /> By Genzi Meraih Mimpi
     </p>
   </div>
 </div>

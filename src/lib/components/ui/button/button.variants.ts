@@ -67,6 +67,12 @@ export const buttonVariants = tv({
 				'text-primary underline-offset-4',
 				'hover:underline',
 				'focus-visible:ring-primary'
+			],
+			'danger-outline': [
+				'bg-transparent text-red-500',
+				'border border-red-300',
+				'hover:bg-red-50 hover:border-red-400 hover:text-red-600',
+				'focus-visible:ring-red-500'
 			]
 		},
 		size: {
