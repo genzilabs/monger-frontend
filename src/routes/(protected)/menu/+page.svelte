@@ -16,6 +16,13 @@
 
   const menuItems = [
     {
+      label: "Profil",
+      href: "/account?view=profile",
+      icon: UserIcon,
+      color: "text-indigo-600",
+      bg: "bg-indigo-50",
+    },
+    {
       label: "Pengaturan",
       href: "/account?view=settings",
       icon: SettingsIcon,
@@ -49,13 +56,6 @@
       icon: TagIcon,
       color: "text-purple-600",
       bg: "bg-purple-50",
-    },
-    {
-      label: "Profil",
-      href: "/account?view=profile",
-      icon: UserIcon,
-      color: "text-indigo-600",
-      bg: "bg-indigo-50",
     },
     {
       label: "Keamanan",

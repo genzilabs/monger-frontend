@@ -1,17 +1,17 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { categoriesApi } from "$lib/api";
-  import { Button, Card } from "$lib/components/ui";
-  import { ArrowUpIcon, ArrowDownIcon, PlusIcon, TagIcon } from "$lib/icons";
+  import { Card } from "$lib/components/ui";
+  import { ArrowUpIcon, ArrowDownIcon, PlusIcon } from "$lib/icons";
   import type { Category } from "$lib/types/category";
-  import ManageCategoryModal from "$lib/components/modals/ManageCategoryModal.svelte";
+  import ManageCategorySheet from "./ManageCategorySheet.svelte";
   import { booksStore } from "$lib/stores/books.svelte";
 
   let categories = $state<Category[]>([]);
   let isLoading = $state(true);
   let error = $state<string | null>(null);
 
-  let isModalOpen = $state(false);
+  let isSheetOpen = $state(false);
   let editingCategory = $state<Category | null>(null);
 
   async function loadCategories() {
@@ -40,14 +40,19 @@
     }
   });
 
-  function openCreateModal() {
+  function openCreateSheet() {
     editingCategory = null;
-    isModalOpen = true;
+    isSheetOpen = true;
   }
 
-  function openEditModal(category: Category) {
+  function openEditSheet(category: Category) {
     editingCategory = category;
-    isModalOpen = true;
+    isSheetOpen = true;
+  }
+
+  function handleSheetClose() {
+    isSheetOpen = false;
+    editingCategory = null;
   }
 
   function handleSuccess() {
@@ -85,7 +90,7 @@
   {:else}
     <!-- Add New Category Card -->
     <button
-      onclick={openCreateModal}
+      onclick={openCreateSheet}
       class="w-full border-2 border-dashed border-border rounded-xl p-4 hover:border-primary/50 transition-colors flex items-center justify-center gap-2 group min-h-15"
     >
       <div
@@ -117,7 +122,7 @@
             {#each categories.filter((c) => c.type === "income") as category}
               <button
                 class="w-full flex items-center justify-between p-3 bg-surface border border-border rounded-xl hover:border-muted transition-colors text-left"
-                onclick={() => openEditModal(category)}
+                onclick={() => openEditSheet(category)}
               >
                 <div class="flex items-center gap-3">
                   <div
@@ -156,7 +161,7 @@
             {#each categories.filter((c) => c.type === "expense") as category}
               <button
                 class="w-full flex items-center justify-between p-3 bg-surface border border-border rounded-xl hover:border-muted transition-colors text-left"
-                onclick={() => openEditModal(category)}
+                onclick={() => openEditSheet(category)}
               >
                 <div class="flex items-center gap-3">
                   <div
@@ -181,9 +186,10 @@
     </div>
   {/if}
 
-  <ManageCategoryModal
-    bind:isOpen={isModalOpen}
+  <ManageCategorySheet
+    open={isSheetOpen}
     categoryToEdit={editingCategory}
+    onClose={handleSheetClose}
     onSuccess={handleSuccess}
   />
 </div>

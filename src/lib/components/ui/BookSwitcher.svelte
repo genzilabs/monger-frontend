@@ -115,25 +115,25 @@
 					</button>
 				{/each}
 
-				<!-- Add New Book Card -->
-				<button
-					onclick={onCreate}
-					class="snap-center shrink-0 w-[85%] max-w-[340px] h-[55vh] rounded-3xl border border-dashed border-border flex flex-col items-center justify-center gap-4 group cursor-pointer hover:border-primary/50 transition-colors"
-				>
-					<div class="w-16 h-16 rounded-full bg-surface group-hover:bg-primary/10 flex items-center justify-center transition-colors">
-						<svg class="w-8 h-8 text-muted group-hover:text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-							<path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-						</svg>
-					</div>
-					<div class="text-center">
-						<p class="text-foreground text-lg font-medium">New Book</p>
-						<p class="text-muted text-sm">Create a new context</p>
-					</div>
-				</button>
 			{/if}
 
 			<!-- Right spacer -->
 			<div class="w-4 shrink-0"></div>
+		</div>
+
+		<!-- Bottom Action -->
+		<div class="p-6 pt-2 pb-8 bg-background">
+			<button
+				onclick={onCreate}
+				class="w-full flex items-center justify-center gap-2 p-4 rounded-2xl border-2 border-dashed border-border hover:border-primary/50 group transition-all duration-200"
+			>
+				<div class="w-8 h-8 rounded-full bg-surface group-hover:bg-primary/10 flex items-center justify-center transition-colors">
+					<svg class="w-5 h-5 text-muted group-hover:text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+					</svg>
+				</div>
+				<span class="text-foreground font-medium">Create New Book</span>
+			</button>
 		</div>
 	</div>
 {/if}
