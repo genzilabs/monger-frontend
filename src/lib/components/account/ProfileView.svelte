@@ -30,7 +30,7 @@
         name,
         email,
         phone: phone || undefined,
-        avatar_url: avatarUrl || null, // Send null when removing photo, not empty string
+        avatar_url: avatarUrl,
       });
 
       if (res.data) {
