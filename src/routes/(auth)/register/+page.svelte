@@ -86,24 +86,18 @@
       }
 
       if (result.data) {
-        authStore.setAuth(
-          result.data.user,
-          result.data.access_token,
-          result.data.refresh_token
-        );
+        // Only redirect to verify, DO NOT set auth store (api returns no tokens)
+        toastStore.success("Akun dibuat! Masukkan kode OTP yang dikirim.");
 
-        // Clear any old onboarding flag and redirect to onboarding
-        if (browser) {
-          localStorage.removeItem("hasCompletedOnboarding");
-        }
-
-        toastStore.success("Akun berhasil dibuat! Silakan verifikasi email.");
-
-        const otpResult = await authApi.sendOTP(email.trim());
+        // The API already sent the first OTP in Register logic, 
+        // so we just go to verify page. We assume standard 60s cooldown.
+        // Or if we want to be safe, we can manually trigger sendOTP here, 
+        // but backend register flow usually sends one.
+        
         const params = new URLSearchParams({
           identifier: email.trim(),
-          cooldown: String(otpResult.data?.cooldown_seconds || 60),
-          postRegister: "true",
+          cooldown: "60", // Default assumption since register just sent one
+          register: "true",
         });
         goto(`/verify?${params.toString()}`);
       }

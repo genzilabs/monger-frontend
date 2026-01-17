@@ -53,6 +53,20 @@
         password,
       });
       if (result.error) {
+        // If error is "Email not verified", redirect to verify page
+        if (result.error.error === "Email not verified") {
+           toastStore.error("Email belum diverifikasi. Verifikasi dulu yuk!");
+            
+            // Send new OTP
+            const otpResult = await authApi.sendOTP(identifier.trim());
+            const params = new URLSearchParams({
+              identifier: identifier.trim(),
+              cooldown: String(otpResult.data?.cooldown_seconds || 60),
+            });
+            goto(`/verify?${params.toString()}`);
+            return;
+        }
+
         error = result.error.error;
         return;
       }
