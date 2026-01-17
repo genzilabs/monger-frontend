@@ -18,10 +18,14 @@
   let balance = $state("");
   let isCreating = $state(false);
 
-  let pocketTypes = $derived(booksStore.pocketTypes.length > 0 ? booksStore.pocketTypes : [
-    { slug: "cash", name: "Cash", icon_slug: "cash" },
-    { slug: "bank", name: "Bank Account", icon_slug: "bank" },
-  ]); // Fallback if store is empty
+  let pocketTypes = $derived(
+    booksStore.pocketTypes.length > 0
+      ? booksStore.pocketTypes
+      : [
+          { slug: "cash", name: "Cash", icon_slug: "cash" },
+          { slug: "bank", name: "Bank Account", icon_slug: "bank" },
+        ]
+  ); // Fallback if store is empty
 
   const colors = [
     "#448AFF",
@@ -33,14 +37,16 @@
   ];
 
   onMount(() => {
-    booksStore.loadPocketTypes();
+    if (booksStore.activeBook) {
+      booksStore.loadPocketTypes(booksStore.activeBook.id);
+    }
   });
 
   async function handleSubmit() {
     if (!name.trim() || !booksStore.activeBook) return;
 
     isCreating = true;
-    const type = pocketTypes.find(t => t.slug === typeSlug);
+    const type = pocketTypes.find((t) => t.slug === typeSlug);
 
     const pocket = await booksStore.createPocket(booksStore.activeBook.id, {
       name: name.trim(),
@@ -89,8 +95,15 @@
     </div>
     <!-- Type -->
     <div>
-      <label class="block text-sm font-medium text-secondary mb-1.5">Type</label>
-      <div class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+      <span
+        id="pocket-type-label"
+        class="block text-sm font-medium text-secondary mb-1.5">Type</span
+      >
+      <div
+        class="grid grid-cols-2 gap-2 overflow-y-auto"
+        role="radiogroup"
+        aria-labelledby="pocket-type-label"
+      >
         {#each pocketTypes as type}
           <button
             type="button"
@@ -109,10 +122,15 @@
 
     <!-- Color -->
     <div>
-      <label class="block text-sm font-medium text-secondary mb-1.5"
-        >Color</label
+      <span
+        id="pocket-color-label"
+        class="block text-sm font-medium text-secondary mb-1.5">Color</span
       >
-      <div class="flex gap-2">
+      <div
+        class="flex gap-2"
+        role="radiogroup"
+        aria-labelledby="pocket-color-label"
+      >
         {#each colors as c}
           <button
             type="button"
@@ -123,6 +141,7 @@
               ? '0 0 0 2px ' + c
               : 'none'}"
             onclick={() => (color = c)}
+            aria-label="Select color {c}"
           ></button>
         {/each}
       </div>

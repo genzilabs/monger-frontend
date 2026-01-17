@@ -81,13 +81,13 @@
       title="Belum Ada Transaksi"
       description="Mulai catat pemasukan dan pengeluaranmu."
     >
-      {#snippet icon()}
+      <!-- {#snippet icon()}
         <div
           class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary"
         >
           <PlusIcon size={24} />
         </div>
-      {/snippet}
+      {/snippet} -->
       {#snippet action()}
         <button
           class="text-primary font-medium hover:underline text-sm"

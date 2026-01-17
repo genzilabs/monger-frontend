@@ -33,10 +33,7 @@
       </div>
     {/each}
   {:else if transactions.length === 0}
-    <EmptyState
-      title="Belum Ada Transaksi"
-      description="Belum ada transaksi di sini."
-    >
+    <EmptyState title="Belum Ada Transaksi">
       {#snippet icon()}
         <svg
           class="w-8 h-8 text-muted"

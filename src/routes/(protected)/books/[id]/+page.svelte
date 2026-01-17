@@ -259,12 +259,6 @@
                 )}
               </p>
             </div>
-            <div class="w-full h-1.5 bg-border rounded-full overflow-hidden">
-              <div
-                class="h-full rounded-full"
-                style="background: {pocket.color}; width: 45%"
-              ></div>
-            </div>
           </a>
         {/each}
       {/if}
