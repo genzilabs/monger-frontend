@@ -4,6 +4,7 @@
 		value?: string;
 		error?: boolean;
 		disabled?: boolean;
+		autoFocus?: boolean;
 		onComplete?: (otp: string) => void;
 		onchange?: (otp: string) => void;
 	}
@@ -13,11 +14,18 @@
 		value = $bindable(''),
 		error = false,
 		disabled = false,
+		autoFocus = false,
 		onComplete,
 		onchange
 	}: Props = $props();
 
 	let inputRefs: HTMLInputElement[] = [];
+
+    $effect(() => {
+        if (autoFocus && inputRefs[0] && !value) {
+            inputRefs[0].focus();
+        }
+    });
 
 	function handleInput(index: number, event: Event) {
 		const target = event.target as HTMLInputElement;

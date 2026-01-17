@@ -6,6 +6,8 @@
     Header,
   } from "$lib/components/ui";
   import { authStore, booksStore, uiStore } from "$lib/stores";
+  import { pinStore } from "$lib/stores/pin.svelte";
+  import PINGuard from "$lib/components/auth/PINGuard.svelte";
   import { goto } from "$app/navigation";
   import { page } from "$app/stores";
   import { onMount } from "svelte";
@@ -42,8 +44,13 @@
       },
       { timeout: 2000 }
     );
+
+    // Initialize PIN store (non-blocking)
+    pinStore.initialize();
   });
 </script>
+
+<PINGuard />
 
 <div class="min-h-screen bg-background flex">
   <!-- Desktop Sidebar -->

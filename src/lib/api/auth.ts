@@ -80,7 +80,7 @@ export const authApi = {
 	 * Get PIN status
 	 */
 	getPINStatus() {
-		return apiClient.get<PINStatusResponse>('/auth/pin', true);
+		return apiClient.get<PINStatusResponse>('/auth/pin/status', true);
 	},
 
 	/**
@@ -94,7 +94,7 @@ export const authApi = {
 	 * Verify PIN (for sensitive actions)
 	 */
 	verifyPIN(data: VerifyPINRequest) {
-		return apiClient.post<{ valid: boolean }>('/auth/pin/verify', data, true);
+		return apiClient.post<MessageResponse>('/auth/pin/verify', data, true);
 	},
 
 	/**

@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
+  import { portal } from "$lib/actions/portal";
 
   interface Props {
     open: boolean;
@@ -17,6 +18,7 @@
 
 {#if open}
   <div
+    use:portal
     class="fixed inset-0 bg-black/50 flex items-end justify-center z-[60]"
     onclick={handleBackdropClick}
     role="dialog"
