@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { booksStore, authStore } from "$lib/stores";
-  import { booksApi } from "$lib/api";
+  import { booksStore, authStore, toastStore } from "$lib/stores";
+  import { booksApi, collaborationApi } from "$lib/api";
   import { onMount } from "svelte";
   import { goto } from "$app/navigation";
   import { page } from "$app/stores";
@@ -10,7 +10,7 @@
     InviteMemberModal,
     MembersListModal,
   } from "$lib/components/modals";
-  import { Button } from "$lib/components/ui";
+  import { Button, ResponsiveModal } from "$lib/components/ui";
   import DynamicIcon from "$lib/components/ui/DynamicIcon.svelte";
   import {
     EditIcon,
@@ -18,6 +18,7 @@
     PlusIcon,
     WalletIcon,
     UserIcon,
+    ShieldIcon,
   } from "$lib/icons";
 
   let bookId = $derived($page.params.id);
@@ -26,7 +27,9 @@
   let showInviteModal = $state(false);
   let showMembersModal = $state(false);
   let showDeleteConfirm = $state(false);
+  let isDeleting = $state(false);
   let activeFilter = $state("all");
+  let memberCount = $state(0);
 
   // Check if current user is owner
   const isOwner = $derived(
@@ -57,6 +60,9 @@
     } else {
       goto("/dashboard");
     }
+
+    // Load member count for UI state
+    loadMemberCount();
   });
 
   function formatBalance(cents: number, currency: string = "IDR") {
@@ -78,11 +84,34 @@
 
   async function handleDelete() {
     if (!bookId) return;
-    const result = await booksApi.delete(bookId);
-    if (result.data) {
-      goto("/books");
+    isDeleting = true;
+    try {
+      const result = await booksApi.delete(bookId);
+      if (result.data) {
+        toastStore.success("Buku berhasil dihapus");
+        goto("/dashboard");
+      } else {
+        toastStore.error(result.error?.error || "Gagal menghapus buku");
+      }
+    } catch (e) {
+      toastStore.error("Terjadi kesalahan");
+    } finally {
+      isDeleting = false;
+      showDeleteConfirm = false;
     }
   }
+
+  // Load member count for UI decisions
+  async function loadMemberCount() {
+    if (!bookId) return;
+    const result = await collaborationApi.listBookMembers(bookId);
+    if (result.data) {
+      memberCount = result.data.members.length;
+    }
+  }
+
+  // Derived: has collaborators (more than just owner)
+  const hasCollaborators = $derived(memberCount > 1);
 </script>
 
 <svelte:head>
@@ -113,10 +142,13 @@
             </div>
             <button
               onclick={() => (showMembersModal = true)}
-              class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center hover:bg-primary/30 transition-colors"
-              aria-label="Lihat anggota"
+              class="flex items-center gap-2 px-3 py-2 rounded-full bg-primary/20 hover:bg-primary/30 transition-colors"
+              aria-label={hasCollaborators ? "Lihat anggota" : "Undang anggota"}
             >
-              <UserIcon size={20} class="text-primary" />
+              <UserIcon size={18} class="text-primary" />
+              <span class="text-xs font-medium text-primary"
+                >{hasCollaborators ? "Lihat" : "Undang"}</span
+              >
             </button>
           </div>
 
@@ -155,28 +187,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Delete Confirmation -->
-      {#if showDeleteConfirm}
-        <div class="bg-red-50 border border-red-200 rounded-xl p-4 space-y-3">
-          <p class="text-sm text-red-700">
-            Yakin ingin menghapus buku ini? Semua kantong di dalamnya juga akan
-            terhapus.
-          </p>
-          <div class="flex gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              onclick={() => (showDeleteConfirm = false)}
-            >
-              Batal
-            </Button>
-            <Button variant="danger" size="sm" onclick={handleDelete}>
-              Ya, Hapus
-            </Button>
-          </div>
-        </div>
-      {/if}
 
       <!-- Filter Chips -->
       <div class="flex gap-3 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2">
@@ -224,7 +234,11 @@
           <h3 class="text-lg font-semibold text-foreground">
             Belum Ada Kantong
           </h3>
-          <p class="text-sm text-muted mt-1">Yuk, buat kantong pertamamu.</p>
+          <p class="text-sm text-muted mt-1">
+            {hasCollaborators
+              ? "Yuk, buat kantong pertama bareng temenmu."
+              : "Yuk, buat kantong pertamamu."}
+          </p>
         </div>
       {:else}
         {#each booksStore.pockets as pocket}
@@ -297,6 +311,42 @@
     {bookId}
   />
 {/if}
+
+<!-- Delete Confirmation Modal -->
+<ResponsiveModal
+  open={showDeleteConfirm}
+  onClose={() => (showDeleteConfirm = false)}
+  title="Hapus Buku"
+>
+  <div class="space-y-4 py-4 animate-fade-in">
+    <div
+      class="flex flex-col items-center justify-center text-center p-6 bg-red-50 rounded-2xl border border-red-100"
+    >
+      <ShieldIcon class="text-red-500 mb-3" size={48} />
+      <h3 class="text-lg font-bold text-red-700 mb-1">Hapus Buku ini?</h3>
+      <p class="text-sm text-red-600/80">
+        Yakin ingin menghapus buku ini? Semua kantong di dalamnya juga akan
+        terhapus secara permanen.
+      </p>
+    </div>
+    <div class="flex gap-3">
+      <Button
+        variant="outline"
+        fullWidth
+        onclick={() => (showDeleteConfirm = false)}>Batal</Button
+      >
+      <Button
+        variant="primary"
+        fullWidth
+        onclick={handleDelete}
+        loading={isDeleting}
+        class="bg-red-600 hover:bg-red-700 text-white border-transparent"
+      >
+        Ya, Hapus
+      </Button>
+    </div>
+  </div>
+</ResponsiveModal>
 
 <style>
   .no-scrollbar::-webkit-scrollbar {

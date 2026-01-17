@@ -64,7 +64,7 @@
   }
 </script>
 
-<ResponsiveModal {open} {onClose} title="Book Members">
+<ResponsiveModal {open} {onClose} title="Anggota Buku">
   <div class="flex flex-col gap-4">
     {#if error}
       <div
@@ -99,7 +99,7 @@
             />
           </svg>
         </div>
-        <p class="text-muted text-sm">No members yet</p>
+        <p class="text-muted text-sm">Belum ada anggota</p>
       </div>
     {:else}
       <div class="flex flex-col gap-2">
@@ -167,13 +167,13 @@
                     onclick={() => handleRemoveMember(member.user_id)}
                     class="px-2 py-1 text-xs bg-red-500 text-white rounded-lg"
                   >
-                    Remove
+                    Hapus
                   </button>
                   <button
                     onclick={() => (confirmingRemove = null)}
                     class="px-2 py-1 text-xs bg-surface border border-border text-muted rounded-lg"
                   >
-                    Cancel
+                    Batal
                   </button>
                 </div>
               {/if}
@@ -200,9 +200,9 @@
             d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
           />
         </svg>
-        Invite Member
+        Undang Anggota
       </Button>
     {/if}
-    <Button variant="secondary" fullWidth onclick={onClose}>Close</Button>
+    <Button variant="secondary" fullWidth onclick={onClose}>Tutup</Button>
   </div>
 </ResponsiveModal>

@@ -1,21 +1,29 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { booksStore, uiStore, transactionsStore } from "$lib/stores";
+  import {
+    booksStore,
+    uiStore,
+    transactionsStore,
+    toastStore,
+  } from "$lib/stores";
   import { formatCurrency } from "$lib/utils/currency";
   import { TransactionList } from "$lib/components/dashboard";
   import {
     EditPocketModal,
     EditTransactionModal,
   } from "$lib/components/modals";
-  import { Button } from "$lib/components/ui";
-  import { EditIcon, TrashIcon } from "$lib/icons";
+  import { Button, ResponsiveModal } from "$lib/components/ui";
+  import { EditIcon, TrashIcon, ShieldIcon } from "$lib/icons";
   import type { Transaction, Pocket } from "$lib/types";
   import { onMount, tick } from "svelte";
   import { goto } from "$app/navigation";
+  import { pocketsApi } from "$lib/api/pockets";
 
   let pocketId = $derived($page.params.id);
   let pocket = $state<Pocket | null>(null);
   let showEditPocketModal = $state(false);
+  let showDeleteConfirm = $state(false);
+  let isDeleting = $state(false);
 
   // Transaction Modal State
   let showEditTransactionModal = $state(false);
@@ -58,6 +66,27 @@
   function handleTransactionClick(tx: Transaction) {
     selectedTransaction = tx;
     showEditTransactionModal = true;
+  }
+
+  async function handleDelete() {
+    if (!pocket || !booksStore.activeBook) return;
+
+    isDeleting = true;
+    try {
+      const res = await pocketsApi.delete(pocket.id);
+      if (res.data) {
+        toastStore.success("Kantong berhasil dihapus");
+        await booksStore.loadPockets(booksStore.activeBook.id);
+        goto("/pockets");
+      } else {
+        toastStore.error(res.error?.error || "Gagal menghapus kantong");
+      }
+    } catch (e) {
+      toastStore.error("Terjadi kesalahan");
+    } finally {
+      isDeleting = false;
+      showDeleteConfirm = false;
+    }
   }
 </script>
 
@@ -117,7 +146,7 @@
           <Button
             variant="danger-outline"
             fullWidth
-            onclick={() => (showEditPocketModal = true)}
+            onclick={() => (showDeleteConfirm = true)}
           >
             {#snippet icon()}
               <TrashIcon size={16} />
@@ -163,6 +192,42 @@
       goto("/pockets");
     }}
   />
+
+  <!-- Delete Confirmation Modal -->
+  <ResponsiveModal
+    open={showDeleteConfirm}
+    onClose={() => (showDeleteConfirm = false)}
+    title="Hapus Kantong"
+  >
+    <div class="space-y-4 py-4 animate-fade-in">
+      <div
+        class="flex flex-col items-center justify-center text-center p-6 bg-red-50 rounded-2xl border border-red-100"
+      >
+        <ShieldIcon class="text-red-500 mb-3" size={48} />
+        <h3 class="text-lg font-bold text-red-700 mb-1">Hapus Kantong ini?</h3>
+        <p class="text-sm text-red-600/80">
+          Semua riwayat transaksi di dalam kantong ini akan ikut terhapus secara
+          permanen.
+        </p>
+      </div>
+      <div class="flex gap-3">
+        <Button
+          variant="outline"
+          fullWidth
+          onclick={() => (showDeleteConfirm = false)}>Batal</Button
+        >
+        <Button
+          variant="primary"
+          fullWidth
+          onclick={handleDelete}
+          loading={isDeleting}
+          class="bg-red-600 hover:bg-red-700 text-white border-transparent"
+        >
+          Ya, Hapus
+        </Button>
+      </div>
+    </div>
+  </ResponsiveModal>
 {/if}
 
 {#if selectedTransaction}

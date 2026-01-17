@@ -62,7 +62,7 @@
       >
         <svg
           class="w-6 h-6"
-          fill={isActive(navItems[0].href) ? "currentColor" : "none"}
+          fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
           stroke-width="2"
@@ -109,7 +109,7 @@
       >
         <svg
           class="w-6 h-6"
-          fill={isActive(navItems[2].href) ? "currentColor" : "none"}
+          fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
           stroke-width="2"
@@ -131,7 +131,7 @@
       >
         <svg
           class="w-6 h-6"
-          fill={isActive(navItems[3].href) ? "currentColor" : "none"}
+          fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
           stroke-width="2"

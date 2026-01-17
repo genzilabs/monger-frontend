@@ -65,7 +65,7 @@ export interface UpdateProfileRequest {
 	name?: string;
 	email?: string;
 	phone?: string;
-	avatar_url?: string;
+	avatar_url?: string | null;
 	locale?: string;
 	base_currency?: string;
 	current_password?: string;

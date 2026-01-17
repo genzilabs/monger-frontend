@@ -11,6 +11,18 @@
   let phone = $state(authStore.user?.phone || "");
   let avatarUrl = $state(authStore.user?.avatar_url || "");
 
+  // Extract initials from name (e.g., "Kazuha Nakamura" → "KN")
+  function getInitials(fullName: string): string {
+    if (!fullName) return "?";
+    const parts = fullName.trim().split(/\s+/);
+    if (parts.length === 1) {
+      return parts[0].charAt(0).toUpperCase();
+    }
+    return (
+      parts[0].charAt(0) + parts[parts.length - 1].charAt(0)
+    ).toUpperCase();
+  }
+
   async function handleSave() {
     loading = true;
     try {
@@ -18,7 +30,7 @@
         name,
         email,
         phone: phone || undefined,
-        avatar_url: avatarUrl, // In a real app, we'd upload file first and get this URL
+        avatar_url: avatarUrl || null, // Send null when removing photo, not empty string
       });
 
       if (res.data) {
@@ -68,6 +80,10 @@
       reader.readAsDataURL(file);
     }
   }
+
+  function handleRemovePhoto() {
+    avatarUrl = "";
+  }
   import { ChevronLeftIcon } from "$lib/icons";
 
   let { onBack } = $props<{ onBack: () => void }>();
@@ -78,10 +94,10 @@
     <h2 class="text-xl font-bold text-foreground">Profil Kamu</h2>
   </div>
 
-  <div class="flex justify-center py-4">
+  <div class="flex flex-col items-center py-4">
     <div class="relative">
       <div
-        class="w-24 h-24 rounded-full bg-surface-elevated flex items-center justify-center border-2 border-border overflow-hidden"
+        class="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center border-2 border-border overflow-hidden"
       >
         {#if avatarUrl}
           <img
@@ -90,7 +106,9 @@
             class="w-full h-full object-cover"
           />
         {:else}
-          <UserIcon size={40} class="text-muted" />
+          <span class="text-2xl font-bold text-primary"
+            >{getInitials(name)}</span
+          >
         {/if}
       </div>
       <label
@@ -105,6 +123,14 @@
         />
       </label>
     </div>
+    {#if avatarUrl}
+      <button
+        onclick={handleRemovePhoto}
+        class="mt-3 text-sm text-red-500 hover:text-red-600 font-medium transition-colors"
+      >
+        Hapus Foto
+      </button>
+    {/if}
   </div>
 
   <Card class="p-5 space-y-4">

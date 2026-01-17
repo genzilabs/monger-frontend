@@ -79,12 +79,15 @@
     <div class="space-y-3">
       <div class="flex justify-between items-center">
         <h3 class="text-sm font-semibold text-foreground">Kantong Kamu</h3>
-        <button class="text-xs text-primary font-medium md:block hidden"
-          >Lihat Semua</button
+        <button
+          onclick={() => (showCreatePocketModal = true)}
+          class="text-xs text-primary font-medium"
         >
+          Buat kantong
+        </button>
       </div>
 
-      <!-- Pocket List (Vertical Stack) -->
+      <!-- Pocket List (Vertical Stack, max 3) -->
       <div class="space-y-3">
         {#if booksStore.isLoading && booksStore.pockets.length === 0}
           <!-- Skeletons -->
@@ -100,7 +103,7 @@
             </div>
           {/each}
         {:else}
-          {#each booksStore.pockets as pocket (pocket.id)}
+          {#each booksStore.pockets.slice(0, 3) as pocket (pocket.id)}
             <PocketListItem
               {pocket}
               currency={booksStore.activeBook?.base_currency}
@@ -108,21 +111,34 @@
             />
           {/each}
 
-          <!-- Add Pocket Button (Full Width) -->
-          <button
-            onclick={() => (showCreatePocketModal = true)}
-            class="w-full border-2 border-dashed border-border rounded-xl p-4 hover:border-primary/50 transition-colors flex items-center justify-center gap-2 group min-h-15"
-          >
-            <div
-              class="w-8 h-8 rounded-full bg-surface-elevated group-hover:bg-primary/10 flex items-center justify-center transition-colors"
+          <!-- Show more link if more than 3 pockets -->
+          {#if booksStore.pockets.length > 3}
+            <a
+              href="/pockets"
+              class="block w-full text-center py-3 text-sm font-medium text-primary hover:text-primary-hover transition-colors"
             >
-              <PlusIcon size={18} class="text-muted group-hover:text-primary" />
-            </div>
-            <span
-              class="text-sm font-semibold text-muted group-hover:text-primary transition-colors"
-              >Tambah Kantong Baru</span
+              Lihat lebih banyak
+            </a>
+          {:else if booksStore.pockets.length === 0}
+            <!-- Add Pocket Button (Full Width) when no pockets -->
+            <button
+              onclick={() => (showCreatePocketModal = true)}
+              class="w-full border-2 border-dashed border-border rounded-xl p-4 hover:border-primary/50 transition-colors flex items-center justify-center gap-2 group min-h-15"
             >
-          </button>
+              <div
+                class="w-8 h-8 rounded-full bg-surface-elevated group-hover:bg-primary/10 flex items-center justify-center transition-colors"
+              >
+                <PlusIcon
+                  size={18}
+                  class="text-muted group-hover:text-primary"
+                />
+              </div>
+              <span
+                class="text-sm font-semibold text-muted group-hover:text-primary transition-colors"
+                >Tambah Kantong Baru</span
+              >
+            </button>
+          {/if}
         {/if}
       </div>
     </div>
