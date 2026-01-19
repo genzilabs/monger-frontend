@@ -19,7 +19,7 @@
 {#if open}
   <div
     use:portal
-    class="fixed inset-0 bg-black/50 flex items-end justify-center z-[60]"
+    class="fixed inset-0 bg-black/50 flex items-end justify-center z-[110]"
     onclick={handleBackdropClick}
     role="dialog"
     aria-modal="true"

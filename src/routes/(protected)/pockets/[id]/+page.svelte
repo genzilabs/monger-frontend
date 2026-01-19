@@ -5,6 +5,7 @@
     uiStore,
     transactionsStore,
     toastStore,
+    authStore,
   } from "$lib/stores";
   import { formatCurrency } from "$lib/utils/currency";
   import { TransactionList } from "$lib/components/dashboard";
@@ -73,13 +74,9 @@
 
     isDeleting = true;
     try {
-      const res = await pocketsApi.delete(pocket.id);
-      if (res.data) {
-        toastStore.success("Kantong berhasil dihapus");
-        await booksStore.loadPockets(booksStore.activeBook.id);
+      const success = await booksStore.deletePocket(pocket.id);
+      if (success) {
         goto("/pockets");
-      } else {
-        toastStore.error(res.error?.error || "Gagal menghapus kantong");
       }
     } catch (e) {
       toastStore.error("Terjadi kesalahan");
@@ -97,9 +94,18 @@
 <div class="animate-fade-in pb-20">
   <!-- Header -->
   <header class="mb-6">
-    <h1 class="text-2xl font-bold text-foreground">
-      {pocket?.name || "Detail Kantong"}
-    </h1>
+    <div class="flex items-center gap-2">
+      <h1 class="text-2xl font-bold text-foreground">
+        {pocket?.name || "Detail Kantong"}
+      </h1>
+      {#if booksStore.activeBook?.owner_id !== authStore.user?.id}
+         <span
+          class="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 text-xs font-medium border border-blue-500/20"
+        >
+          Kolaborasi
+        </span>
+      {/if}
+    </div>
     <p class="text-secondary">Kelola transaksi kantong ini.</p>
   </header>
 

@@ -6,6 +6,7 @@
 		pocket: Pocket;
 		currency?: string;
 		isHighlighted?: boolean;
+		role?: string;
 		onclick?: () => void;
 	}
 
@@ -13,6 +14,7 @@
 		pocket,
 		currency = "IDR",
 		isHighlighted = false,
+		role = "owner",
 		onclick,
 	}: Props = $props();
 
@@ -40,12 +42,17 @@
 
 	<!-- Content -->
 	<div class="z-10 relative">
-		<div
-			class="mb-3 w-10 h-10 rounded-full bg-background/20 backdrop-blur-sm flex items-center justify-center {isHighlighted
-				? 'text-white'
-				: 'text-primary'}"
-		>
-			<DynamicIcon name={pocket.icon_slug} size={20} />
+		<div class="flex justify-between items-start">
+			<div
+				class="mb-3 w-10 h-10 rounded-full bg-background/20 backdrop-blur-sm flex items-center justify-center {isHighlighted
+					? 'text-white'
+					: 'text-primary'}"
+			>
+				<DynamicIcon name={pocket.icon_slug} size={20} />
+			</div>
+			{#if role !== 'owner'}
+				<div class="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
+			{/if}
 		</div>
 		<p
 			class="text-xs {isHighlighted

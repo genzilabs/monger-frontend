@@ -1,7 +1,9 @@
 <script lang="ts">
   import { Button, ResponsiveModal } from "$lib/components/ui";
+  import { NativeSelect } from "$lib/components/ui/native-select";
   import { collaborationApi } from "$lib/api";
   import type { BookMember, CollaborationRole } from "$lib/types";
+  import { Pencil, Check, X, Trash2 } from "lucide-svelte";
   import { onMount } from "svelte";
 
   interface Props {
@@ -18,6 +20,9 @@
   let isLoading = $state(true);
   let error = $state<string | null>(null);
   let confirmingRemove = $state<string | null>(null);
+  let editingMemberId = $state<string | null>(null);
+  let editingRole = $state<string>("");
+  let isUpdating = $state(false);
 
   $effect(() => {
     if (open && bookId) {
@@ -48,6 +53,40 @@
       members = members.filter((m) => m.user_id !== userId);
     }
     confirmingRemove = null;
+  }
+
+  function startEditing(member: BookMember) {
+    editingMemberId = member.user_id;
+    editingRole = member.role;
+    confirmingRemove = null;
+  }
+
+  function cancelEditing() {
+    editingMemberId = null;
+    editingRole = "";
+  }
+
+  async function saveRole(userId: string) {
+    if (!editingRole) return;
+    
+    isUpdating = true;
+    error = null;
+
+    const result = await collaborationApi.updateBookMember(bookId, userId, {
+      role: editingRole as CollaborationRole
+    });
+
+    if (result.error) {
+      error = (result.error as any).error || "Failed to update role";
+    } else {
+      // Update local state
+      members = members.map(m => 
+        m.user_id === userId ? { ...m, role: editingRole as CollaborationRole } : m
+      );
+      cancelEditing();
+    }
+    
+    isUpdating = false;
   }
 
   function getRoleBadgeClasses(role: string) {
@@ -134,48 +173,78 @@
             </div>
 
             <div class="flex items-center gap-2">
-              <span
-                class="text-xs px-2 py-1 rounded-full capitalize {getRoleBadgeClasses(
-                  member.role
-                )}"
-              >
-                {member.role}
-              </span>
-
-              {#if isOwner && member.role !== "owner" && confirmingRemove !== member.user_id}
-                <button
-                  onclick={() => (confirmingRemove = member.user_id)}
-                  class="p-1.5 text-muted hover:text-red-400 transition-colors"
-                >
-                  <svg
-                    class="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                    />
-                  </svg>
-                </button>
-              {:else if isOwner && confirmingRemove === member.user_id}
+              {#if editingMemberId === member.user_id}
                 <div class="flex items-center gap-1">
+                  <div class="w-24">
+                    <NativeSelect
+                      bind:value={editingRole}
+                      class="h-8 py-1 text-xs"
+                      aria-label="Role"
+                      disabled={isUpdating}
+                    >
+                      <option value="viewer">Viewer</option>
+                      <option value="editor">Editor</option>
+                      <option value="admin">Admin</option>
+                    </NativeSelect>
+                  </div>
                   <button
-                    onclick={() => handleRemoveMember(member.user_id)}
-                    class="px-2 py-1 text-xs bg-red-500 text-white rounded-lg"
+                    onclick={() => saveRole(member.user_id)}
+                    class="p-1.5 text-emerald-500 hover:bg-emerald-500/10 rounded-lg transition-colors"
+                    disabled={isUpdating}
                   >
-                    Hapus
+                    <Check size={16} />
                   </button>
                   <button
-                    onclick={() => (confirmingRemove = null)}
-                    class="px-2 py-1 text-xs bg-surface border border-border text-muted rounded-lg"
+                    onclick={cancelEditing}
+                    class="p-1.5 text-muted hover:bg-muted/10 rounded-lg transition-colors"
+                    disabled={isUpdating}
                   >
-                    Batal
+                    <X size={16} />
                   </button>
                 </div>
+              {:else}
+                <span
+                  class="text-xs px-2 py-1 rounded-full capitalize {getRoleBadgeClasses(
+                    member.role
+                  )}"
+                >
+                  {member.role}
+                </span>
+
+                {#if isOwner && member.role !== "owner"}
+                   {#if confirmingRemove !== member.user_id}
+                      <button
+                        onclick={() => startEditing(member)}
+                        class="p-1.5 text-muted hover:text-primary transition-colors"
+                        title="Edit Role"
+                      >
+                        <Pencil size={14} />
+                      </button>
+                      
+                      <button
+                        onclick={() => (confirmingRemove = member.user_id)}
+                        class="p-1.5 text-muted hover:text-red-400 transition-colors"
+                        title="Remove Member"
+                      >
+                       <Trash2 size={14} />
+                      </button>
+                   {:else}
+                      <div class="flex items-center gap-1 animate-fade-in">
+                        <button
+                          onclick={() => handleRemoveMember(member.user_id)}
+                          class="px-2 py-1 text-xs bg-red-500 text-white rounded-lg hover:bg-red-600"
+                        >
+                          Hapus
+                        </button>
+                        <button
+                          onclick={() => (confirmingRemove = null)}
+                          class="px-2 py-1 text-xs bg-surface border border-border text-muted rounded-lg hover:bg-surface-elevated"
+                        >
+                          Batal
+                        </button>
+                      </div>
+                   {/if}
+                {/if}
               {/if}
             </div>
           </div>

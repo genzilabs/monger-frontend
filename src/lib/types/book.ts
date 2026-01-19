@@ -19,6 +19,7 @@ export interface Book {
 	version: number;
 	created_at: string;
 	updated_at: string;
+	member_count: number;
 }
 
 export interface Pocket {

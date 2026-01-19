@@ -1,6 +1,8 @@
 <script lang="ts">
   import { booksStore, authStore, toastStore } from "$lib/stores";
   import { booksApi, collaborationApi } from "$lib/api";
+  import { MemberStack } from "$lib/components/ui";
+  import type { BookMember } from "$lib/types/collaboration";
   import { onMount } from "svelte";
   import { goto } from "$app/navigation";
   import { page } from "$app/stores";
@@ -21,7 +23,7 @@
     ShieldIcon,
   } from "$lib/icons";
 
-  let bookId = $derived($page.params.id);
+  // Effects
   let showCreatePocketModal = $state(false);
   let showEditBookModal = $state(false);
   let showInviteModal = $state(false);
@@ -29,7 +31,14 @@
   let showDeleteConfirm = $state(false);
   let isDeleting = $state(false);
   let activeFilter = $state("all");
+
+  // Data
   let memberCount = $state(0);
+  let members = $state<BookMember[]>([]);
+
+  // Derived (must be after state)
+  const bookId = $derived($page.params.id);
+  const hasCollaborators = $derived(memberCount > 1);
 
   // Check if current user is owner
   const isOwner = $derived(
@@ -101,17 +110,14 @@
     }
   }
 
-  // Load member count for UI decisions
   async function loadMemberCount() {
     if (!bookId) return;
     const result = await collaborationApi.listBookMembers(bookId);
     if (result.data) {
-      memberCount = result.data.members.length;
+      members = result.data.members;
+      memberCount = result.data.total;
     }
   }
-
-  // Derived: has collaborators (more than just owner)
-  const hasCollaborators = $derived(memberCount > 1);
 </script>
 
 <svelte:head>
@@ -131,25 +137,45 @@
 
         <div class="relative z-10">
           <div class="flex justify-between items-start mb-4">
-            <div>
+            <div class="flex flex-col items-start gap-1">
               <span
                 class="text-primary text-sm font-semibold tracking-wider uppercase"
                 >BUKU</span
               >
-              <h1 class="text-2xl font-bold text-foreground">
-                {booksStore.activeBook.name}
-              </h1>
+              <div class="flex items-center">
+                  <h1 class="text-2xl font-bold text-foreground">
+                    {booksStore.activeBook.name}
+                  </h1>
+                  {#if hasCollaborators}
+                    <span
+                      class="ml-2 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 text-xs font-medium border border-blue-500/20"
+                    >
+                      Kolaborasi
+                    </span>
+                  {/if}
+              </div>
             </div>
-            <button
-              onclick={() => (showMembersModal = true)}
-              class="flex items-center gap-2 px-3 py-2 rounded-full bg-primary/20 hover:bg-primary/30 transition-colors"
-              aria-label={hasCollaborators ? "Lihat anggota" : "Undang anggota"}
-            >
-              <UserIcon size={18} class="text-primary" />
-              <span class="text-xs font-medium text-primary"
-                >{hasCollaborators ? "Lihat" : "Undang"}</span
+            <div class="flex items-center gap-3">
+              {#if hasCollaborators}
+                <div 
+                  class="cursor-pointer" 
+                  onclick={() => (showMembersModal = true)}
+                  role="button"
+                  tabindex="0"
+                  onkeydown={(e) => e.key === 'Enter' && (showMembersModal = true)}
+                >
+                  <MemberStack members={members} maxDisplay={3} size="sm" />
+                </div>
+              {/if}
+              <button
+                onclick={() => (showMembersModal = true)}
+                class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-colors border border-primary/20"
+                aria-label="Undang anggota"
               >
-            </button>
+                <UserIcon size={16} />
+                <span class="text-xs font-semibold">Undang</span>
+              </button>
+            </div>
           </div>
 
           <p class="text-sm text-muted">Total Saldo</p>
@@ -262,8 +288,15 @@
                     {pocket.type_slug.replace("-", " ")}
                   </p>
                 </div>
+                </div>
               </div>
-              <p
+              <div class="flex items-center gap-3">
+                 {#if pocket.role !== 'owner'}
+                    <div class="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 text-[10px] font-bold border border-blue-500/20 uppercase tracking-wider">
+                      {pocket.role === 'editor' ? 'Editor' : pocket.role}
+                    </div>
+                 {/if}
+                 <p
                 class="text-lg font-bold text-foreground"
                 class:text-red-500={pocket.balance_cents < 0}
               >

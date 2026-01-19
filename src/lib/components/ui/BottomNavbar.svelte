@@ -27,7 +27,7 @@
   const isActive = (href: string) => $page.url.pathname === href;
 </script>
 
-<nav class="fixed bottom-0 left-0 right-0 z-50">
+<nav class="fixed bottom-0 left-0 right-0 z-[50]">
   <!-- Floating Add Button (above the bar) -->
   <div class="absolute left-1/2 -translate-x-1/2 -top-7 z-10">
     <button

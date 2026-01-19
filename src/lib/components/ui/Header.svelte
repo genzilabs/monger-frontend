@@ -12,9 +12,10 @@
   } from "$lib/icons";
   import logoOnly from "$lib/assets/Logo/logo-only.webp";
 
-  let { showBookSwitcher = $bindable(), onNotificationClick } = $props<{
+  let { showBookSwitcher = $bindable(), onNotificationClick, onCreateBook } = $props<{
     showBookSwitcher: boolean;
     onNotificationClick: () => void;
+    onCreateBook: () => void;
   }>();
 
   // Define root paths where Logo is shown instead of Back button
@@ -70,25 +71,22 @@
     </div>
 
     <!-- Center Section: Book Selector -->
-    <div class="absolute left-1/2 -translate-x-1/2">
-      <button
-        onclick={() => (showBookSwitcher = true)}
-        class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface border border-transparent hover:border-border transition-all active:scale-95 max-w-40"
-      >
-        {#if booksStore.activeBook}
-          <!-- <div class="w-5 h-5 rounded bg-primary/20 flex items-center justify-center shrink-0">
-                        <BookIcon class="text-primary" size={12} />
-                    </div> -->
-          <p class="text-sm font-semibold text-foreground truncate">
-            {booksStore.activeBook.name}
-          </p>
-        {:else if booksStore.books.length > 0}
-          <p class="text-sm text-muted">Pilih Buku</p>
-        {:else}
-          <p class="text-sm text-primary font-medium">Buat Buku</p>
-        {/if}
-        <ChevronDownIcon class="text-muted shrink-0" size={14} />
-      </button>
+    <div class="absolute left-1/2 -translate-x-1/2 z-30">
+        <button
+          onclick={() => (showBookSwitcher = !showBookSwitcher)}
+          class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface border border-transparent hover:border-border transition-all active:scale-95 max-w-40 {showBookSwitcher ? 'border-primary/20 bg-primary/5' : ''}"
+        >
+          {#if booksStore.activeBook}
+            <p class="text-sm font-semibold text-foreground truncate">
+              {booksStore.activeBook.name}
+            </p>
+          {:else if booksStore.books.length > 0}
+            <p class="text-sm text-muted">Pilih Buku</p>
+          {:else}
+            <p class="text-sm text-primary font-medium">Buat Buku</p>
+          {/if}
+          <ChevronDownIcon class="text-muted shrink-0 transition-transform duration-200 {showBookSwitcher ? 'rotate-180' : ''}" size={14} />
+        </button>
     </div>
 
     <!-- Right Section: Notification -->
@@ -110,36 +108,100 @@
   <!-- Desktop Header -->
   <div class="px-6 py-4 hidden md:flex items-center justify-between">
     <!-- Book Selector -->
-    <button
-      onclick={() => (showBookSwitcher = true)}
-      class="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface hover:bg-border transition-colors"
-    >
-      {#if booksStore.activeBook}
-        <div
-          class="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center"
+    <div class="relative z-30">
+      <button
+        onclick={() => (showBookSwitcher = !showBookSwitcher)}
+        class="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface hover:bg-border transition-colors border border-transparent {showBookSwitcher ? 'border-primary/20 bg-primary/5' : ''}"
+      >
+        {#if booksStore.activeBook}
+          <div
+            class="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center"
+          >
+            <BookIcon class="text-primary" size={16} />
+          </div>
+          <div class="flex flex-col items-start">
+            <p class="text-xs text-muted font-medium uppercase tracking-wider">Buku Aktif</p>
+            <p class="text-sm font-bold text-foreground line-clamp-1 max-w-[120px]">
+              {booksStore.activeBook.name}
+            </p>
+          </div>
+        {:else if booksStore.books.length > 0}
+          <div
+            class="w-8 h-8 rounded-lg bg-surface flex items-center justify-center"
+          >
+            <BookIcon class="text-muted" size={16} />
+          </div>
+          <p class="text-sm text-muted">Pilih Buku</p>
+        {:else}
+          <div
+            class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center"
+          >
+            <PlusIcon class="text-primary" size={16} />
+          </div>
+          <p class="text-sm text-primary font-medium">Buat Buku</p>
+        {/if}
+        <ChevronDownIcon class="text-muted transition-transform duration-200 {showBookSwitcher ? 'rotate-180' : ''}" size={16} />
+      </button>
+
+      <!-- Dropdown Menu -->
+      {#if showBookSwitcher}
+        <div 
+          class="absolute top-full left-0 mt-2 w-72 bg-surface rounded-2xl shadow-xl border border-border overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200"
         >
-          <BookIcon class="text-primary" size={16} />
+          <div class="p-2 space-y-1 max-h-[60vh] overflow-y-auto custom-scrollbar">
+            {#each booksStore.books as book}
+              <button 
+                onclick={() => {
+                  booksStore.setActiveBook(book);
+                  showBookSwitcher = false;
+                  goto("/dashboard");
+                }}
+                class="w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left {booksStore.activeBook?.id === book.id ? 'bg-primary/10' : 'hover:bg-muted/10'}"
+              >
+                <div class="w-10 h-10 rounded-lg {booksStore.activeBook?.id === book.id ? 'bg-primary text-white' : 'bg-muted/20 text-muted-foreground'} flex items-center justify-center text-lg font-bold shrink-0 relative">
+                  {book.name.charAt(0).toUpperCase()}
+                  {#if book.member_count > 0}
+                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center border-2 border-surface">
+                      <span class="text-[9px] font-bold text-white">{book.member_count}</span>
+                    </div>
+                  {/if}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-bold text-sm truncate {booksStore.activeBook?.id === book.id ? 'text-primary' : 'text-foreground'}">
+                    {book.name}
+                  </p>
+                  <p class="text-xs text-muted truncate">
+                    {book.base_currency} • {book.owner_id === authStore.user?.id ? 'Owner' : 'Member'}
+                  </p>
+                </div>
+                {#if booksStore.activeBook?.id === book.id}
+                   <div class="w-2 h-2 rounded-full bg-primary shrink-0"></div>
+                {/if}
+              </button>
+            {/each}
+          </div>
+          
+          <div class="p-2 border-t border-border bg-muted/5">
+             <button
+                onclick={() => {
+                  showBookSwitcher = false;
+                  onCreateBook();
+                }}
+                class="w-full flex items-center justify-center gap-2 p-3 rounded-xl border-2 border-dashed border-border hover:border-primary/50 text-muted-foreground hover:text-primary transition-all group"
+             >
+                <PlusIcon size={16} class="group-hover:scale-110 transition-transform" />
+                <span class="text-sm font-semibold">Buat Buku Baru</span>
+             </button>
+          </div>
         </div>
-        <p class="text-sm font-medium text-foreground">
-          {booksStore.activeBook.name}
-        </p>
-      {:else if booksStore.books.length > 0}
-        <div
-          class="w-8 h-8 rounded-lg bg-surface flex items-center justify-center"
-        >
-          <BookIcon class="text-muted" size={16} />
-        </div>
-        <p class="text-sm text-muted">Pilih Buku</p>
-      {:else}
-        <div
-          class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center"
-        >
-          <PlusIcon class="text-primary" size={16} />
-        </div>
-        <p class="text-sm text-primary font-medium">Buat Buku</p>
+        
+        <!-- Backdrop to close -->
+        <div 
+          class="fixed inset-0 z-40 bg-transparent" 
+          onclick={() => (showBookSwitcher = false)}
+        ></div>
       {/if}
-      <ChevronDownIcon class="text-muted" size={16} />
-    </button>
+    </div>
 
     <!-- User Info -->
     <div class="flex items-center gap-4">

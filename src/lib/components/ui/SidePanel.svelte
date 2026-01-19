@@ -48,7 +48,7 @@
   <!-- Backdrop -->
   <div
     use:portal
-    class="fixed inset-0 bg-black/30 z-50 hidden md:block"
+    class="fixed inset-0 bg-black/30 z-[110] hidden md:block"
     onclick={onClose}
     role="presentation"
   ></div>
@@ -56,7 +56,7 @@
   <!-- Panel -->
   <aside
     use:portal
-    class="fixed top-0 right-0 h-full w-full md:w-[440px] bg-background border-l border-border z-50 flex flex-col shadow-xl
+    class="fixed top-0 right-0 h-full w-full md:w-[440px] bg-background border-l border-border z-[110] flex flex-col shadow-xl
 			   transform transition-transform duration-300 ease-out
 			   hidden md:flex animate-slide-in-right"
     role="dialog"

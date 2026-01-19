@@ -338,6 +338,32 @@ function createBooksStore() {
 			return null;
 		},
 
+
+		/**
+		 * Delete a pocket
+		 */
+		async deletePocket(id: string) {
+			state.isLoading = true;
+			state.error = null;
+			try {
+				const result = await pocketsApi.delete(id);
+				if (!result.error) {
+					state.pockets = state.pockets.filter((p) => p.id !== id);
+					toastStore.success('Kantong berhasil dihapus!');
+					return true;
+				} else {
+					state.error = result.error.error;
+					toastStore.error(result.error.error);
+				}
+			} catch {
+				state.error = 'Failed to delete pocket';
+				toastStore.error('Gagal menghapus kantong');
+			} finally {
+				state.isLoading = false;
+			}
+			return false;
+		},
+
 		/**
 		 * Clear store state
 		 */
