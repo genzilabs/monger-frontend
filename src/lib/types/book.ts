@@ -35,6 +35,7 @@ export interface Pocket {
 	created_at: string;
 	updated_at: string;
 	vault?: Vault;
+    currency?: string;
 }
 
 export interface PocketType {

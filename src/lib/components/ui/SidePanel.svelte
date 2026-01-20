@@ -5,9 +5,14 @@
    * Use for transaction creation, pocket creation, detail views
    */
   import type { Snippet } from "svelte";
-  import { XIcon } from "$lib/icons";
+  import { XIcon, ArrowUpIcon, RepeatIcon, WalletIcon } from "$lib/icons";
   import { browser } from "$app/environment";
   import { portal } from "$lib/actions/portal";
+  import { page } from "$app/stores";
+
+  function isActive(path: string) {
+    return $page.url.pathname.startsWith(path);
+  }
 
   interface Props {
     open: boolean;
@@ -79,6 +84,35 @@
         <XIcon size={20} />
       </button>
     </header>
+
+    <!-- Navigation Links (added content) -->
+    <div class="p-6 border-b border-border">
+      <nav class="grid gap-2">
+        <a
+          href="/transactions"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors {isActive('/transactions') ? 'bg-primary/10 text-primary' : 'text-muted hover:bg-surface-elevated hover:text-foreground'}"
+        >
+          <ArrowUpIcon size={20} />
+          Transaksi
+        </a>
+        
+        <a
+          href="/recurring"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors {isActive('/recurring') ? 'bg-primary/10 text-primary' : 'text-muted hover:bg-surface-elevated hover:text-foreground'}"
+        >
+          <RepeatIcon size={20} />
+          Rutin
+        </a>
+
+        <a
+          href="/pockets"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors {isActive('/pockets') ? 'bg-primary/10 text-primary' : 'text-muted hover:bg-surface-elevated hover:text-foreground'}"
+        >
+          <WalletIcon size={20} />
+          Dompet
+        </a>
+      </nav>
+    </div>
 
     <!-- Content -->
     <div class="flex-1 overflow-y-auto p-6">

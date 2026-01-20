@@ -2,6 +2,7 @@
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
   import { authStore, booksStore } from "$lib/stores";
+  import { notificationsStore } from "$lib/stores/notifications.svelte";
   import {
     ChevronLeftIcon,
     BookIcon,
@@ -11,12 +12,19 @@
     BellIcon,
   } from "$lib/icons";
   import logoOnly from "$lib/assets/Logo/logo-only.webp";
+  import { onMount } from "svelte";
 
   let { showBookSwitcher = $bindable(), onNotificationClick, onCreateBook } = $props<{
     showBookSwitcher: boolean;
     onNotificationClick: () => void;
     onCreateBook: () => void;
   }>();
+
+  onMount(() => {
+    if (authStore.user) {
+        notificationsStore.loadUnreadCount();
+    }
+  });
 
   // Define root paths where Logo is shown instead of Back button
   const rootPaths = ["/dashboard", "/transactions", "/pockets", "/menu"];
@@ -98,8 +106,9 @@
       >
         <div class="relative">
           <BellIcon size={24} />
-          <!-- Notification Dot (Placeholder) -->
-          <!-- <span class="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 border-2 border-background rounded-full"></span> -->
+          {#if notificationsStore.unreadCount > 0}
+           <span class="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 border-2 border-background rounded-full"></span>
+          {/if}
         </div>
       </button>
     </div>
@@ -207,9 +216,12 @@
     <div class="flex items-center gap-4">
       <button
         onclick={onNotificationClick}
-        class="p-2 text-muted hover:text-foreground transition-colors"
+        class="p-2 text-muted hover:text-foreground transition-colors relative"
       >
         <BellIcon size={20} />
+        {#if notificationsStore.unreadCount > 0}
+            <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-background"></span>
+        {/if}
       </button>
       <div class="h-6 w-px bg-border"></div>
       {#if authStore.user}
@@ -229,3 +241,4 @@
     </div>
   </div>
 </header>
+

@@ -130,6 +130,7 @@ export { default as BottomSheet } from './BottomSheet.svelte';
 export { default as Sidebar } from './Sidebar.svelte';
 export { default as SidePanel } from './SidePanel.svelte';
 export { default as ResponsiveModal } from './ResponsiveModal.svelte';
+export { default as ConfirmDialog } from './ConfirmDialog.svelte';
 export { default as AppLayout } from './AppLayout.svelte';
 
 // Form Components

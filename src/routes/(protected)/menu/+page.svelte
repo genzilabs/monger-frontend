@@ -9,6 +9,7 @@
     LogOutIcon,
     TagIcon,
     CreditCardIcon,
+    RepeatIcon,
   } from "$lib/icons";
   import { Card } from "$lib/components/ui";
   import { authStore } from "$lib/stores";
@@ -35,6 +36,13 @@
       icon: BookIcon,
       color: "text-blue-600",
       bg: "bg-blue-50",
+    },
+    {
+      label: "Rutin",
+      href: "/recurring",
+      icon: RepeatIcon,
+      color: "text-teal-600",
+      bg: "bg-teal-50",
     },
     {
       label: "Kantong",

@@ -1,12 +1,14 @@
 import type { Category, Subcategory } from './category';
 import type { Pocket } from './book';
 
+export type TransactionType = 'income' | 'expense' | 'transfer';
+
 export interface Transaction {
 	id: string;
 	pocket_id: string;
 	name: string;
 	amount_cents: number;
-	type: 'income' | 'expense' | 'transfer';
+	type: TransactionType;
 	date: string;
 	description?: string;
 	category_id?: string;

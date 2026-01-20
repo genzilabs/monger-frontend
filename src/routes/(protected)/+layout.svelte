@@ -21,6 +21,22 @@
   let CreateTransactionModal: any = $state(null);
   let NotificationModal: any = $state(null);
 
+  $effect(() => {
+    if (uiStore.isTransactionModalOpen && !CreateTransactionModal) {
+      import("$lib/components/modals/CreateTransactionModal.svelte").then((m) => {
+        CreateTransactionModal = m.default;
+      });
+    }
+  });
+
+  $effect(() => {
+    if (showNotificationModal && !NotificationModal) {
+      import("$lib/components/modals/NotificationModal.svelte").then((m) => {
+        NotificationModal = m.default;
+      });
+    }
+  });
+
   onMount(async () => {
     // Initialize auth first (blocking - needed for protected routes)
     if (!authStore.isInitialized) await authStore.initialize();

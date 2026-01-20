@@ -69,7 +69,9 @@
   $effect(() => {
     if (open) {
       untrack(() => {
-        categoriesStore.load(); // Uses caching
+        if (booksStore.activeBook?.id) {
+            categoriesStore.load(booksStore.activeBook.id); // Uses caching
+        }
         type = defaultType;
         
         // Reset book selection
