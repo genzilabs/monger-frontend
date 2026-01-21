@@ -19,6 +19,18 @@ export interface Update {
 
 export const UPDATES: Update[] = [
   {
+    version: "0.2.0-alpha",
+    date: "2026-01-21",
+    title: "Privasi dan Tampilan Lebih Baik",
+    description: "Kamu sekarang bisa menyembunyikan nominal di dashboard. Kami juga merapikan tampilan agar lebih nyaman digunakan.",
+    changes: [
+      { text: "Sembunyikan atau tampilkan nominal dengan satu ketukan" },
+      { text: "Privasi berlaku di seluruh halaman keuangan" },
+      { text: "Tampilan transaksi lebih rapi untuk nama panjang" },
+      { text: "Navigasi halaman menu lebih konsisten" },
+    ],
+  },
+  {
     version: "0.1.0-alpha",
     date: "2026-01-21",
     title: "Versi Awal Alpha",

@@ -13,6 +13,7 @@
     GlobeIcon,
   } from "$lib/icons";
   import { Card } from "$lib/components/ui";
+  import { getLatestVersion } from "$lib/data/updates";
   import { authStore } from "$lib/stores";
   import { goto } from "$app/navigation";
 
@@ -192,7 +193,7 @@
     <p
       class="text-center text-[10px] text-muted-foreground mt-6 tracking-widest opacity-60"
     >
-      Monger<br /> Versi: Alpha<br /> By Genzi Meraih Mimpi
+      Monger<br /> Versi: {getLatestVersion()}<br /> By Genzi Meraih Mimpi
     </p>
   </div>
 </div>
