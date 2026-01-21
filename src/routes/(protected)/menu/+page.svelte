@@ -87,6 +87,13 @@
       color: "text-yellow-600",
       bg: "bg-yellow-50",
     },
+    {
+      label: "Pembaruan",
+      href: "/menu/updates",
+      icon: BellIcon, // Reusing BellIcon, but semantically could be a different one
+      color: "text-lime-600",
+      bg: "bg-lime-50",
+    },
   ];
 </script>
 

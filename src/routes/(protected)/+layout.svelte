@@ -1,12 +1,9 @@
 <script lang="ts">
-  import {
-    BottomNavbar,
-    Sidebar,
-    Header,
-  } from "$lib/components/ui";
-  import { authStore, booksStore, uiStore } from "$lib/stores";
+  import { BottomNavbar, Sidebar, Header } from "$lib/components/ui";
+  import { authStore, booksStore, uiStore, updatesStore } from "$lib/stores";
   import { pinStore } from "$lib/stores/pin.svelte";
   import PINGuard from "$lib/components/auth/PINGuard.svelte";
+  import UpdateModal from "$lib/components/updates/UpdateModal.svelte";
   import { goto } from "$app/navigation";
   import { onMount } from "svelte";
   import CreateBookModal from "$lib/components/modals/CreateBookModal.svelte";
@@ -23,9 +20,11 @@
 
   $effect(() => {
     if (uiStore.isTransactionModalOpen && !CreateTransactionModal) {
-      import("$lib/components/modals/CreateTransactionModal.svelte").then((m) => {
-        CreateTransactionModal = m.default;
-      });
+      import("$lib/components/modals/CreateTransactionModal.svelte").then(
+        (m) => {
+          CreateTransactionModal = m.default;
+        },
+      );
     }
   });
 
@@ -46,6 +45,9 @@
 
     // Initialize PIN store (non-blocking)
     pinStore.initialize();
+
+    // Check for updates and show modal if needed
+    updatesStore.checkAndShowModal();
   });
 </script>
 
@@ -69,73 +71,94 @@
     </main>
   </div>
 
-    <!-- Mobile Bottom Navigation (hidden on desktop) -->
+  <!-- Mobile Bottom Navigation (hidden on desktop) -->
   <div class="md:hidden">
     <BottomNavbar />
   </div>
 
   <!-- Mobile Book Switcher Dropdown (Global Overlay) -->
   {#if showBookSwitcher}
-    <div 
+    <div
       class="fixed inset-0 z-50 flex flex-col items-center justify-start pt-20 px-6 md:hidden animate-in fade-in duration-200"
     >
-        <!-- Backdrop -->
-        <div 
-          class="absolute inset-0 bg-black/40 backdrop-blur-sm"
-          onclick={() => (showBookSwitcher = false)}
-        ></div>
+      <!-- Backdrop -->
+      <div
+        class="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onclick={() => (showBookSwitcher = false)}
+      ></div>
 
-        <!-- Dropdown Content -->
-        <div class="w-full max-w-sm bg-surface rounded-3xl shadow-2xl border border-border overflow-hidden relative z-10 flex flex-col max-h-[70vh]">
-            <div class="p-4 border-b border-border bg-muted/5">
-                <h3 class="font-bold text-center">Ganti Buku</h3>
-            </div>
-            
-            <div class="p-2 space-y-1 overflow-y-auto custom-scrollbar">
-              {#each booksStore.books as book}
-                <button 
-                  onclick={() => {
-                    booksStore.setActiveBook(book);
-                    showBookSwitcher = false;
-                    goto("/dashboard");
-                  }}
-                  class="w-full flex items-center gap-3 p-3 rounded-2xl transition-colors text-left {booksStore.activeBook?.id === book.id ? 'bg-primary/10' : 'hover:bg-muted/10'}"
-                >
-                  <div class="w-10 h-10 rounded-xl {booksStore.activeBook?.id === book.id ? 'bg-primary text-white' : 'bg-muted/20 text-muted-foreground'} flex items-center justify-center text-lg font-bold shrink-0 relative">
-                    {book.name.charAt(0).toUpperCase()}
-                    {#if book.member_count > 0}
-                      <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center border-2 border-surface">
-                        <span class="text-[9px] font-bold text-white">{book.member_count}</span>
-                      </div>
-                    {/if}
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <p class="font-bold text-sm truncate {booksStore.activeBook?.id === book.id ? 'text-primary' : 'text-foreground'}">
-                      {book.name}
-                    </p>
-                    <p class="text-xs text-muted truncate">
-                      {book.base_currency} • {book.owner_id === authStore.user?.id ? 'Owner' : 'Member'}
-                    </p>
-                  </div>
-                  {#if booksStore.activeBook?.id === book.id}
-                     <div class="w-2 h-2 rounded-full bg-primary shrink-0"></div>
-                  {/if}
-                </button>
-              {/each}
-            </div>
-            
-            <div class="p-4 border-t border-border bg-muted/5">
-               <button
-                  onclick={() => {
-                    showBookSwitcher = false;
-                    showCreateBookModal = true;
-                  }}
-                  class="w-full flex items-center justify-center gap-2 p-3.5 rounded-2xl border-2 border-dashed border-border hover:border-primary/50 text-muted-foreground hover:text-primary transition-all group bg-background"
-               >
-                  <span class="text-sm font-bold">Buat Buku Baru</span>
-               </button>
-            </div>
+      <!-- Dropdown Content -->
+      <div
+        class="w-full max-w-sm bg-surface rounded-3xl shadow-2xl border border-border overflow-hidden relative z-10 flex flex-col max-h-[70vh]"
+      >
+        <div class="p-4 border-b border-border bg-muted/5">
+          <h3 class="font-bold text-center">Ganti Buku</h3>
         </div>
+
+        <div class="p-2 space-y-1 overflow-y-auto custom-scrollbar">
+          {#each booksStore.books as book}
+            <button
+              onclick={() => {
+                booksStore.setActiveBook(book);
+                showBookSwitcher = false;
+                goto("/dashboard");
+              }}
+              class="w-full flex items-center gap-3 p-3 rounded-2xl transition-colors text-left {booksStore
+                .activeBook?.id === book.id
+                ? 'bg-primary/10'
+                : 'hover:bg-muted/10'}"
+            >
+              <div
+                class="w-10 h-10 rounded-xl {booksStore.activeBook?.id ===
+                book.id
+                  ? 'bg-primary text-white'
+                  : 'bg-muted/20 text-muted-foreground'} flex items-center justify-center text-lg font-bold shrink-0 relative"
+              >
+                {book.name.charAt(0).toUpperCase()}
+                {#if book.member_count > 0}
+                  <div
+                    class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center border-2 border-surface"
+                  >
+                    <span class="text-[9px] font-bold text-white"
+                      >{book.member_count}</span
+                    >
+                  </div>
+                {/if}
+              </div>
+              <div class="flex-1 min-w-0">
+                <p
+                  class="font-bold text-sm truncate {booksStore.activeBook
+                    ?.id === book.id
+                    ? 'text-primary'
+                    : 'text-foreground'}"
+                >
+                  {book.name}
+                </p>
+                <p class="text-xs text-muted truncate">
+                  {book.base_currency} • {book.owner_id === authStore.user?.id
+                    ? "Owner"
+                    : "Member"}
+                </p>
+              </div>
+              {#if booksStore.activeBook?.id === book.id}
+                <div class="w-2 h-2 rounded-full bg-primary shrink-0"></div>
+              {/if}
+            </button>
+          {/each}
+        </div>
+
+        <div class="p-4 border-t border-border bg-muted/5">
+          <button
+            onclick={() => {
+              showBookSwitcher = false;
+              showCreateBookModal = true;
+            }}
+            class="w-full flex items-center justify-center gap-2 p-3.5 rounded-2xl border-2 border-dashed border-border hover:border-primary/50 text-muted-foreground hover:text-primary transition-all group bg-background"
+          >
+            <span class="text-sm font-bold">Buat Buku Baru</span>
+          </button>
+        </div>
+      </div>
     </div>
   {/if}
 </div>
@@ -161,3 +184,5 @@
     onClose={() => (showNotificationModal = false)}
   />
 {/if}
+
+<UpdateModal />

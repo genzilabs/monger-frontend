@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import { booksStore, transactionsStore } from "$lib/stores";
   import { TransactionItem } from "$lib/components/dashboard";
-  import { EmptyState } from "$lib/components/ui";
+  import { EmptyState, PrivacyToggle } from "$lib/components/ui";
   import { PlusIcon } from "$lib/icons";
   import { goto } from "$app/navigation";
   import type { Transaction } from "$lib/types/transaction";
@@ -45,7 +45,7 @@
     // Sort by date desc first
     // Note: transactionsStore.transactions should be a list.
     const sorted = [...(transactionsStore.transactions || [])].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
     );
 
     for (const tx of sorted) {
@@ -59,7 +59,10 @@
 
 <div class="space-y-4 pb-20">
   <div class="flex items-center justify-between">
-    <h3 class="text-lg font-bold text-foreground">Transaksi Terkini</h3>
+    <div class="flex items-center gap-2">
+      <h3 class="text-lg font-bold text-foreground">Transaksi Terkini</h3>
+      <PrivacyToggle />
+    </div>
     <!-- <button class="text-sm font-medium text-primary hover:text-primary/80">Lihat Semua</button> -->
   </div>
 

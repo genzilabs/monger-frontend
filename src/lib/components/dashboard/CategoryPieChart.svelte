@@ -3,6 +3,7 @@
   import { Chart, registerables } from "chart.js";
   import type { CategoryBreakdown } from "$lib/api/transactions";
   import { DynamicIcon } from "$lib/components/ui";
+  import { privacyStore } from "$lib/stores";
 
   // Register Chart.js components
   Chart.register(...registerables);
@@ -18,7 +19,7 @@
 
   let canvas: HTMLCanvasElement;
   let chart: Chart | null = null;
-  
+
   // Define palettes
   const incomeColors = [
     "#10B981", // Emerald 500
@@ -87,7 +88,7 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        cutout: '70%',
+        cutout: "70%",
         plugins: {
           legend: {
             display: false,
@@ -98,17 +99,28 @@
             bodyColor: "#475569", // Slate 600
             borderColor: "#e2e8f0", // Slate 200
             borderWidth: 1,
-            titleFont: { size: 13, weight: "600", family: "'Inter', sans-serif" },
+            titleFont: {
+              size: 13,
+              weight: "600",
+              family: "'Inter', sans-serif",
+            },
             bodyFont: { size: 12, family: "'Inter', sans-serif" },
             padding: 12,
             cornerRadius: 12,
             displayColors: true,
             boxPadding: 4,
             callbacks: {
-              label: (context: { label?: string; parsed: number; dataset: { data: number[] } }) => {
+              label: (context: {
+                label?: string;
+                parsed: number;
+                dataset: { data: number[] };
+              }) => {
                 const label = context.label || "";
                 const value = context.parsed;
-                const total = context.dataset.data.reduce((a, b) => (a as number) + (b as number), 0) as number;
+                const total = context.dataset.data.reduce(
+                  (a, b) => (a as number) + (b as number),
+                  0,
+                ) as number;
                 const percentage = Math.round((value / total) * 100);
                 return `${label}: ${formatCurrency(value * 100)} (${percentage}%)`;
               },
@@ -135,8 +147,8 @@
   let legendData = $derived(
     data.slice(0, 5).map((item, index) => ({
       ...item,
-      color: getColor(index, type)
-    }))
+      color: getColor(index, type),
+    })),
   );
 </script>
 
@@ -144,12 +156,19 @@
   <!-- Chart -->
   <div class="relative w-48 h-48 flex-shrink-0">
     <canvas bind:this={canvas}></canvas>
-    
+
     <!-- Center Text -->
-    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-      <span class="text-[10px] text-muted uppercase tracking-wider font-semibold mb-0.5">Total</span>
+    <div
+      class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
+    >
+      <span
+        class="text-[10px] text-muted uppercase tracking-wider font-semibold mb-0.5"
+        >Total</span
+      >
       <span class="text-sm font-bold text-foreground">
-        {formatCurrency(data.reduce((sum, d) => sum + d.amount, 0))}
+        {privacyStore.hideAmounts
+          ? "••••"
+          : formatCurrency(data.reduce((sum, d) => sum + d.amount, 0))}
       </span>
     </div>
   </div>
@@ -160,21 +179,23 @@
       <div class="flex items-center justify-between group cursor-default">
         <div class="flex items-center gap-3">
           <!-- Icon with colored background -->
-          <div 
+          <div
             class="w-9 h-9 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
             style="background-color: {item.color}20; color: {item.color};"
           >
             <DynamicIcon name={item.category_icon} size={18} />
           </div>
           <div class="flex flex-col">
-            <span class="text-sm font-semibold text-foreground">{item.category_name}</span>
+            <span class="text-sm font-semibold text-foreground"
+              >{item.category_name}</span
+            >
             <span class="text-xs text-muted font-medium">
               {item.percentage.toFixed(1)}%
             </span>
           </div>
         </div>
         <span class="text-sm font-bold text-foreground tabular-nums">
-          {formatCurrency(item.amount)}
+          {privacyStore.hideAmounts ? "••••" : formatCurrency(item.amount)}
         </span>
       </div>
     {/each}

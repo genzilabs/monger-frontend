@@ -31,17 +31,9 @@
 </svelte:head>
 
 <div class="container mx-auto space-y-6 pb-24 md:pb-6">
-  <div class="flex items-center gap-3">
-    <button
-      onclick={() => goto("/menu")}
-      class="p-2 -ml-2 rounded-lg hover:bg-surface transition-colors"
-    >
-      <ChevronLeftIcon size={20} class="text-muted" />
-    </button>
-    <div>
-      <h1 class="text-2xl font-bold text-foreground">Bahasa</h1>
-      <p class="text-secondary text-sm">Pilih bahasa aplikasi</p>
-    </div>
+  <div>
+    <h1 class="text-2xl font-bold text-foreground">Bahasa</h1>
+    <p class="text-secondary text-sm">Pilih bahasa aplikasi</p>
   </div>
 
   <Card class="p-0 overflow-hidden">

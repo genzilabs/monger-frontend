@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Card, EmptyState } from "$lib/components/ui";
+  import { Card, EmptyState, PrivacyToggle } from "$lib/components/ui";
   import { TransactionItem } from "$lib/components/dashboard";
   import {
     TransactionDetailSheet,
@@ -158,7 +158,10 @@
 <div class="animate-fade-in space-y-4">
   <!-- Header -->
   <div>
-    <h1 class="text-2xl font-bold text-foreground">Riwayat Transaksi</h1>
+    <div class="flex items-center gap-2">
+      <h1 class="text-2xl font-bold text-foreground">Riwayat Transaksi</h1>
+      <PrivacyToggle />
+    </div>
     <p class="text-secondary">
       {#if booksStore.activeBook}
         {#if selectedPocketId}

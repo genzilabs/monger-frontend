@@ -1,0 +1,47 @@
+/**
+ * Application Updates / Release Notes
+ * 
+ * Add new updates at the TOP of the array (newest first).
+ * Each update should have a unique version string.
+ */
+
+export interface UpdateChange {
+  text: string;
+}
+
+export interface Update {
+  version: string;
+  date: string; // Format: YYYY-MM-DD
+  title: string;
+  description: string;
+  changes: UpdateChange[];
+}
+
+export const UPDATES: Update[] = [
+  {
+    version: "0.1.0-alpha",
+    date: "2026-01-21",
+    title: "Versi Awal Alpha",
+    description: "Monger hadir dalam versi awal. Kami masih terus memperbaiki dan mendengarkan masukanmu.",
+    changes: [
+      { text: "Catat transaksi harian dengan Buku dan Kantong" },
+      { text: "Lihat ringkasan keuangan di Dashboard" },
+      { text: "Atur kategori sesuai kebutuhan" },
+      { text: "Transaksi rutin untuk pengeluaran tetap" },
+    ],
+  },
+];
+
+/**
+ * Get the latest update version string
+ */
+export function getLatestVersion(): string {
+  return UPDATES.length > 0 ? UPDATES[0].version : "0.0.0";
+}
+
+/**
+ * Get the latest update object
+ */
+export function getLatestUpdate(): Update | null {
+  return UPDATES.length > 0 ? UPDATES[0] : null;
+}

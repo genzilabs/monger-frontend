@@ -6,6 +6,7 @@
     transactionsStore,
     toastStore,
     authStore,
+    privacyStore,
   } from "$lib/stores";
   import { formatCurrency } from "$lib/utils/currency";
   import { TransactionList } from "$lib/components/dashboard";
@@ -13,7 +14,7 @@
     EditPocketModal,
     EditTransactionModal,
   } from "$lib/components/modals";
-  import { Button, ResponsiveModal } from "$lib/components/ui";
+  import { Button, ResponsiveModal, PrivacyToggle } from "$lib/components/ui";
   import { EditIcon, TrashIcon, ShieldIcon } from "$lib/icons";
   import type { Transaction, Pocket } from "$lib/types";
   import { onMount, tick } from "svelte";
@@ -99,7 +100,7 @@
         {pocket?.name || "Detail Kantong"}
       </h1>
       {#if booksStore.activeBook?.owner_id !== authStore.user?.id}
-         <span
+        <span
           class="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 text-xs font-medium border border-blue-500/20"
         >
           Kolaborasi
@@ -113,12 +114,17 @@
     <!-- Balance Card -->
     <div class="bg-surface border border-border rounded-2xl p-6 mb-6">
       <div class="flex flex-col items-center justify-center">
-        <span class="text-sm text-muted mb-1 font-medium">Total Saldo</span>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-sm text-muted font-medium">Total Saldo</span>
+          <PrivacyToggle />
+        </div>
         <h2 class="text-4xl font-bold text-foreground mb-6">
-          {formatCurrency(
-            pocket.balance_cents,
-            booksStore.activeBook?.base_currency
-          )}
+          {privacyStore.hideAmounts
+            ? "••••"
+            : formatCurrency(
+                pocket.balance_cents,
+                booksStore.activeBook?.base_currency,
+              )}
         </h2>
 
         <!-- Transaction Quick Actions -->

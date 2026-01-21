@@ -6,3 +6,5 @@ export { transactionsStore } from './transactions.svelte';
 export { uiStore } from './ui.svelte';
 export { authStore } from './auth.svelte';
 export { booksStore } from './books.svelte';
+export { updatesStore } from './updates.svelte';
+export { privacyStore } from './privacy.svelte';
