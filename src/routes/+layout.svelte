@@ -5,13 +5,16 @@
   import { onMount } from "svelte";
   import { browser } from "$app/environment";
   import { pwaInfo } from 'virtual:pwa-info';
+  import { page } from "$app/stores";
 
   let { children } = $props();
+
+  let isPublic = $derived(['/', '/privacy', '/terms'].includes($page.url.pathname));
 
   onMount(async () => {
     authStore.initialize();
 
-    if (pwaInfo) {
+    if (pwaInfo && !isPublic) {
       const { registerSW } = await import('virtual:pwa-register');
       registerSW({
         immediate: true,
@@ -64,7 +67,7 @@
       rel="stylesheet"
     />
   </noscript>
-  {#if pwaInfo?.webManifest?.linkTag}
+  {#if pwaInfo?.webManifest?.linkTag && !isPublic}
     {@html pwaInfo.webManifest.linkTag}
   {/if}
 </svelte:head>
