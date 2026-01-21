@@ -10,6 +10,7 @@
     TagIcon,
     CreditCardIcon,
     RepeatIcon,
+    GlobeIcon,
   } from "$lib/icons";
   import { Card } from "$lib/components/ui";
   import { authStore } from "$lib/stores";
@@ -29,6 +30,13 @@
       icon: SettingsIcon,
       color: "text-orange-600",
       bg: "bg-orange-50",
+    },
+    {
+      label: "Bahasa",
+      href: "/settings/language",
+      icon: GlobeIcon,
+      color: "text-pink-600",
+      bg: "bg-pink-50",
     },
     {
       label: "Buku",

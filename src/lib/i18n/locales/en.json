@@ -1,0 +1,101 @@
+{
+	"common": {
+		"save": "Save",
+		"cancel": "Cancel",
+		"delete": "Delete",
+		"edit": "Edit",
+		"create": "Create",
+		"add": "Add",
+		"loading": "Loading...",
+		"back": "Back",
+		"next": "Next",
+		"done": "Done",
+		"confirm": "Confirm",
+		"close": "Close",
+		"viewMore": "View more",
+		"search": "Search",
+		"noData": "No data"
+	},
+	"dashboard": {
+		"title": "Dashboard",
+		"totalNetWorth": "Total Net Worth",
+		"thisMonth": "This Month",
+		"income": "Income",
+		"expense": "Expense",
+		"yourPockets": "Your Pockets",
+		"createPocket": "Create Pocket",
+		"addNewPocket": "Add New Pocket",
+		"recentTransactions": "Recent Transactions",
+		"noTransactions": "No transactions yet",
+		"hideBalance": "Hide balance",
+		"showBalance": "Show balance",
+		"selectBook": "Select Book",
+		"selectBookDesc": "Please select a book first.",
+		"startJourney": "Start Your Financial Journey",
+		"createFirstBook": "Create your first book above.",
+		"incomeExpenseChart": "Income & Expense Chart"
+	},
+	"books": {
+		"title": "Books",
+		"createBook": "Create Book",
+		"addNewBook": "Add New Book",
+		"noBooks": "No Books Yet",
+		"deleteBook": "Delete Book",
+		"editBook": "Edit Book",
+		"switchBook": "Switch Book"
+	},
+	"pockets": {
+		"title": "Pockets",
+		"createPocket": "Create Pocket",
+		"addNewPocket": "Add New Pocket",
+		"noPockets": "No Pockets Yet",
+		"deletePocket": "Delete Pocket",
+		"editPocket": "Edit Pocket",
+		"selectBookFirst": "Select a Book First"
+	},
+	"transactions": {
+		"title": "Transactions",
+		"createTransaction": "Create Transaction",
+		"addTransaction": "Add Transaction",
+		"income": "Income",
+		"expense": "Expense",
+		"transfer": "Transfer",
+		"noTransactions": "No transactions yet",
+		"deleteTransaction": "Delete Transaction",
+		"editTransaction": "Edit Transaction",
+		"addIncome": "Add Income",
+		"addExpense": "Add Expense"
+	},
+	"auth": {
+		"login": "Login",
+		"register": "Register",
+		"logout": "Logout",
+		"email": "Email",
+		"password": "Password",
+		"confirmPassword": "Confirm Password",
+		"forgotPassword": "Forgot Password?",
+		"noAccount": "Don't have an account?",
+		"hasAccount": "Already have an account?",
+		"loginDesc": "Sign in to your Books and Pockets.",
+		"registerDesc": "Create a new account to get started.",
+		"sendCode": "Send Code",
+		"enterOtp": "Enter 6-digit code"
+	},
+	"settings": {
+		"title": "Settings",
+		"language": "Language",
+		"selectLanguage": "Select app language",
+		"theme": "Theme",
+		"account": "Account",
+		"categories": "Categories",
+		"pocketTypes": "Pocket Types",
+		"about": "About"
+	},
+	"categories": {
+		"income": "Income",
+		"expense": "Expense",
+		"createCategory": "Create Category",
+		"editCategory": "Edit Category",
+		"deleteCategory": "Delete Category"
+	}
+}

@@ -59,7 +59,7 @@
     <div>
       <div class="flex items-center justify-between mb-1">
         <p class="text-sm font-medium text-muted flex items-center gap-2">
-          Total Net Worth
+          Total Nilai Bersih
         </p>
         <button
           onclick={toggleVisibility}
@@ -87,8 +87,10 @@
       {/if}
     </div>
 
-    <!-- Income / Expense Grid -->
-    <div class="grid grid-cols-2 gap-3 md:hidden">
+    <!-- Income / Expense Grid - Monthly -->
+    <div class="space-y-2">
+      <p class="text-xs font-medium text-muted">Bulan Ini</p>
+      <div class="grid grid-cols-2 gap-3">
       <!-- Income -->
       <div class="bg-emerald-500/10 rounded-xl p-3 flex flex-col gap-1">
         <div class="flex items-center gap-1.5">
@@ -127,5 +129,6 @@
         {/if}
       </div>
     </div>
+  </div>
   </div>
 </div>

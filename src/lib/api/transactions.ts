@@ -8,6 +8,32 @@ export interface ListByBookOptions {
 	type?: 'income' | 'expense' | 'transfer';
 }
 
+export interface MonthlySummary {
+	total_income: number;
+	total_expense: number;
+	month: number;
+	year: number;
+}
+
+export interface DailyBreakdown {
+	date: string;
+	income: number;
+	expense: number;
+}
+
+export interface MonthlySummaryResponse {
+	summary: MonthlySummary;
+	daily: DailyBreakdown[];
+}
+
+export interface CategoryBreakdown {
+	category_id: string | null;
+	category_name: string;
+	category_icon: string;
+	amount: number;
+	percentage: number;
+}
+
 export const transactionsApi = {
 	create: (data: CreateTransactionRequest) => 
 		client.post<Transaction>('/transactions', data, true),
@@ -40,6 +66,12 @@ export const transactionsApi = {
 		if (options.search) params.set('search', options.search);
 		if (options.type) params.set('type', options.type);
 		return client.get<Transaction[]>(`/books/${bookId}/transactions?${params.toString()}`, true);
-	}
+	},
+
+	getMonthlySummary: (bookId: string, month: number, year: number) =>
+		client.get<MonthlySummaryResponse>(`/books/${bookId}/summary?month=${month}&year=${year}`, true),
+
+	getCategoryBreakdown: (bookId: string, type: 'income' | 'expense', month: number, year: number) =>
+		client.get<CategoryBreakdown[]>(`/books/${bookId}/categories/breakdown?type=${type}&month=${month}&year=${year}`, true)
 };
 

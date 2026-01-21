@@ -1,0 +1,101 @@
+{
+	"common": {
+		"save": "Simpan",
+		"cancel": "Batal",
+		"delete": "Hapus",
+		"edit": "Ubah",
+		"create": "Buat",
+		"add": "Tambah",
+		"loading": "Memuat...",
+		"back": "Kembali",
+		"next": "Lanjut",
+		"done": "Selesai",
+		"confirm": "Konfirmasi",
+		"close": "Tutup",
+		"viewMore": "Lihat lebih banyak",
+		"search": "Cari",
+		"noData": "Tidak ada data"
+	},
+	"dashboard": {
+		"title": "Dashboard",
+		"totalNetWorth": "Total Nilai Bersih",
+		"thisMonth": "Bulan Ini",
+		"income": "Pemasukan",
+		"expense": "Pengeluaran",
+		"yourPockets": "Kantong Kamu",
+		"createPocket": "Buat Kantong",
+		"addNewPocket": "Tambah Kantong Baru",
+		"recentTransactions": "Transaksi Terbaru",
+		"noTransactions": "Belum ada transaksi",
+		"hideBalance": "Sembunyikan saldo",
+		"showBalance": "Tampilkan saldo",
+		"selectBook": "Pilih Buku",
+		"selectBookDesc": "Pilih buku di atas dulu ya.",
+		"startJourney": "Mulai Perjalanan Keuanganmu",
+		"createFirstBook": "Buat buku pertamamu di atas.",
+		"incomeExpenseChart": "Grafik Pemasukan & Pengeluaran"
+	},
+	"books": {
+		"title": "Buku",
+		"createBook": "Buat Buku",
+		"addNewBook": "Tambah Buku Baru",
+		"noBooks": "Belum Ada Buku",
+		"deleteBook": "Hapus Buku",
+		"editBook": "Ubah Buku",
+		"switchBook": "Ganti Buku"
+	},
+	"pockets": {
+		"title": "Kantong",
+		"createPocket": "Buat Kantong",
+		"addNewPocket": "Tambah Kantong Baru",
+		"noPockets": "Belum Ada Kantong",
+		"deletePocket": "Hapus Kantong",
+		"editPocket": "Ubah Kantong",
+		"selectBookFirst": "Pilih Buku Dulu"
+	},
+	"transactions": {
+		"title": "Transaksi",
+		"createTransaction": "Buat Transaksi",
+		"addTransaction": "Tambah Transaksi",
+		"income": "Pemasukan",
+		"expense": "Pengeluaran",
+		"transfer": "Transfer",
+		"noTransactions": "Belum ada transaksi",
+		"deleteTransaction": "Hapus Transaksi",
+		"editTransaction": "Ubah Transaksi",
+		"addIncome": "Tambah Pemasukan",
+		"addExpense": "Tambah Pengeluaran"
+	},
+	"auth": {
+		"login": "Masuk",
+		"register": "Daftar",
+		"logout": "Keluar",
+		"email": "Email",
+		"password": "Kata Sandi",
+		"confirmPassword": "Konfirmasi Kata Sandi",
+		"forgotPassword": "Lupa Kata Sandi?",
+		"noAccount": "Belum punya akun?",
+		"hasAccount": "Sudah punya akun?",
+		"loginDesc": "Masuk ke Buku dan Kantongmu.",
+		"registerDesc": "Buat akun baru untuk memulai.",
+		"sendCode": "Kirim Kode",
+		"enterOtp": "Masukkan 6 digit kode"
+	},
+	"settings": {
+		"title": "Pengaturan",
+		"language": "Bahasa",
+		"selectLanguage": "Pilih bahasa aplikasi",
+		"theme": "Tema",
+		"account": "Akun",
+		"categories": "Kategori",
+		"pocketTypes": "Jenis Kantong",
+		"about": "Tentang"
+	},
+	"categories": {
+		"income": "Pemasukan",
+		"expense": "Pengeluaran",
+		"createCategory": "Buat Kategori",
+		"editCategory": "Ubah Kategori",
+		"deleteCategory": "Hapus Kategori"
+	}
+}
