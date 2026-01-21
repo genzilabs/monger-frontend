@@ -54,7 +54,7 @@ export default defineConfig({
 				enabled: true,
 				type: 'module'
 			}
-		})
+		}) as any
 	],
 	
 	// Performance optimizations
@@ -63,23 +63,10 @@ export default defineConfig({
 		minify: 'esbuild',
 		
 		// Code splitting - create smaller chunks
+		// Code splitting is handled automatically by Vite
 		rollupOptions: {
-			output: {
-				manualChunks: (id) => {
-					// Vendor chunks for better caching
-					if (id.includes('node_modules')) {
-						if (id.includes('bits-ui') || id.includes('lucide')) {
-							return 'ui-vendor';
-						}
-						if (id.includes('sentry')) {
-							return 'sentry';
-						}
-						// Group remaining vendor deps
-						return 'vendor';
-					}
-				}
-			}
-		},
+            // explicit empty to clear previous config if needed, or just remove the block
+        },
 		
 		// Increase chunk size warning limit
 		chunkSizeWarningLimit: 500,
@@ -95,6 +82,6 @@ export default defineConfig({
 	
 	// Enable esbuild optimizations
 	esbuild: {
-		drop: ['console', 'debugger'] // Remove in production
+		drop: ['debugger'] // Keep console for server logs, only drop debugger
 	}
 });

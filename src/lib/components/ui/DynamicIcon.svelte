@@ -39,7 +39,7 @@
     'hand-holding-dollar': Icons.WalletIcon, // Placeholder
   };
 
-  const IconComponent = $derived(iconMap[name] || Icons.WalletIcon);
+  const IconComponent = $derived(iconMap[name] || Icons.WalletIcon || null);
 </script>
 
 <IconComponent {size} class={className} />
