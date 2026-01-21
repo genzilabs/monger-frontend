@@ -4,11 +4,25 @@
   import { ToastContainer } from "$lib/components/ui";
   import { onMount } from "svelte";
   import { browser } from "$app/environment";
+  import { pwaInfo } from 'virtual:pwa-info';
 
   let { children } = $props();
 
-  onMount(() => {
+  onMount(async () => {
     authStore.initialize();
+
+    if (pwaInfo) {
+      const { registerSW } = await import('virtual:pwa-register');
+      registerSW({
+        immediate: true,
+        onRegistered(r: ServiceWorkerRegistration | undefined) {
+          console.log('SW Registered: ' + r);
+        },
+        onRegisterError(error: any) {
+          console.log('SW Registration Error', error);
+        }
+      });
+    }
 
     // Lazy load fonts after initial render
     if (browser) {
@@ -50,6 +64,9 @@
       rel="stylesheet"
     />
   </noscript>
+  {#if pwaInfo?.webManifest?.linkTag}
+    {@html pwaInfo.webManifest.linkTag}
+  {/if}
 </svelte:head>
 
 {@render children()}

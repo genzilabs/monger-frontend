@@ -68,7 +68,7 @@
         {:else if currentView === "security"}
           <SecurityView onBack={handleBack} />
         {:else if currentView === "settings"}
-          <SettingsView onBack={handleBack} />
+          <SettingsView />
         {/if}
       </div>
     {/if}

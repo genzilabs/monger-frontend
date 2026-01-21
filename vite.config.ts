@@ -3,7 +3,7 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 import { sentrySvelteKit } from "@sentry/sveltekit";
 
-import { VitePWA } from 'vite-plugin-pwa';
+import { SvelteKitPWA } from '@vite-pwa/sveltekit';
 
 export default defineConfig({
 	plugins: [
@@ -16,9 +16,9 @@ export default defineConfig({
 		}), 
 		tailwindcss(), 
 		sveltekit(),
-		VitePWA({
+		SvelteKitPWA({
 			registerType: 'autoUpdate',
-			includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+			includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
 			manifest: {
 				name: 'Monger - Keuangan Gen Z',
 				short_name: 'Monger',
@@ -54,7 +54,7 @@ export default defineConfig({
 				enabled: true,
 				type: 'module'
 			}
-		}) as any
+		})
 	],
 	
 	// Performance optimizations
