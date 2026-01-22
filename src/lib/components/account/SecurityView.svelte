@@ -11,7 +11,7 @@
   let currentPassword = $state("");
   let newPassword = $state("");
   let confirmPassword = $state("");
-  
+
   async function handleUpdatePassword() {
     passwordError = "";
     if (!currentPassword) {
@@ -62,9 +62,9 @@
 
   // PIN Modal State
   let showPinModal = $state(false);
-  let pinMode = $state<'set' | 'change'>('set');
-  let pinStep = $state<'current' | 'new' | 'confirm'>('new');
-  
+  let pinMode = $state<"set" | "change">("set");
+  let pinStep = $state<"current" | "new" | "confirm">("new");
+
   let currentPin = $state("");
   let newPin = $state("");
   let confirmPin = $state("");
@@ -88,10 +88,10 @@
 
   async function handlePinToggle() {
     if (isSavingPin) return;
-    
+
     // If enabling and PIN not set, show Set PIN modal
     if (!pinStatus.enabled && !pinStatus.is_set) {
-      openPinModal('set');
+      openPinModal("set");
       return;
     }
 
@@ -103,7 +103,7 @@
       pinStatus.enabled = newEnabled;
       // Sync store
       pinStore.updateSettings(newEnabled, pinStatus.lock_timeout);
-      
+
       toastStore.success(newEnabled ? "PIN diaktifkan" : "PIN dinonaktifkan");
     } catch (e) {
       toastStore.error("Gagal mengubah pengaturan PIN");
@@ -115,12 +115,12 @@
   async function handleTimeoutChange(e: Event) {
     const select = e.target as HTMLSelectElement;
     const newTimeout = select.value;
-    
+
     try {
       await authApi.updatePINSettings({ lock_timeout: newTimeout as any });
       pinStatus.lock_timeout = newTimeout;
       // Sync store
-      pinStore.updateSettings(pinStatus.enabled, newTimeout); 
+      pinStore.updateSettings(pinStatus.enabled, newTimeout);
 
       toastStore.success("Waktu kunci diperbarui");
     } catch {
@@ -130,9 +130,9 @@
     }
   }
 
-  function openPinModal(mode: 'set' | 'change') {
+  function openPinModal(mode: "set" | "change") {
     pinMode = mode;
-    pinStep = mode === 'change' ? 'current' : 'new';
+    pinStep = mode === "change" ? "current" : "new";
     currentPin = "";
     newPin = "";
     confirmPin = "";
@@ -142,16 +142,16 @@
 
   async function handlePinSubmit() {
     pinError = "";
-    
+
     // Step 1: Verify Current PIN (Change Mode)
-    if (pinStep === 'current') {
+    if (pinStep === "current") {
       if (currentPin.length !== 6) return;
-      // In a real flow we might verify against API here, or just proceed to New PIN 
+      // In a real flow we might verify against API here, or just proceed to New PIN
       // and verify all at end. But checking first is better UX.
       try {
         const res = await authApi.verifyPIN({ pin: currentPin });
         if (res.data) {
-          pinStep = 'new';
+          pinStep = "new";
         } else {
           pinError = "PIN salah";
         }
@@ -162,14 +162,14 @@
     }
 
     // Step 2: Enter New PIN
-    if (pinStep === 'new') {
+    if (pinStep === "new") {
       if (newPin.length !== 6) return;
-      pinStep = 'confirm';
+      pinStep = "confirm";
       return;
     }
 
     // Step 3: Confirm & Save
-    if (pinStep === 'confirm') {
+    if (pinStep === "confirm") {
       if (confirmPin !== newPin) {
         pinError = "PIN tidak sama";
         return;
@@ -177,19 +177,19 @@
 
       isSavingPin = true;
       try {
-        if (pinMode === 'set') {
+        if (pinMode === "set") {
           await authApi.setPIN({ pin: newPin, confirm_pin: confirmPin });
           toastStore.success("PIN berhasil dibuat");
           // Setting PIN automatically enables it usually? API sets enabled=true.
         } else {
-          await authApi.changePIN({ 
-            current_pin: currentPin, 
-            new_pin: newPin, 
-            confirm_pin: confirmPin 
+          await authApi.changePIN({
+            current_pin: currentPin,
+            new_pin: newPin,
+            confirm_pin: confirmPin,
           });
           toastStore.success("PIN berhasil diubah");
         }
-        
+
         await fetchPinStatus();
         showPinModal = false;
       } catch (e: any) {
@@ -199,17 +199,11 @@
       }
     }
   }
-
-  import { ChevronLeftIcon } from "$lib/icons";
-  let { onBack } = $props<{ onBack: () => void }>();
 </script>
 
-<div class="space-y-6 animate-fade-in pt-2">
-  <!-- Inline Header -->
-  <div class="flex items-center gap-3 mb-6">
-    <button onclick={onBack} class="md:hidden p-2 -ml-2 hover:bg-surface rounded-full">
-      <ChevronLeftIcon class="w-5 h-5" />
-    </button>
+<div class="space-y-6 animate-fade-in">
+  <!-- Title only, no back button - consistent with SettingsView -->
+  <div class="flex items-center gap-3">
     <h2 class="text-xl font-bold text-foreground">Keamanan</h2>
   </div>
 
@@ -268,15 +262,19 @@
           Kunci aplikasi saat tidak digunakan.
         </p>
       </div>
-      
+
       <!-- Toggle Switch -->
       <button
         onclick={handlePinToggle}
         disabled={isSavingPin}
-        class="w-11 h-6 rounded-full relative transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary {pinStatus.enabled ? 'bg-primary' : 'bg-border'}"
+        class="w-11 h-6 rounded-full relative transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary {pinStatus.enabled
+          ? 'bg-primary'
+          : 'bg-border'}"
       >
         <span
-          class="block w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-200 {pinStatus.enabled ? 'translate-x-6' : 'translate-x-1'}"
+          class="block w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-200 {pinStatus.enabled
+            ? 'translate-x-6'
+            : 'translate-x-1'}"
         ></span>
       </button>
     </div>
@@ -284,9 +282,11 @@
     {#if pinStatus.enabled}
       <div class="pt-4 border-t border-border space-y-4 animate-fade-in">
         <div class="grid grid-cols-2 gap-4 items-center">
-          <label class="text-sm font-medium text-foreground">Kunci Otomatis</label>
-          <select 
-            value={pinStatus.lock_timeout} 
+          <label class="text-sm font-medium text-foreground"
+            >Kunci Otomatis</label
+          >
+          <select
+            value={pinStatus.lock_timeout}
             onchange={handleTimeoutChange}
             class="bg-surface border border-border rounded-lg text-sm p-2 focus:border-primary focus:ring-1 focus:ring-primary outline-none"
           >
@@ -301,10 +301,10 @@
 
         <div class="flex items-center justify-between">
           <span class="text-sm font-medium text-foreground">Ubah PIN</span>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onclick={() => openPinModal('change')}
+          <Button
+            variant="outline"
+            size="sm"
+            onclick={() => openPinModal("change")}
           >
             Ubah
           </Button>
@@ -317,24 +317,24 @@
 <!-- PIN Modal -->
 <ResponsiveModal
   open={showPinModal}
-  onClose={() => showPinModal = false}
-  title={pinMode === 'set' ? 'Buat PIN' : 'Ubah PIN'}
+  onClose={() => (showPinModal = false)}
+  title={pinMode === "set" ? "Buat PIN" : "Ubah PIN"}
 >
   <div class="p-4 space-y-6 flex flex-col items-center">
     <div class="text-center space-y-2">
       <h3 class="text-lg font-semibold">
-        {#if pinStep === 'current'}
+        {#if pinStep === "current"}
           Masukkan PIN Lama
-        {:else if pinStep === 'new'}
-          {pinMode === 'set' ? 'Buat PIN Baru' : 'Masukkan PIN Baru'}
+        {:else if pinStep === "new"}
+          {pinMode === "set" ? "Buat PIN Baru" : "Masukkan PIN Baru"}
         {:else}
           Konfirmasi PIN Baru
         {/if}
       </h3>
       <p class="text-sm text-secondary">
-        {#if pinStep === 'current'}
+        {#if pinStep === "current"}
           Verifikasi identitasmu dulu.
-        {:else if pinStep === 'new'}
+        {:else if pinStep === "new"}
           Gunakan 6 angka yang susah ditebak.
         {:else}
           Masukkan ulang biar ngga salah.
@@ -346,11 +346,15 @@
       <OTPInput
         length={6}
         autoFocus
-        value={pinStep === 'current' ? currentPin : pinStep === 'new' ? newPin : confirmPin}
+        value={pinStep === "current"
+          ? currentPin
+          : pinStep === "new"
+            ? newPin
+            : confirmPin}
         error={!!pinError}
         onchange={(val) => {
-          if (pinStep === 'current') currentPin = val;
-          else if (pinStep === 'new') newPin = val;
+          if (pinStep === "current") currentPin = val;
+          else if (pinStep === "new") newPin = val;
           else confirmPin = val;
           pinError = "";
         }}
@@ -365,19 +369,29 @@
     {/if}
 
     <div class="w-full pt-4">
-       {#if pinStep === 'current'}
-          <Button fullWidth variant="primary" onclick={handlePinSubmit} loading={isSavingPin}>
-             Lanjut
-          </Button>
-       {:else if pinStep === 'new'}
-           <Button fullWidth variant="primary" onclick={handlePinSubmit}>
-             Lanjut
-          </Button>
-       {:else}
-           <Button fullWidth variant="primary" onclick={handlePinSubmit} loading={isSavingPin}>
-             Simpan PIN
-          </Button>
-       {/if}
+      {#if pinStep === "current"}
+        <Button
+          fullWidth
+          variant="primary"
+          onclick={handlePinSubmit}
+          loading={isSavingPin}
+        >
+          Lanjut
+        </Button>
+      {:else if pinStep === "new"}
+        <Button fullWidth variant="primary" onclick={handlePinSubmit}>
+          Lanjut
+        </Button>
+      {:else}
+        <Button
+          fullWidth
+          variant="primary"
+          onclick={handlePinSubmit}
+          loading={isSavingPin}
+        >
+          Simpan PIN
+        </Button>
+      {/if}
     </div>
   </div>
 </ResponsiveModal>
