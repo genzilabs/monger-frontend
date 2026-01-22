@@ -19,6 +19,19 @@ export interface Update {
 
 export const UPDATES: Update[] = [
   {
+    version: "0.3.0-alpha",
+    date: "2026-01-22",
+    title: "Perbaikan UI dan Fitur Baru",
+    description: "Kami menambahkan fitur feedback dan merapikan tampilan transaksi agar lebih nyaman digunakan.",
+    changes: [
+      { text: "Beri masukan langsung dari menu" },
+      { text: "Input nominal dengan pemisah ribuan" },
+      { text: "Tampilan transaksi lebih konsisten" },
+      { text: "Pengaturan bahasa dipindah ke Akun" },
+      { text: "Halaman transaksi rutin lebih rapi" },
+    ],
+  },
+  {
     version: "0.2.0-alpha",
     date: "2026-01-21",
     title: "Privasi dan Tampilan Lebih Baik",

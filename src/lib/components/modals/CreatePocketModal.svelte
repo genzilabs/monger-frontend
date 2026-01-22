@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Button, ResponsiveModal } from "$lib/components/ui";
+  import { Button, ResponsiveModal, MoneyInput } from "$lib/components/ui";
   import DynamicIcon from "$lib/components/ui/DynamicIcon.svelte";
   import { booksStore } from "$lib/stores";
   import { onMount } from "svelte";
@@ -24,7 +24,7 @@
       : [
           { slug: "cash", name: "Cash", icon_slug: "cash" },
           { slug: "bank", name: "Bank Account", icon_slug: "bank" },
-        ]
+        ],
   ); // Fallback if store is empty
 
   const colors = [
@@ -155,13 +155,7 @@
       >
         Initial Balance
       </label>
-      <input
-        id="pocket-balance"
-        type="number"
-        bind:value={balance}
-        placeholder="0"
-        class="w-full px-4 py-3 bg-surface border border-border rounded-xl text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary"
-      />
+      <MoneyInput id="pocket-balance" bind:value={balance} placeholder="0" />
     </div>
   </div>
 
