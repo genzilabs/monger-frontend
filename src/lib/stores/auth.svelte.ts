@@ -49,19 +49,35 @@ function createAuthStore() {
 				const storedUser = tokenStorage.getUser<User>();
 				const accessToken = tokenStorage.getAccessToken();
 
+				console.log('[Auth Init] Stored user:', !!storedUser, 'Token:', !!accessToken);
+
 				if (storedUser && accessToken) {
-					// Validate token by fetching profile
-					const result = await authApi.getProfile();
-					if (result.data) {
-						state.user = result.data;
-						tokenStorage.setUser(result.data);
-					} else {
-						// Token invalid, clear storage
-						tokenStorage.clearAll();
+					// Set user immediately from storage (for offline/fast load)
+					state.user = storedUser;
+					
+					// Validate token by fetching profile (but don't logout on network error)
+					try {
+						const result = await authApi.getProfile();
+						if (result.data) {
+							state.user = result.data;
+							tokenStorage.setUser(result.data);
+							console.log('[Auth Init] Profile validated');
+						} else if (result.error) {
+							// Only clear if server explicitly rejects (401/403), not network error
+							const errorMsg = result.error.error || '';
+							console.log('[Auth Init] Profile error:', errorMsg);
+							if (errorMsg.includes('401') || errorMsg.toLowerCase().includes('unauthorized')) {
+								tokenStorage.clearAll();
+								state.user = null;
+							}
+						}
+					} catch (networkError) {
+						// Network error - keep user logged in with cached data
+						console.log('[Auth Init] Network error, keeping cached user');
 					}
 				}
-			} catch {
-				tokenStorage.clearAll();
+			} catch (err) {
+				console.log('[Auth Init] Unexpected error:', err);
 			} finally {
 				state.isLoading = false;
 				state.isInitialized = true;

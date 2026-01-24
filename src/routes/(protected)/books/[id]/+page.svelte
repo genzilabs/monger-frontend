@@ -23,7 +23,7 @@
     ShieldIcon,
   } from "$lib/icons";
 
-  // Effects
+  // Modal states
   let showCreatePocketModal = $state(false);
   let showEditBookModal = $state(false);
   let showInviteModal = $state(false);

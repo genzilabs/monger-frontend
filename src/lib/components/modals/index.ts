@@ -8,4 +8,5 @@ export { default as NotificationModal } from "./NotificationModal.svelte";
 export { default as EditPocketModal } from "./EditPocketModal.svelte";
 export { default as InviteMemberModal } from './InviteMemberModal.svelte';
 export { default as MembersListModal } from './MembersListModal.svelte';
-
+export { default as ExportModal } from './ExportModal.svelte';
+export { default as ImportWizard } from './ImportWizard.svelte';
