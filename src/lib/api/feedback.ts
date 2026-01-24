@@ -10,6 +10,6 @@ export const feedbackApi = {
 	 * Submit user feedback
 	 */
 	async submit(data: FeedbackRequest) {
-		return apiClient.post<FeedbackResponse>('/feedback', data);
+		return apiClient.post<FeedbackResponse>('/feedback', data, true);
 	}
 };
