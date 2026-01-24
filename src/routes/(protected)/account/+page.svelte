@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  
+
   import {
     Menu,
     ProfileView,
@@ -30,8 +30,6 @@
   function handleBack() {
     currentView = "menu";
   }
-
-
 
   onMount(async () => {
     // Check for view param
@@ -66,7 +64,7 @@
         {#if currentView === "profile"}
           <ProfileView onBack={handleBack} />
         {:else if currentView === "security"}
-          <SecurityView onBack={handleBack} />
+          <SecurityView />
         {:else if currentView === "settings"}
           <SettingsView />
         {/if}

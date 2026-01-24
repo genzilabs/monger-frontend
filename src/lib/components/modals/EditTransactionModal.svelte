@@ -4,7 +4,8 @@
     Combobox,
     type ComboboxOption,
     ResponsiveModal,
-    BookSelector
+    BookSelector,
+    MoneyInput,
   } from "$lib/components/ui";
   import { booksStore, transactionsStore, toastStore } from "$lib/stores";
   import { transactionsApi } from "$lib/api/transactions";
@@ -46,7 +47,7 @@
   let excludeFromAnalytics = $state(false);
 
   // Temporary storage for books not in the store (to fix Unknown Book)
-  let tempBooks = $state<Record<string, { id: string, name: string }>>({});
+  let tempBooks = $state<Record<string, { id: string; name: string }>>({});
 
   // Categories
   let categories = $state<Category[]>([]);
@@ -81,8 +82,8 @@
     if (isCrossBook && fromBookId) {
       sourceList = fromBookPockets;
     } else {
-       // Default to active book pockets if not cross-book or no fromBookId yet
-       sourceList = booksStore.pockets;
+      // Default to active book pockets if not cross-book or no fromBookId yet
+      sourceList = booksStore.pockets;
     }
 
     const baseOptions = sourceList.map((p) => ({
@@ -95,173 +96,205 @@
     // We use the transaction data to fill in the label if needed
     // Ensure the current "fromPocketId" is represented even if lists are loading
     // We use the transaction data to fill in the label if needed
-    if (fromPocketId && !baseOptions.find(o => o.value === fromPocketId)) {
-        let label = "Unknown Pocket";
-        let icon = "💰";
-        
-        if (transaction) {
-             const pocket = transaction.source_pocket?.id === fromPocketId ? transaction.source_pocket
-                            : transaction.pocket?.id === fromPocketId ? transaction.pocket
-                            : transaction.related_pocket?.id === fromPocketId ? transaction.related_pocket
-                            : null;
-             
-             if (pocket) {
-                 // Privacy Masking: If we can't edit this side (book not in store), mask the name via owner
-                 if (!canEditFrom && (pocket as any).book?.owner_name) {
-                     label = `${(pocket as any).book.owner_name}'s Pocket`;
-                 } else {
-                     label = pocket.name;
-                 }
-             }
+    if (fromPocketId && !baseOptions.find((o) => o.value === fromPocketId)) {
+      let label = "Unknown Pocket";
+      let icon = "💰";
+
+      if (transaction) {
+        const pocket =
+          transaction.source_pocket?.id === fromPocketId
+            ? transaction.source_pocket
+            : transaction.pocket?.id === fromPocketId
+              ? transaction.pocket
+              : transaction.related_pocket?.id === fromPocketId
+                ? transaction.related_pocket
+                : null;
+
+        if (pocket) {
+          // Privacy Masking: If we can't edit this side (book not in store), mask the name via owner
+          if (!canEditFrom && (pocket as any).book?.owner_name) {
+            label = `${(pocket as any).book.owner_name}'s Pocket`;
+          } else {
+            label = pocket.name;
+          }
         }
-        
-        baseOptions.push({
-            value: fromPocketId,
-            label: label,
-            icon: icon
-        });
+      }
+
+      baseOptions.push({
+        value: fromPocketId,
+        label: label,
+        icon: icon,
+      });
     }
 
     return baseOptions;
   });
 
-
-
   // Available books for selection (From side)
   const fromBookOptions = $derived.by(() => {
-     const baseOptions = booksStore.books.map(b => ({
-        value: b.id,
-        label: b.name,
-        icon: "📚"
-     }));
+    const baseOptions = booksStore.books.map((b) => ({
+      value: b.id,
+      label: b.name,
+      icon: "📚",
+    }));
 
-     if (fromBookId && !baseOptions.find(o => o.value === fromBookId)) {
-        let label = "Unknown Book";
-        let icon = "📚";
-        
-        // Check tempBooks first
-        if (tempBooks[fromBookId]) {
-            label = tempBooks[fromBookId].name;
-        } 
-         // Try to find book name from transaction
-         else if (transaction?.source_pocket && (transaction.source_pocket as any).book) {
-             const book = (transaction.source_pocket as any).book;
-             if (book.owner_name) {
-                 label = `${book.owner_name}'s Book`;
-             } else {
-                 label = book.name;
-             }
-         } else if (transaction?.related_pocket && (transaction.related_pocket as any).book && transaction.related_pocket.book_id === fromBookId) {
-             const book = (transaction.related_pocket as any).book;
-             if (book.owner_name) {
-                 label = `${book.owner_name}'s Book`;
-             } else {
-                 label = book.name;
-             }
-         } else if (transaction?.pocket && (transaction.pocket as any).book && transaction.pocket.book_id === fromBookId) {
-             const book = (transaction.pocket as any).book;
-             if (book.owner_name) {
-                 label = `${book.owner_name}'s Book`;
-             } else {
-                 label = book.name;
-             }
-         }
+    if (fromBookId && !baseOptions.find((o) => o.value === fromBookId)) {
+      let label = "Unknown Book";
+      let icon = "📚";
 
-        baseOptions.push({
-            value: fromBookId,
-            label: label,
-            icon: icon
-        });
-     }
-     return baseOptions;
+      // Check tempBooks first
+      if (tempBooks[fromBookId]) {
+        label = tempBooks[fromBookId].name;
+      }
+      // Try to find book name from transaction
+      else if (
+        transaction?.source_pocket &&
+        (transaction.source_pocket as any).book
+      ) {
+        const book = (transaction.source_pocket as any).book;
+        if (book.owner_name) {
+          label = `${book.owner_name}'s Book`;
+        } else {
+          label = book.name;
+        }
+      } else if (
+        transaction?.related_pocket &&
+        (transaction.related_pocket as any).book &&
+        transaction.related_pocket.book_id === fromBookId
+      ) {
+        const book = (transaction.related_pocket as any).book;
+        if (book.owner_name) {
+          label = `${book.owner_name}'s Book`;
+        } else {
+          label = book.name;
+        }
+      } else if (
+        transaction?.pocket &&
+        (transaction.pocket as any).book &&
+        transaction.pocket.book_id === fromBookId
+      ) {
+        const book = (transaction.pocket as any).book;
+        if (book.owner_name) {
+          label = `${book.owner_name}'s Book`;
+        } else {
+          label = book.name;
+        }
+      }
+
+      baseOptions.push({
+        value: fromBookId,
+        label: label,
+        icon: icon,
+      });
+    }
+    return baseOptions;
   });
 
   // Available books for selection (To side)
   const toBookOptions = $derived.by(() => {
-     const baseOptions = booksStore.books.map(b => ({
-        value: b.id,
-        label: b.name,
-        icon: "📚"
-     }));
+    const baseOptions = booksStore.books.map((b) => ({
+      value: b.id,
+      label: b.name,
+      icon: "📚",
+    }));
 
-     if (toBookId && !baseOptions.find(o => o.value === toBookId)) {
-        let label = "Unknown Book";
-        let icon = "📚";
-        
-        // Check tempBooks first
-        if (tempBooks[toBookId]) {
-            label = tempBooks[toBookId].name;
-        } 
-        // Try to find book name from transaction dest_pocket
-        else if (transaction?.dest_pocket && (transaction.dest_pocket as any).book) {
-             const book = (transaction.dest_pocket as any).book;
-             if (book.owner_name) {
-                 label = `${book.owner_name}'s Book`;
-             } else {
-                 label = book.name;
-             }
-        } else if (transaction?.related_pocket && (transaction.related_pocket as any).book && transaction.related_pocket.book_id === toBookId) {
-             const book = (transaction.related_pocket as any).book;
-             if (book.owner_name) {
-                 label = `${book.owner_name}'s Book`;
-             } else {
-                 label = book.name;
-             }
-        } else if (transaction?.pocket && (transaction.pocket as any).book && transaction.pocket.book_id === toBookId) {
-             const book = (transaction.pocket as any).book;
-             if (book.owner_name) {
-                 label = `${book.owner_name}'s Book`;
-             } else {
-                 label = book.name;
-             }
+    if (toBookId && !baseOptions.find((o) => o.value === toBookId)) {
+      let label = "Unknown Book";
+      let icon = "📚";
+
+      // Check tempBooks first
+      if (tempBooks[toBookId]) {
+        label = tempBooks[toBookId].name;
+      }
+      // Try to find book name from transaction dest_pocket
+      else if (
+        transaction?.dest_pocket &&
+        (transaction.dest_pocket as any).book
+      ) {
+        const book = (transaction.dest_pocket as any).book;
+        if (book.owner_name) {
+          label = `${book.owner_name}'s Book`;
+        } else {
+          label = book.name;
         }
+      } else if (
+        transaction?.related_pocket &&
+        (transaction.related_pocket as any).book &&
+        transaction.related_pocket.book_id === toBookId
+      ) {
+        const book = (transaction.related_pocket as any).book;
+        if (book.owner_name) {
+          label = `${book.owner_name}'s Book`;
+        } else {
+          label = book.name;
+        }
+      } else if (
+        transaction?.pocket &&
+        (transaction.pocket as any).book &&
+        transaction.pocket.book_id === toBookId
+      ) {
+        const book = (transaction.pocket as any).book;
+        if (book.owner_name) {
+          label = `${book.owner_name}'s Book`;
+        } else {
+          label = book.name;
+        }
+      }
 
-        baseOptions.push({
-            value: toBookId,
-            label: label,
-            icon: icon
-        });
-     }
-     return baseOptions;
+      baseOptions.push({
+        value: toBookId,
+        label: label,
+        icon: icon,
+      });
+    }
+    return baseOptions;
   });
 
   // To Pocket Options (Dynamic based on selected book)
   const toPocketOptions = $derived.by(() => {
     const baseOptions = toBookPockets
       // Filter out fromPocket if we are in the same book, to prevent same-pocket transfer
-      .filter((p) => booksStore.activeBook && toBookId === booksStore.activeBook.id ? p.id !== fromPocketId : true)
+      .filter((p) =>
+        booksStore.activeBook && toBookId === booksStore.activeBook.id
+          ? p.id !== fromPocketId
+          : true,
+      )
       .map((p) => ({
         value: p.id,
         label: p.name,
         icon: "💰",
       }));
 
-      // Add current selected pocket if not in list (Unknown/Privacy Case)
-      if (toPocketId && !baseOptions.find(o => o.value === toPocketId)) {
-        let label = "Unknown Pocket";
-        let icon = "💰";
-        
-        if (transaction) {
-             const pocket = transaction.dest_pocket?.id === toPocketId ? transaction.dest_pocket
-                            : transaction.pocket?.id === toPocketId ? transaction.pocket
-                            : transaction.related_pocket?.id === toPocketId ? transaction.related_pocket
-                            : null;
-             
-             if (pocket) {
-                 // Privacy Masking
-                 if (!canEditTo && (pocket as any).book?.owner_name) {
-                     label = `${(pocket as any).book.owner_name}'s Pocket`;
-                 } else {
-                     label = pocket.name;
-                 }
-             }
+    // Add current selected pocket if not in list (Unknown/Privacy Case)
+    if (toPocketId && !baseOptions.find((o) => o.value === toPocketId)) {
+      let label = "Unknown Pocket";
+      let icon = "💰";
+
+      if (transaction) {
+        const pocket =
+          transaction.dest_pocket?.id === toPocketId
+            ? transaction.dest_pocket
+            : transaction.pocket?.id === toPocketId
+              ? transaction.pocket
+              : transaction.related_pocket?.id === toPocketId
+                ? transaction.related_pocket
+                : null;
+
+        if (pocket) {
+          // Privacy Masking
+          if (!canEditTo && (pocket as any).book?.owner_name) {
+            label = `${(pocket as any).book.owner_name}'s Pocket`;
+          } else {
+            label = pocket.name;
+          }
         }
-        
-        baseOptions.push({
-            value: toPocketId,
-            label: label,
-            icon: icon
-        });
+      }
+
+      baseOptions.push({
+        value: toPocketId,
+        label: label,
+        icon: icon,
+      });
     }
 
     return baseOptions;
@@ -270,20 +303,19 @@
   // Populate form when transaction changes
   $effect(() => {
     if (open && transaction?.id) {
-      console.log("DEBUG TRANSACTION:", transaction); 
+      console.log("DEBUG TRANSACTION:", transaction);
       const tx = transaction;
       untrack(() => {
         loadCategories();
-        
+
         // Initialize with passed transaction data first (optimistic)
         initializeForm(tx);
-  
+
         // Fetch full details to ensure we have related_pocket and fees
         fetchFullTransactionDetails(tx.id);
       });
     }
   });
-
 
   async function loadToBookPockets(specificBookId?: string) {
     const targetBookId = specificBookId || toBookId;
@@ -307,12 +339,12 @@
     } catch (e: any) {
       // 403 is expected if we don't have permission to view that book (e.g. cross-book transfer)
       if (e?.response?.status !== 403) {
-          console.error("Failed to load pockets for To Book", e);
+        console.error("Failed to load pockets for To Book", e);
       }
     } finally {
-        if (toBookId === targetBookId) {
-             isLoadingToPockets = false;
-        }
+      if (toBookId === targetBookId) {
+        isLoadingToPockets = false;
+      }
     }
   }
 
@@ -322,28 +354,32 @@
 
     // If it's the active book, use the store
     if (booksStore.activeBook && targetBookId === booksStore.activeBook.id) {
-        // Wait, fromBookPockets usually mirrors active pockets if same?
-        // Let's just fetch to be safe or use store if matched.
-        fromBookPockets = booksStore.pockets;
-        isLoadingFromPockets = false;
-        return;
+      // Wait, fromBookPockets usually mirrors active pockets if same?
+      // Let's just fetch to be safe or use store if matched.
+      fromBookPockets = booksStore.pockets;
+      isLoadingFromPockets = false;
+      return;
     }
 
     // Attempt to resolve book name if needed (Collab Case)
     // If the book is NOT in our local store, fetch it to get the name
-    if (targetBookId && !booksStore.books.find(b => b.id === targetBookId) && !tempBooks[targetBookId]) {
-        try {
-            const bookRes = await booksApi.get(targetBookId);
-            if (bookRes.data) {
-                // Update tempBooks using spread to ensure reactivity
-                tempBooks = {
-                    ...tempBooks,
-                    [targetBookId]: { id: bookRes.data.id, name: bookRes.data.name }
-                };
-            }
-        } catch (e) {
-            console.error("Failed to fetch book details for", fromBookId, e);
+    if (
+      targetBookId &&
+      !booksStore.books.find((b) => b.id === targetBookId) &&
+      !tempBooks[targetBookId]
+    ) {
+      try {
+        const bookRes = await booksApi.get(targetBookId);
+        if (bookRes.data) {
+          // Update tempBooks using spread to ensure reactivity
+          tempBooks = {
+            ...tempBooks,
+            [targetBookId]: { id: bookRes.data.id, name: bookRes.data.name },
+          };
         }
+      } catch (e) {
+        console.error("Failed to fetch book details for", fromBookId, e);
+      }
     }
 
     // Otherwise fetch pockets for that book
@@ -356,7 +392,7 @@
     } catch (e: any) {
       // 403 is expected if we don't have permission to view that book (e.g. cross-book transfer)
       if (e?.response?.status !== 403) {
-          console.error("Failed to load pockets for From Book", e);
+        console.error("Failed to load pockets for From Book", e);
       }
       // Do NOT reset lastLoadedFromBookId to prevent error loops
     }
@@ -370,49 +406,55 @@
         const tx = res.data;
         // Only patch fields that might be missing in list view (fees, related pockets)
         // Do NOT re-run full initializeForm to avoid resetting IDs that trigger effects
-        
+
         // Patch Amount/Fee if needed
         if (tx.type === "transfer") {
-             const feeVal = tx.transfer_fee_cents ?? tx.fee_cents ?? 0;
-             if (feeVal > 0) {
-                if (!includeFee) {
-                    includeFee = true;
-                    fee = (feeVal / 100).toString();
-                }
-             }
-             
-             // AUTHORITY: If source/dest pockets are present, they are the truth.
-             // Overwrite whatever heuristic initializeForm might have set.
-             if (tx.source_pocket) {
-                 fromBookId = tx.source_pocket.book_id;
-                 fromPocketId = tx.source_pocket.id;
-                 loadFromBookPockets();
-             }
-             if (tx.dest_pocket) {
-                 toBookId = tx.dest_pocket.book_id;
-                 toPocketId = tx.dest_pocket.id;
-                 loadToBookPockets();
-             }
-             
-             // Update CrossBook state
-             if (fromBookId && toBookId) {
-                 isCrossBook = fromBookId !== toBookId;
-             }
+          const feeVal = tx.transfer_fee_cents ?? tx.fee_cents ?? 0;
+          if (feeVal > 0) {
+            if (!includeFee) {
+              includeFee = true;
+              fee = (feeVal / 100).toString();
+            }
+          }
+
+          // AUTHORITY: If source/dest pockets are present, they are the truth.
+          // Overwrite whatever heuristic initializeForm might have set.
+          if (tx.source_pocket) {
+            fromBookId = tx.source_pocket.book_id;
+            fromPocketId = tx.source_pocket.id;
+            loadFromBookPockets();
+          }
+          if (tx.dest_pocket) {
+            toBookId = tx.dest_pocket.book_id;
+            toPocketId = tx.dest_pocket.id;
+            loadToBookPockets();
+          }
+
+          // Update CrossBook state
+          if (fromBookId && toBookId) {
+            isCrossBook = fromBookId !== toBookId;
+          }
         }
-        
+
         // Refresh tempBooks name if found for From Book
         if (fromBookId && tx.source_pocket && (tx.source_pocket as any).book) {
-             const b = (tx.source_pocket as any).book;
-             if (!tempBooks[fromBookId]) {
-                 tempBooks = { ...tempBooks, [fromBookId]: { id: b.id, name: b.name } };
-             }
+          const b = (tx.source_pocket as any).book;
+          if (!tempBooks[fromBookId]) {
+            tempBooks = {
+              ...tempBooks,
+              [fromBookId]: { id: b.id, name: b.name },
+            };
+          }
         }
         // Refresh tempBooks name if found for To Book
         if (toBookId && tx.dest_pocket && (tx.dest_pocket as any).book) {
-             const b = (tx.dest_pocket as any).book;
-             if (!tempBooks[toBookId]) {
-                 tempBooks = { ...tempBooks, [toBookId]: { id: b.id, name: b.name } };
-             }
+          const b = (tx.dest_pocket as any).book;
+          if (!tempBooks[toBookId]) {
+            tempBooks = {
+              ...tempBooks,
+              [toBookId]: { id: b.id, name: b.name },
+            };
+          }
         }
       }
     } catch (e) {
@@ -453,20 +495,20 @@
       if (tx.source_pocket && tx.dest_pocket) {
         fromPocketId = tx.source_pocket.id;
         toPocketId = tx.dest_pocket.id;
-        
+
         // Determine Books
         toBookId = tx.dest_pocket.book_id;
         fromBookId = tx.source_pocket.book_id;
-        
+
         // Set cross-book toggle
         isCrossBook = toBookId !== fromBookId;
-        
+
         // Pre-populate toBookPockets/fromBookPockets if active
         if (booksStore.activeBook && toBookId === booksStore.activeBook.id) {
-           toBookPockets = booksStore.pockets;
+          toBookPockets = booksStore.pockets;
         }
         if (booksStore.activeBook && fromBookId === booksStore.activeBook.id) {
-           fromBookPockets = booksStore.pockets;
+          fromBookPockets = booksStore.pockets;
         }
       } else {
         // Fallback to old heuristic logic
@@ -478,35 +520,35 @@
           toPocketId = tx.related_pocket_id || tx.related_pocket?.id || "";
           // Guess book from related pocket if available
           if (tx.related_pocket) {
-             toBookId = tx.related_pocket.book_id;
+            toBookId = tx.related_pocket.book_id;
           } else if (booksStore.activeBook) {
-             toBookId = booksStore.activeBook.id;
+            toBookId = booksStore.activeBook.id;
           }
-          
+
           if (tx.pocket) {
-             fromBookId = tx.pocket.book_id;
+            fromBookId = tx.pocket.book_id;
           } else if (booksStore.activeBook) {
-             fromBookId = booksStore.activeBook.id;
+            fromBookId = booksStore.activeBook.id;
           }
         } else {
           fromPocketId = tx.related_pocket_id || tx.related_pocket?.id || "";
           toPocketId = tx.pocket_id;
-           // Guess book from main pocket if available? 
-           // If isSource is false, then related_pocket is the SOURCE, and pocket_id is DEST.
-           // So toBookId should be from pocket_id (main pocket)
-           if (tx.pocket) {
-             toBookId = tx.pocket.book_id;
-           } else if (booksStore.activeBook) {
-             toBookId = booksStore.activeBook.id;
-           }
-           
-           if (tx.related_pocket) {
-             fromBookId = tx.related_pocket.book_id;
-           } else if (booksStore.activeBook) {
-             fromBookId = booksStore.activeBook.id;
-           }
+          // Guess book from main pocket if available?
+          // If isSource is false, then related_pocket is the SOURCE, and pocket_id is DEST.
+          // So toBookId should be from pocket_id (main pocket)
+          if (tx.pocket) {
+            toBookId = tx.pocket.book_id;
+          } else if (booksStore.activeBook) {
+            toBookId = booksStore.activeBook.id;
+          }
+
+          if (tx.related_pocket) {
+            fromBookId = tx.related_pocket.book_id;
+          } else if (booksStore.activeBook) {
+            fromBookId = booksStore.activeBook.id;
+          }
         }
-        
+
         isCrossBook = toBookId !== fromBookId;
       }
     } else {
@@ -530,7 +572,7 @@
   const filteredCategories = $derived(
     transaction && transaction.type !== "transfer"
       ? categories.filter((c) => c.type === transaction.type)
-      : []
+      : [],
   );
 
   // Category Options for Combobox
@@ -539,12 +581,12 @@
       value: c.id,
       label: c.name,
       icon: c.icon,
-    }))
+    })),
   );
 
   // Get subcategories for selected category
   const selectedCategory = $derived(
-    categories.find((c) => c.id === categoryId)
+    categories.find((c) => c.id === categoryId),
   );
 
   const subcategories = $derived(selectedCategory?.subcategories || []);
@@ -554,16 +596,16 @@
     subcategories.map((s) => ({
       value: s.id,
       label: s.name,
-    }))
+    })),
   );
 
   // Determine if we have edit access to the books
   const canEditFrom = $derived(
-      !fromBookId || booksStore.books.some(b => b.id === fromBookId)
+    !fromBookId || booksStore.books.some((b) => b.id === fromBookId),
   );
 
   const canEditTo = $derived(
-      !toBookId || booksStore.books.some(b => b.id === toBookId)
+    !toBookId || booksStore.books.some((b) => b.id === toBookId),
   );
 
   async function handleSubmit() {
@@ -581,7 +623,7 @@
       // Map From/To to Pocket/Related based on transaction direction
       // We always send both to be safe and ensure backend syncs links
       const isOutgoing = transaction.amount_cents < 0;
-      
+
       if (isOutgoing) {
         // We are Source
         // Pocket = From
@@ -595,7 +637,6 @@
         finalPocketId = toPocketId;
         finalRelatedPocketId = fromPocketId;
       }
-      
     }
 
     // Amount sign logic: Always send positive amount to backend (validation requires min=1)
@@ -629,7 +670,7 @@
       });
 
       if (result.data) {
-        toastStore.success('Transaksi berhasil diperbarui!');
+        toastStore.success("Transaksi berhasil diperbarui!");
         // Refresh pockets to update balances
         if (booksStore.activeBook) {
           await booksStore.loadPockets(booksStore.activeBook.id);
@@ -639,10 +680,10 @@
         onClose();
         if (onSaved) onSaved();
       } else {
-        toastStore.error(result.error?.error || 'Gagal memperbarui transaksi');
+        toastStore.error(result.error?.error || "Gagal memperbarui transaksi");
       }
     } catch (e) {
-      toastStore.error('Terjadi kesalahan saat menyimpan');
+      toastStore.error("Terjadi kesalahan saat menyimpan");
     } finally {
       isSubmitting = false;
     }
@@ -662,19 +703,7 @@
           for="edit-amount"
           class="block text-sm font-medium text-secondary mb-1.5">Amount</label
         >
-        <div class="relative">
-          <span
-            class="absolute left-4 top-1/2 -translate-y-1/2 text-muted font-medium"
-            >Rp</span
-          >
-          <input
-            id="edit-amount"
-            type="number"
-            bind:value={amount}
-            placeholder="0"
-            class="w-full pl-10 pr-4 py-3 bg-surface border border-border rounded-xl text-foreground text-lg font-semibold placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-        </div>
+        <MoneyInput id="edit-amount" bind:value={amount} placeholder="0" />
       </div>
 
       <!-- Transfer Fee (Visible only for transfers) -->
@@ -702,17 +731,8 @@
             </button>
           </div>
           {#if includeFee}
-            <div class="mt-3 relative">
-              <span
-                class="absolute left-4 top-1/2 -translate-y-1/2 text-muted font-medium"
-                >Rp</span
-              >
-              <input
-                type="number"
-                bind:value={fee}
-                placeholder="0"
-                class="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-lg text-foreground text-sm font-semibold placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary"
-              />
+            <div class="mt-3">
+              <MoneyInput bind:value={fee} placeholder="0" />
             </div>
           {/if}
         </div>
@@ -735,10 +755,16 @@
       </div>
 
       <!-- Analytics Toggle -->
-      <div class="flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-border/50">
+      <div
+        class="flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-border/50"
+      >
         <div>
-          <span class="text-sm font-medium text-foreground block">Exclude from Analytics</span>
-          <span class="text-xs text-muted block mt-0.5">Don't include this in spending reports</span>
+          <span class="text-sm font-medium text-foreground block"
+            >Exclude from Analytics</span
+          >
+          <span class="text-xs text-muted block mt-0.5"
+            >Don't include this in spending reports</span
+          >
         </div>
         <button
           type="button"
@@ -761,7 +787,9 @@
         <div class="space-y-4">
           <!-- Type Switcher / Cross-Book Toggle -->
           <div class="flex items-center justify-between">
-            <span class="text-sm font-medium text-secondary">Cross-book Transfer</span>
+            <span class="text-sm font-medium text-secondary"
+              >Cross-book Transfer</span
+            >
             <button
               type="button"
               role="switch"
@@ -781,33 +809,35 @@
 
           <div class="grid grid-cols-1 gap-4">
             <!-- From Section -->
-            <div class="space-y-3 p-4 bg-muted/30 rounded-xl border border-border/50">
-               {#if isCrossBook}
-                  <Combobox
-                    label="From Book"
-                    options={fromBookOptions}
-                    value={fromBookId}
-                    onValueChange={(val) => {
-                      fromBookId = val;
-                      fromPocketId = '';
-                      loadFromBookPockets(val);
-                    }}
-                    placeholder="Select book"
-                    searchPlaceholder="Search books..."
-                    emptyMessage="No books found"
-                    disabled={!canEditFrom}
-                  />
-               {/if}
-                
+            <div
+              class="space-y-3 p-4 bg-muted/30 rounded-xl border border-border/50"
+            >
+              {#if isCrossBook}
                 <Combobox
-                  label="From Pocket"
-                  options={pocketOptions}
-                  bind:value={fromPocketId}
-                  placeholder="Select pocket"
-                  searchPlaceholder="Search..."
-                  emptyMessage="No pockets found"
+                  label="From Book"
+                  options={fromBookOptions}
+                  value={fromBookId}
+                  onValueChange={(val) => {
+                    fromBookId = val;
+                    fromPocketId = "";
+                    loadFromBookPockets(val);
+                  }}
+                  placeholder="Select book"
+                  searchPlaceholder="Search books..."
+                  emptyMessage="No books found"
                   disabled={!canEditFrom}
                 />
+              {/if}
+
+              <Combobox
+                label="From Pocket"
+                options={pocketOptions}
+                bind:value={fromPocketId}
+                placeholder="Select pocket"
+                searchPlaceholder="Search..."
+                emptyMessage="No pockets found"
+                disabled={!canEditFrom}
+              />
             </div>
 
             <!-- Swap Button -->
@@ -820,11 +850,11 @@
                   const tempPocket = fromPocketId;
                   fromPocketId = toPocketId;
                   toPocketId = tempPocket;
-                  
+
                   if (isCrossBook) {
-                     const tempBook = fromBookId;
-                     fromBookId = toBookId;
-                     toBookId = tempBook;
+                    const tempBook = fromBookId;
+                    fromBookId = toBookId;
+                    toBookId = tempBook;
                   }
                 }}
                 aria-label="Swap pockets"
@@ -846,32 +876,39 @@
             </div>
 
             <!-- To Section -->
-            <div class="space-y-3 p-4 bg-muted/30 rounded-xl border border-border/50">
-               {#if isCrossBook}
-                  <Combobox
-                    label="To Book"
-                    options={toBookOptions}
-                    value={toBookId}
-                    onValueChange={(val) => {
-                      toBookId = val;
-                      toPocketId = '';
-                      loadToBookPockets(val);
-                    }}
-                    placeholder="Select book"
-                    searchPlaceholder="Search books..."
-                    emptyMessage="No books found"
-                  />
-               {/if}
-                
+            <div
+              class="space-y-3 p-4 bg-muted/30 rounded-xl border border-border/50"
+            >
+              {#if isCrossBook}
                 <Combobox
-                  label="To Pocket"
-                  options={toPocketOptions}
-                  bind:value={toPocketId}
-                  placeholder={isLoadingToPockets ? "Loading pockets..." : "Select pocket"}
-                  searchPlaceholder="Search pockets..."
-                  emptyMessage={isLoadingToPockets ? "Loading..." : "No pockets found"}
-                  disabled={isLoadingToPockets || (!isCrossBook ? false : !toBookId)}
+                  label="To Book"
+                  options={toBookOptions}
+                  value={toBookId}
+                  onValueChange={(val) => {
+                    toBookId = val;
+                    toPocketId = "";
+                    loadToBookPockets(val);
+                  }}
+                  placeholder="Select book"
+                  searchPlaceholder="Search books..."
+                  emptyMessage="No books found"
                 />
+              {/if}
+
+              <Combobox
+                label="To Pocket"
+                options={toPocketOptions}
+                bind:value={toPocketId}
+                placeholder={isLoadingToPockets
+                  ? "Loading pockets..."
+                  : "Select pocket"}
+                searchPlaceholder="Search pockets..."
+                emptyMessage={isLoadingToPockets
+                  ? "Loading..."
+                  : "No pockets found"}
+                disabled={isLoadingToPockets ||
+                  (!isCrossBook ? false : !toBookId)}
+              />
             </div>
           </div>
         </div>

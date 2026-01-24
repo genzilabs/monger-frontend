@@ -24,13 +24,13 @@
     <!-- Navigation -->
     <nav class="flex items-center gap-5 text-sm">
       <a
-        href="#cerita"
+        href="#cara-kerja"
         class="text-muted hover:text-foreground transition-colors hidden sm:block"
       >
-        Cerita
+        Cara Kerja
       </a>
       <a
-        href="#fitur"
+        href="#kemampuan"
         class="text-muted hover:text-foreground transition-colors hidden sm:block"
       >
         Fitur

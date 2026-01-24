@@ -3,8 +3,14 @@
   import { onMount } from "svelte";
   import { browser } from "$app/environment";
   import { page } from "$app/stores";
-  import { LandingHeader } from "$lib/components/landing";
+  import { LandingHeader, FaqAccordion } from "$lib/components/landing";
   import logoOnly from "$lib/assets/Logo/logo-only.webp";
+
+  // Icons
+  import BookIcon from "$lib/icons/BookIcon.svelte";
+  import TagIcon from "$lib/icons/TagIcon.svelte";
+  import UserIcon from "$lib/icons/UserIcon.svelte";
+  import ShieldIcon from "$lib/icons/ShieldIcon.svelte";
 
   onMount(() => {
     if (browser) {
@@ -20,6 +26,78 @@
       }
     }
   });
+
+  // FAQ items
+  const faqItems = [
+    {
+      question: "Apakah data saya aman?",
+      answer:
+        "Kami memperlakukan data keuanganmu seperti milik kami sendiri — dengan sangat hati-hati. Tidak ada penjualan data ke pihak ketiga, tidak ada iklan. Privasimu adalah prioritas.",
+    },
+    {
+      question: "Benar-benar gratis selama Alpha?",
+      answer:
+        "Ya. Selama fase Alpha, semua fitur tersedia tanpa biaya. Ini cara kami berterima kasih kepada pengguna awal yang membantu membentuk Monger.",
+    },
+    {
+      question: "Siapa yang cocok menggunakan Monger?",
+      answer:
+        "Monger cocok untuk siapa saja yang ingin lebih sadar tentang keuangan tanpa merasa dihakimi. Baik kamu baru mulai mencatat atau sudah punya kebiasaan, Monger menyesuaikan tempomu.",
+    },
+    {
+      question: "Bagaimana cara memberi feedback?",
+      answer:
+        "Kamu bisa menghubungi kami langsung melalui aplikasi atau email. Setiap masukan sangat berarti — kamu adalah bagian dari proses pembuatan Monger.",
+    },
+    {
+      question: "Apa yang terjadi setelah Alpha?",
+      answer:
+        "Kami berencana memperkenalkan model berlangganan yang terjangkau. Pengguna Alpha akan mendapat perlakuan khusus sebagai early supporter.",
+    },
+  ];
+
+  // Capabilities - focused on outcomes
+  const capabilities = [
+    {
+      icon: BookIcon,
+      title: "Jurnal Harian",
+      desc: "Catat pengeluaran seperti menulis jurnal. Simpel, tanpa form rumit.",
+    },
+    {
+      icon: TagIcon,
+      title: "Kategori Fleksibel",
+      desc: "Atur sesuai caramu. Buat tag yang cocok dengan gaya hidupmu.",
+    },
+    {
+      icon: UserIcon,
+      title: "Mode Bersama",
+      desc: "Rencanakan bareng pasangan tanpa gabung rekening.",
+    },
+    {
+      icon: ShieldIcon,
+      title: "Privasi Utama",
+      desc: "Datamu milikmu. Tidak dijual, tidak untuk iklan.",
+    },
+  ];
+
+  // How it works steps
+  const steps = [
+    {
+      number: "01",
+      title: "Catat Pelan-Pelan",
+      desc: "Mulai dari satu transaksi. Tidak perlu lengkap, tidak perlu sempurna.",
+    },
+    {
+      number: "02",
+      title: "Kenali Polanya",
+      desc: "Perlahan, kamu akan melihat ke mana uangmu mengalir.",
+    },
+    {
+      number: "03",
+      title: "Tarik Napas, Lanjutkan",
+      desc: "Dengan kesadaran, keputusan jadi lebih tenang.",
+    },
+  ];
 </script>
 
 <svelte:head>
@@ -35,45 +113,32 @@
   <LandingHeader />
 
   <!-- ========================================= -->
-  <!-- HERO SECTION -->
+  <!-- 1. HERO SECTION -->
   <!-- ========================================= -->
-  <section class="relative pt-24 pb-16 md:pt-36 md:pb-24 px-6 overflow-hidden">
-    <!-- Background blur -->
+  <section class="relative pt-28 pb-20 md:pt-40 md:pb-32 px-6 overflow-hidden">
+    <!-- Subtle breathing background -->
     <div
-      class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl pointer-events-none"
+      class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] md:w-[700px] md:h-[700px] bg-primary/5 rounded-full blur-3xl pointer-events-none animate-pulse"
+      style="animation-duration: 4s;"
+    ></div>
+    <div
+      class="absolute top-1/3 left-1/4 w-[300px] h-[300px] bg-primary/3 rounded-full blur-3xl pointer-events-none animate-pulse"
+      style="animation-duration: 6s; animation-delay: 1s;"
     ></div>
 
-    <div class="max-w-4xl mx-auto text-center relative z-10">
-      <div
-        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider mb-6"
-      >
-        <svg
-          class="w-4 h-4"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-          />
-        </svg>
-        Private Alpha
-      </div>
-
+    <div class="max-w-3xl mx-auto text-center relative z-10">
       <h1
-        class="text-4xl md:text-6xl font-extrabold tracking-tight text-foreground mb-6 leading-[1.1]"
+        class="text-4xl md:text-6xl font-extrabold tracking-tight text-foreground mb-8 leading-[1.15]"
       >
-        Catat uang,<br />tanpa <span class="text-primary">tekanan</span>.
+        Lebih sadar tentang uang,<br />
+        <span class="text-primary">tanpa tekanan</span>.
       </h1>
 
       <p
-        class="text-lg md:text-xl text-secondary max-w-2xl mx-auto mb-10 leading-relaxed"
+        class="text-lg md:text-xl text-secondary max-w-xl mx-auto mb-12 leading-relaxed"
       >
-        Pendekatan yang tenang dan manusiawi untuk keuangan pribadi. Tanpa rasa
-        bersalah, tanpa notifikasi mengganggu. Cuma kejelasan dan ketenangan.
+        Pendamping keuangan yang tenang dan manusiawi. Cukup untuk mulai.
+        Fleksibel untuk berkembang bersamamu.
       </p>
 
       <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -81,123 +146,61 @@
           href="/auth"
           class="h-12 px-8 rounded-xl bg-primary text-white text-base font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 inline-flex items-center justify-center"
         >
-          Gabung Alpha Access
+          Gabung Alpha
         </a>
         <a
-          href="#filosofi"
+          href="#cara-kerja"
           class="h-12 px-8 rounded-xl bg-surface text-foreground border border-border text-base font-semibold hover:bg-border/50 transition-all duration-300 inline-flex items-center justify-center"
         >
-          Pelajari Filosofi
+          Lihat Cara Kerjanya
         </a>
       </div>
     </div>
   </section>
 
   <!-- ========================================= -->
-  <!-- DASHBOARD PREVIEW -->
+  <!-- 2. ALPHA LISTENING PHASE -->
   <!-- ========================================= -->
-  <section class="px-6 pb-20 md:pb-32">
-    <div class="max-w-4xl mx-auto">
-      <div
-        class="relative bg-surface rounded-2xl p-3 md:p-4 shadow-lg border border-border"
-      >
-        <div
-          class="rounded-xl overflow-hidden bg-background aspect-[16/10] relative"
-        >
-          <!-- Placeholder dashboard -->
-          <div class="absolute inset-0 p-6 md:p-8">
-            <div class="flex items-center gap-3 mb-6">
-              <div class="w-10 h-10 rounded-full bg-primary/20"></div>
-              <div class="space-y-1">
-                <div class="h-3 w-24 bg-border rounded"></div>
-                <div class="h-2 w-16 bg-border/50 rounded"></div>
-              </div>
-            </div>
-            <div class="h-10 w-40 bg-primary/10 rounded-xl mb-6"></div>
-            <div class="grid grid-cols-2 gap-4 mb-6">
-              <div class="h-24 bg-border/30 rounded-xl"></div>
-              <div class="h-24 bg-border/30 rounded-xl"></div>
-            </div>
-            <div class="space-y-3">
-              <div class="h-14 bg-border/20 rounded-xl"></div>
-              <div class="h-14 bg-border/20 rounded-xl"></div>
-            </div>
-          </div>
-          <!-- Preview overlay -->
-          <div
-            class="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-sm"
-          >
-            <div
-              class="bg-surface p-8 rounded-2xl shadow-xl border border-border text-center max-w-sm"
-            >
-              <svg
-                class="w-10 h-10 text-primary mx-auto mb-3"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="1.5"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"
-                />
-              </svg>
-              <h3 class="text-lg font-bold text-foreground mb-2">
-                Preview Privat
-              </h3>
-              <p class="text-sm text-secondary">
-                Interface kami sedang disempurnakan oleh alpha tester. Gabung
-                untuk melihat langsung.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ========================================= -->
-  <!-- ALPHA LISTENING PHASE -->
-  <!-- ========================================= -->
-  <section class="px-6 py-16">
+  <section id="alpha" class="px-6 py-16 md:py-20">
     <div class="max-w-3xl mx-auto">
       <div
         class="bg-surface border border-border rounded-2xl p-8 md:p-12 text-center shadow-sm"
       >
-        <svg
-          class="w-10 h-10 text-primary mx-auto mb-4"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="1.5"
+        <div
+          class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-5"
         >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z"
-          />
-        </svg>
+          <svg
+            class="w-6 h-6 text-primary"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z"
+            />
+          </svg>
+        </div>
         <h2 class="text-2xl md:text-3xl font-bold text-foreground mb-4">
           Kami dalam tahap mendengarkan
         </h2>
-        <p class="text-secondary text-lg mb-8 leading-relaxed">
-          Kami membangun Monger bersamamu, bukan hanya untukmu. Saat ini kami
-          menerima sekelompok kecil pengguna yang ingin membantu membentuk masa
-          depan keuangan yang lebih tenang.
+        <p class="text-secondary text-lg mb-6 leading-relaxed max-w-lg mx-auto">
+          Monger masih dalam fase Alpha. Artinya, kami membangun ini <strong
+            class="text-foreground">bersamamu</strong
+          >, bukan hanya untukmu. Setiap feedback membentuk arah perkembangan
+          Monger.
         </p>
-        <a
-          href="/auth"
-          class="inline-flex items-center justify-center h-12 px-6 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary font-bold transition-colors"
-        >
-          Daftar sebagai Alpha Tester
-        </a>
+        <p class="text-muted text-sm">
+          Pengguna Alpha adalah kolaborator, bukan hanya pengguna.
+        </p>
       </div>
     </div>
   </section>
 
   <!-- ========================================= -->
-  <!-- PROBLEM VS SOLUTION -->
+  <!-- 3. PROBLEM VS SOLUTION -->
   <!-- ========================================= -->
   <section id="filosofi" class="px-6 py-20 bg-surface">
     <div class="max-w-5xl mx-auto">
@@ -206,8 +209,8 @@
           Kebisingan vs. Kesadaran
         </h2>
         <p class="text-secondary max-w-2xl mx-auto">
-          Aplikasi keuangan biasa hidup dari kecemasanmu. Kami hidup dari
-          ketenanganmu.
+          Kebanyakan aplikasi keuangan hidup dari kecemasanmu. Kami percaya ada
+          cara yang lebih tenang.
         </p>
       </div>
 
@@ -235,7 +238,7 @@
           <ul class="space-y-5">
             <li class="flex gap-4 opacity-70">
               <svg
-                class="w-5 h-5 text-danger shrink-0 mt-0.5"
+                class="w-5 h-5 text-error shrink-0 mt-0.5"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -252,36 +255,13 @@
                   >Notifikasi Terus-menerus</strong
                 >
                 <span class="text-sm text-secondary"
-                  >Alert yang tidak perlu mengganggu sepanjang hari.</span
+                  >Alert yang tidak perlu, mengganggu sepanjang hari.</span
                 >
               </div>
             </li>
             <li class="flex gap-4 opacity-70">
               <svg
-                class="w-5 h-5 text-danger shrink-0 mt-0.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-              <div>
-                <strong class="block text-foreground mb-1"
-                  >Upselling & Iklan</strong
-                >
-                <span class="text-sm text-secondary"
-                  >Penawaran kartu kredit disamarkan sebagai "rekomendasi".</span
-                >
-              </div>
-            </li>
-            <li class="flex gap-4 opacity-70">
-              <svg
-                class="w-5 h-5 text-danger shrink-0 mt-0.5"
+                class="w-5 h-5 text-error shrink-0 mt-0.5"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -299,6 +279,27 @@
                 >
                 <span class="text-sm text-secondary"
                   >Angka merah dan peringatan karena beli kopi.</span
+                >
+              </div>
+            </li>
+            <li class="flex gap-4 opacity-70">
+              <svg
+                class="w-5 h-5 text-error shrink-0 mt-0.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+              <div>
+                <strong class="block text-foreground mb-1">Chart Rumit</strong>
+                <span class="text-sm text-secondary"
+                  >Data yang membingungkan, bukan mencerahkan.</span
                 >
               </div>
             </li>
@@ -370,11 +371,10 @@
               </svg>
               <div>
                 <strong class="block text-foreground mb-1"
-                  >Selaras dengan Nilai</strong
+                  >Tanpa Penghakiman</strong
                 >
                 <span class="text-sm text-secondary"
-                  >Alat yang membantu kamu spending untuk hal yang benar-benar
-                  penting.</span
+                  >Tidak ada label "boros" atau angka merah yang mengintimidasi.</span
                 >
               </div>
             </li>
@@ -394,10 +394,10 @@
               </svg>
               <div>
                 <strong class="block text-foreground mb-1"
-                  >Kejelasan Total</strong
+                  >Kejelasan Sederhana</strong
                 >
                 <span class="text-sm text-secondary"
-                  >Data sederhana dan mudah dibaca tanpa chart rumit.</span
+                  >Data yang mudah dibaca, tanpa perlu jadi analis.</span
                 >
               </div>
             </li>
@@ -408,46 +408,112 @@
   </section>
 
   <!-- ========================================= -->
-  <!-- CAPABILITIES -->
+  <!-- 4. SOCIAL PROOF -->
   <!-- ========================================= -->
   <section class="px-6 py-20">
-    <div class="max-w-5xl mx-auto">
+    <div class="max-w-4xl mx-auto text-center">
+      <h2 class="text-2xl md:text-3xl font-bold text-foreground mb-4">
+        Dibangun bersama pengguna awal
+      </h2>
+      <p class="text-secondary max-w-xl mx-auto mb-12">
+        Bukan hanya untuk mereka, tapi dengan mereka.
+      </p>
+
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="bg-surface border border-border rounded-xl p-6 text-left">
+          <p class="text-secondary leading-relaxed mb-4 italic">
+            "Akhirnya ada aplikasi keuangan yang tidak membuatku merasa bersalah
+            setiap buka."
+          </p>
+          <div class="flex items-center gap-3">
+            <div
+              class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm"
+            >
+              R
+            </div>
+            <div>
+              <p class="text-foreground font-medium text-sm">Rina</p>
+              <p class="text-muted text-xs">Alpha Tester</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-surface border border-border rounded-xl p-6 text-left">
+          <p class="text-secondary leading-relaxed mb-4 italic">
+            "Simpel banget. Aku cuma catat yang aku ingat, dan pelan-pelan jadi
+            kebiasaan."
+          </p>
+          <div class="flex items-center gap-3">
+            <div
+              class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm"
+            >
+              D
+            </div>
+            <div>
+              <p class="text-foreground font-medium text-sm">Dimas</p>
+              <p class="text-muted text-xs">Alpha Tester</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-surface border border-border rounded-xl p-6 text-left">
+          <p class="text-secondary leading-relaxed mb-4 italic">
+            "Mode bersama sangat membantu kami sebagai pasangan untuk lebih
+            terbuka tentang uang."
+          </p>
+          <div class="flex items-center gap-3">
+            <div
+              class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm"
+            >
+              A
+            </div>
+            <div>
+              <p class="text-foreground font-medium text-sm">Ayu & Budi</p>
+              <p class="text-muted text-xs">Alpha Testers</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="text-muted text-sm mt-10">
+        Bagian dari ekosistem <a
+          href="https://genzilabs.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-primary hover:underline">Genzi Meraih Mimpi</a
+        >
+      </p>
+    </div>
+  </section>
+
+  <!-- ========================================= -->
+  <!-- 5. CAPABILITIES -->
+  <!-- ========================================= -->
+  <section id="kemampuan" class="px-6 py-20 bg-surface">
+    <div class="max-w-4xl mx-auto">
       <div class="text-center max-w-2xl mx-auto mb-16">
         <h2 class="text-2xl md:text-3xl font-bold text-foreground mb-4">
           Fitur secukupnya
         </h2>
         <p class="text-secondary">
-          Semua yang kamu butuhkan untuk memahami uangmu, tanpa yang tidak
-          perlu.
+          Cukup untuk mulai. Fleksibel untuk berkembang bersamamu.
         </p>
       </div>
 
-      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {#each [{ icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2", title: "Jurnal Harian", desc: "Perlakukan pengeluaran seperti jurnal. Entry simpel tanpa form rumit." }, { icon: "M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z", title: "Kategori Fleksibel", desc: "Atur spending sesuai caramu. Buat tag yang cocok dengan gaya hidupmu." }, { icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z", title: "Mode Bersama", desc: "Rencanakan bareng pasangan tanpa gabung rekening. Shared visibility, maintained privacy." }, { icon: "M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12", title: "Ekspor Data", desc: "Datamu milikmu. Ekspor ke CSV atau JSON kapanpun kamu mau." }, { icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z", title: "Privasi Utama", desc: "Kami tidak jual datamu ke pengiklan. Kehidupan finansialmu tetap privat." }, { icon: "M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636", title: "Tanpa Kebisingan", desc: "Tanpa iklan, tanpa badge, tanpa distraksi. Cuma interface bersih untuk pikiran jernih." }] as feature}
+      <div class="grid sm:grid-cols-2 gap-5">
+        {#each capabilities as cap}
           <div
-            class="bg-surface p-6 rounded-xl border border-border hover:border-primary/50 transition-colors group"
+            class="bg-background p-6 rounded-xl border border-border hover:border-primary/50 transition-colors group"
           >
             <div
               class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-4 group-hover:scale-110 transition-transform"
             >
-              <svg
-                class="w-6 h-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="1.5"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d={feature.icon}
-                />
-              </svg>
+              <cap.icon class="w-6 h-6" />
             </div>
             <h3 class="text-lg font-bold text-foreground mb-2">
-              {feature.title}
+              {cap.title}
             </h3>
-            <p class="text-sm text-secondary leading-relaxed">{feature.desc}</p>
+            <p class="text-sm text-secondary leading-relaxed">{cap.desc}</p>
           </div>
         {/each}
       </div>
@@ -455,7 +521,52 @@
   </section>
 
   <!-- ========================================= -->
-  <!-- PRICING -->
+  <!-- 6. HOW IT WORKS - 3 STEPS -->
+  <!-- ========================================= -->
+  <section id="cara-kerja" class="px-6 py-20">
+    <div class="max-w-4xl mx-auto">
+      <div class="text-center max-w-2xl mx-auto mb-16">
+        <h2 class="text-2xl md:text-3xl font-bold text-foreground mb-4">
+          Cara kerjanya
+        </h2>
+        <p class="text-secondary">Tiga langkah sederhana. Tanpa tekanan.</p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-8">
+        {#each steps as step, index}
+          <div class="text-center md:text-left">
+            <div
+              class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 text-primary font-bold text-lg mb-5"
+            >
+              {step.number}
+            </div>
+            <h3 class="text-xl font-bold text-foreground mb-3">{step.title}</h3>
+            <p class="text-secondary leading-relaxed">{step.desc}</p>
+            {#if index < steps.length - 1}
+              <div class="hidden md:block mt-6">
+                <svg
+                  class="w-6 h-6 text-muted mx-auto md:mx-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3"
+                  />
+                </svg>
+              </div>
+            {/if}
+          </div>
+        {/each}
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================= -->
+  <!-- 7. PRICING -->
   <!-- ========================================= -->
   <section class="px-6 py-20 bg-surface border-t border-border">
     <div class="max-w-lg mx-auto text-center">
@@ -466,19 +577,18 @@
         <div
           class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide"
         >
-          Terbatas
+          Alpha
         </div>
         <h3 class="text-xl font-bold text-foreground mb-2">Alpha Access</h3>
         <div class="text-4xl font-black text-primary mb-6">
-          Rp0<span class="text-base font-normal text-secondary">/selamanya</span
-          >
+          Rp0<span class="text-base font-normal text-secondary">/saat ini</span>
         </div>
         <p class="text-sm text-secondary mb-8">
-          Gabung selama fase alpha dan dapatkan akses seumur hidup ke fitur inti
-          secara gratis.
+          Selama fase Alpha, semua fitur tersedia tanpa biaya. Ini cara kami
+          berterima kasih.
         </p>
         <ul class="text-left space-y-3 mb-8 max-w-xs mx-auto">
-          {#each ["Akses penuh ke semua fitur", "Jalur langsung ke founder", "Akses awal ke mobile app"] as item}
+          {#each ["Akses ke semua fitur", "Feedback langsung ke tim", "Akses awal ke update"] as item}
             <li class="flex items-center gap-3 text-sm text-foreground">
               <svg
                 class="w-5 h-5 text-primary"
@@ -501,18 +611,18 @@
           href="/auth"
           class="block w-full h-12 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold transition-colors flex items-center justify-center"
         >
-          Klaim Akun Gratis
+          Mulai Sekarang
         </a>
       </div>
       <p class="mt-6 text-xs text-muted">
-        Kami berencana memperkenalkan model langganan yang berkelanjutan nanti.
-        Early supporter akan di-grandfather in.
+        Kami berencana memperkenalkan model berlangganan yang terjangkau nanti.
+        Early supporter akan mendapat perlakuan khusus.
       </p>
     </div>
   </section>
 
   <!-- ========================================= -->
-  <!-- PHILOSOPHY / ABOUT -->
+  <!-- 8. PHILOSOPHY / ABOUT -->
   <!-- ========================================= -->
   <section class="px-6 py-24">
     <div class="max-w-2xl mx-auto space-y-16">
@@ -525,9 +635,9 @@
         </p>
         <p class="text-lg text-secondary leading-loose">
           Kami membangun Monger sebagai penangkalnya. Tempat tenang untuk
-          merefleksikan pengeluaranmu, menyelaraskan uang dengan nilai-nilaimu,
-          dan menemukan kejelasan tanpa kecemasan. Kami percaya ketika kamu
-          menghilangkan kebisingan, kamu membuat keputusan yang lebih baik.
+          merefleksikan pengeluaranmu, menemukan kejelasan tanpa kecemasan. Kami
+          percaya ketika kamu menghilangkan kebisingan, kamu membuat keputusan
+          yang lebih baik.
         </p>
       </div>
 
@@ -543,10 +653,9 @@
           <h3 class="text-lg font-bold text-foreground">Genzi Meraih Mimpi</h3>
         </div>
         <p class="text-secondary leading-relaxed mb-6">
-          Proyek ini dibuat dengan penuh cinta oleh tim di Genzi Meraih Mimpi.
-          Kami adalah kolektif kecil dari designer dan developer yang
-          berdedikasi membangun software yang manusiawi, menghargai perhatianmu
-          dan datamu.
+          Monger dibuat dengan penuh cinta oleh tim di Genzi Meraih Mimpi. Kami
+          adalah kolektif kecil dari designer dan developer yang berdedikasi
+          membangun software yang manusiawi — menghargai perhatianmu dan datamu.
         </p>
         <a
           href="https://genzilabs.com"
@@ -574,21 +683,44 @@
   </section>
 
   <!-- ========================================= -->
-  <!-- FOOTER -->
+  <!-- 9. FAQ -->
   <!-- ========================================= -->
-  <footer class="bg-surface border-t border-border pt-12 pb-8 px-6">
+  <section class="px-6 py-20 bg-surface">
+    <div class="max-w-2xl mx-auto">
+      <div class="text-center mb-12">
+        <h2 class="text-2xl md:text-3xl font-bold text-foreground mb-4">
+          Pertanyaan Umum
+        </h2>
+        <p class="text-secondary">Beberapa hal yang mungkin kamu ingin tahu.</p>
+      </div>
+
+      <FaqAccordion items={faqItems} />
+    </div>
+  </section>
+
+  <!-- ========================================= -->
+  <!-- 10. FOOTER -->
+  <!-- ========================================= -->
+  <footer class="bg-background border-t border-border pt-12 pb-8 px-6">
     <div
       class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8"
     >
       <div class="flex items-center gap-2">
         <img src={logoOnly} alt="Monger" class="w-6 h-6" />
         <span class="font-bold text-foreground">Monger</span>
+        <span
+          class="text-xs text-muted ml-2 px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium"
+          >Alpha</span
+        >
       </div>
       <nav
         class="flex flex-wrap justify-center gap-8 text-sm font-medium text-secondary"
       >
         <a href="#filosofi" class="hover:text-primary transition-colors"
           >Filosofi</a
+        >
+        <a href="#cara-kerja" class="hover:text-primary transition-colors"
+          >Cara Kerja</a
         >
         <a href="/privacy" class="hover:text-primary transition-colors"
           >Privasi</a

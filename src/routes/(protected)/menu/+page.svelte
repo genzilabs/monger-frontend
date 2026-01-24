@@ -11,6 +11,8 @@
     CreditCardIcon,
     RepeatIcon,
     GlobeIcon,
+    PaperPlaneIcon,
+    MessageIcon,
   } from "$lib/icons";
   import { Card } from "$lib/components/ui";
   import { getLatestVersion } from "$lib/data/updates";
@@ -31,13 +33,6 @@
       icon: SettingsIcon,
       color: "text-orange-600",
       bg: "bg-orange-50",
-    },
-    {
-      label: "Bahasa",
-      href: "/settings/language",
-      icon: GlobeIcon,
-      color: "text-pink-600",
-      bg: "bg-pink-50",
     },
     {
       label: "Buku",
@@ -84,9 +79,16 @@
     {
       label: "Undangan",
       href: "/invitations",
-      icon: BellIcon,
+      icon: PaperPlaneIcon,
       color: "text-yellow-600",
       bg: "bg-yellow-50",
+    },
+    {
+      label: "Beri Feedback",
+      href: "/feedback",
+      icon: MessageIcon,
+      color: "text-violet-600",
+      bg: "bg-violet-50",
     },
     {
       label: "Pembaruan",

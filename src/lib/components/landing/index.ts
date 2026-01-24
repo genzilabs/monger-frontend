@@ -6,3 +6,4 @@
  */
 
 export { default as LandingHeader } from "./LandingHeader.svelte";
+export { default as FaqAccordion } from "./FaqAccordion.svelte";
