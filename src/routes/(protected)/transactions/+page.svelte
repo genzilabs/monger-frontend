@@ -1,18 +1,26 @@
 <script lang="ts">
   import { Card, EmptyState, PrivacyToggle } from "$lib/components/ui";
-  import { TransactionItem } from "$lib/components/dashboard";
   import {
     TransactionDetailSheet,
     EditTransactionModal,
+    TransactionFilterModal,
   } from "$lib/components/modals";
-  import { booksStore } from "$lib/stores";
+  import { booksStore, privacyStore } from "$lib/stores";
   import {
     transactionsApi,
     type ListByBookOptions,
   } from "$lib/api/transactions";
   import type { Transaction } from "$lib/types/transaction";
-  import PocketFilter from "$lib/components/transactions/PocketFilter.svelte";
+  import DailyTransactionList from "$lib/components/transactions/DailyTransactionList.svelte";
+  import MonthlyTransactionSummary from "$lib/components/transactions/MonthlyTransactionSummary.svelte";
+  import TransactionTotalSummary from "$lib/components/transactions/TransactionTotalSummary.svelte";
+  import PeriodSummary from "$lib/components/transactions/PeriodSummary.svelte";
   import { untrack } from "svelte";
+  import { SlidersIcon } from "$lib/icons";
+
+  // Tab state
+  type TabType = "daily" | "monthly" | "total";
+  let activeTab = $state<TabType>("daily");
 
   // State
   let transactions = $state<Transaction[]>([]);
@@ -20,18 +28,18 @@
   let error = $state<string | null>(null);
   let hasMore = $state(true);
 
-  // Filters
-  let searchQuery = $state("");
-  let activeFilter = $state<"all" | "income" | "expense">("all");
+  // Filter state
   let selectedPocketId = $state<string | null>(null);
+  let selectedType = $state<"all" | "income" | "expense" | "transfer">("all");
+  let startDate = $state("");
+  let endDate = $state("");
+  let showFilterModal = $state(false);
+
   let offset = $state(0);
-  const limit = 20;
+  const limit = 50; // Load more for grouping purposes
 
   // Track loaded book to prevent duplicate fetches
   let loadedBookId = $state<string | null>(null);
-
-  // Debounce timer for search
-  let searchTimeout: ReturnType<typeof setTimeout>;
 
   // Transaction detail sheet
   let selectedTransaction = $state<Transaction | null>(null);
@@ -80,8 +88,7 @@
       const options: ListByBookOptions = {
         limit,
         offset,
-        search: searchQuery || undefined,
-        type: activeFilter !== "all" ? activeFilter : undefined,
+        type: selectedType !== "all" ? selectedType : undefined,
       };
 
       let result;
@@ -94,10 +101,23 @@
 
       if (result.data) {
         const newTxs = result.data || [];
+        // Filter by date range if specified
+        let filtered = newTxs;
+        if (startDate) {
+          const start = new Date(startDate);
+          start.setHours(0, 0, 0, 0);
+          filtered = filtered.filter((tx) => new Date(tx.date) >= start);
+        }
+        if (endDate) {
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          filtered = filtered.filter((tx) => new Date(tx.date) <= end);
+        }
+
         if (reset) {
-          transactions = newTxs;
+          transactions = filtered;
         } else {
-          transactions = [...transactions, ...newTxs];
+          transactions = [...transactions, ...filtered];
         }
         hasMore = newTxs.length === limit;
         offset += newTxs.length;
@@ -105,29 +125,22 @@
         error = result.error.error;
       }
     } catch (e: any) {
-      error = e.message || "Failed to load transactions";
+      error = e.message || "Gagal memuat transaksi";
     } finally {
       isLoading = false;
     }
   }
 
-  function handleSearch(e: Event) {
-    const value = (e.target as HTMLInputElement).value;
-    searchQuery = value;
-
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-      loadTransactions(true);
-    }, 300);
-  }
-
-  function handleFilterChange(filter: "all" | "income" | "expense") {
-    activeFilter = filter;
-    loadTransactions(true);
-  }
-
-  function handlePocketSelect(id: string | null) {
-    selectedPocketId = id;
+  function handleFilterApply(filters: {
+    pocketId: string | null;
+    type: "all" | "income" | "expense" | "transfer";
+    startDate: string;
+    endDate: string;
+  }) {
+    selectedPocketId = filters.pocketId;
+    selectedType = filters.type;
+    startDate = filters.startDate;
+    endDate = filters.endDate;
     loadTransactions(true);
   }
 
@@ -136,6 +149,14 @@
       loadTransactions(false);
     }
   }
+
+  // Check if any filters are active
+  const hasActiveFilters = $derived(
+    selectedPocketId !== null ||
+      selectedType !== "all" ||
+      startDate !== "" ||
+      endDate !== "",
+  );
 
   // Load when active book changes (only when book ID actually changes)
   $effect(() => {
@@ -149,26 +170,48 @@
       }
     }
   });
+
+  const tabs = [
+    { id: "daily" as TabType, label: "Harian" },
+    { id: "monthly" as TabType, label: "Bulanan" },
+    { id: "total" as TabType, label: "Total" },
+  ];
 </script>
 
 <svelte:head>
   <title>Transaksi - Monger</title>
 </svelte:head>
 
-<div class="animate-fade-in space-y-4">
+<div class="animate-fade-in space-y-4 pb-24">
   <!-- Header -->
   <div>
-    <div class="flex items-center gap-2">
-      <h1 class="text-2xl font-bold text-foreground">Riwayat Transaksi</h1>
-      <PrivacyToggle />
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <h1 class="text-2xl font-bold text-foreground">Riwayat Transaksi</h1>
+        <PrivacyToggle />
+      </div>
+
+      <!-- Filter Button -->
+      <button
+        onclick={() => (showFilterModal = true)}
+        class="flex items-center gap-2 px-3 py-2 bg-surface border border-border rounded-xl text-sm font-medium text-secondary hover:text-foreground hover:border-primary/50 transition-all {hasActiveFilters
+          ? 'border-primary text-primary'
+          : ''}"
+      >
+        <SlidersIcon size={16} />
+        <span>Filter</span>
+        {#if hasActiveFilters}
+          <span class="w-2 h-2 rounded-full bg-primary"></span>
+        {/if}
+      </button>
     </div>
-    <p class="text-secondary">
+    <p class="text-secondary text-sm mt-1">
       {#if booksStore.activeBook}
         {#if selectedPocketId}
-          Catatan di {booksStore.pockets.find((p) => p.id === selectedPocketId)
-            ?.name || "Kantong"}
+          {booksStore.pockets.find((p) => p.id === selectedPocketId)?.name ||
+            "Kantong"}
         {:else}
-          Semua catatan di {booksStore.activeBook.name}
+          {booksStore.activeBook.name}
         {/if}
       {:else}
         <span class="text-muted">Pilih buku dulu</span>
@@ -177,156 +220,40 @@
   </div>
 
   {#if booksStore.activeBook}
-    <!-- Pocket Filter -->
-    <PocketFilter
-      activePocketId={selectedPocketId}
-      pockets={booksStore.pockets}
-      onSelect={handlePocketSelect}
+    <!-- Top-Level Tabs -->
+    <div class="flex p-1 bg-surface rounded-xl border border-border">
+      {#each tabs as tab}
+        <button
+          onclick={() => (activeTab = tab.id)}
+          class="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg transition-all {activeTab ===
+          tab.id
+            ? 'bg-primary text-white shadow-sm'
+            : 'text-secondary hover:text-foreground'}"
+        >
+          {tab.label}
+        </button>
+      {/each}
+    </div>
+
+    <!-- Period Summary Section -->
+    <PeriodSummary
+      {transactions}
+      currency={booksStore.activeBook?.base_currency}
+      loading={isLoading}
     />
 
-    <!-- Search Bar -->
-    <div class="relative">
-      <svg
-        class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        stroke-width="2"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+    <!-- Tab Content -->
+    <div class="min-h-[200px]">
+      {#if activeTab === "daily"}
+        <DailyTransactionList
+          {transactions}
+          currency={booksStore.activeBook?.base_currency}
+          loading={isLoading}
+          onTransactionClick={openDetail}
         />
-      </svg>
-      <input
-        type="text"
-        placeholder="Cari transaksi..."
-        value={searchQuery}
-        oninput={handleSearch}
-        class="w-full pl-10 pr-4 py-3 bg-surface border border-border rounded-xl text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-      />
-    </div>
 
-    <!-- Filter Tabs -->
-    <div class="flex gap-2">
-      <button
-        onclick={() => handleFilterChange("all")}
-        class="px-4 py-2 rounded-full text-sm font-medium transition-all
-					{activeFilter === 'all'
-          ? 'bg-primary text-white'
-          : 'bg-surface text-secondary hover:bg-border'}"
-      >
-        Semua
-      </button>
-      <button
-        onclick={() => handleFilterChange("income")}
-        class="px-4 py-2 rounded-full text-sm font-medium transition-all
-					{activeFilter === 'income'
-          ? 'bg-emerald-500 text-white'
-          : 'bg-surface text-secondary hover:bg-border'}"
-      >
-        Pemasukan
-      </button>
-      <button
-        onclick={() => handleFilterChange("expense")}
-        class="px-4 py-2 rounded-full text-sm font-medium transition-all
-					{activeFilter === 'expense'
-          ? 'bg-red-500 text-white'
-          : 'bg-surface text-secondary hover:bg-border'}"
-      >
-        Pengeluaran
-      </button>
-    </div>
-
-    <!-- Transaction List -->
-    <Card class="p-4">
-      {#if isLoading && transactions.length === 0}
-        <!-- Loading State -->
-        <div class="space-y-3">
-          {#each Array(5) as _}
-            <div class="flex items-center justify-between py-3 animate-pulse">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-border"></div>
-                <div class="space-y-2">
-                  <div class="w-24 h-3 bg-border rounded"></div>
-                  <div class="w-16 h-2 bg-border rounded"></div>
-                </div>
-              </div>
-              <div class="w-20 h-4 bg-border rounded"></div>
-            </div>
-          {/each}
-        </div>
-      {:else if error}
-        <!-- Error State -->
-        <EmptyState
-          class="py-10"
-          title="Ada Masalah"
-          description={error || "Terjadi kesalahan"}
-        >
-          {#snippet icon()}
-            <svg
-              class="w-6 h-6 text-red-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-              />
-            </svg>
-          {/snippet}
-          {#snippet action()}
-            <button
-              onclick={() => loadTransactions(true)}
-              class="text-primary font-medium hover:underline"
-            >
-              Coba lagi
-            </button>
-          {/snippet}
-        </EmptyState>
-      {:else if transactions.length === 0}
-        <!-- Empty State -->
-        <EmptyState
-          class="py-10"
-          title={searchQuery ? "Tidak Ditemukan" : "Belum Ada Transaksi"}
-          description={searchQuery
-            ? `Tidak ada transaksi untuk "${searchQuery}"`
-            : "Belum ada transaksi sama sekali"}
-        >
-          {#snippet icon()}
-            <svg
-              class="w-6 h-6 text-muted"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-              />
-            </svg>
-          {/snippet}
-        </EmptyState>
-      {:else}
-        <!-- Transaction List -->
-        <div class="space-y-1">
-          {#each transactions as tx (tx.id)}
-            <TransactionItem
-              transaction={tx}
-              currency={booksStore.activeBook?.base_currency}
-              onclick={() => openDetail(tx)}
-            />
-          {/each}
-        </div>
-
-        <!-- Load More -->
-        {#if hasMore}
+        <!-- Load More for Daily -->
+        {#if hasMore && transactions.length > 0}
           <div class="pt-4 text-center">
             <button
               onclick={loadMore}
@@ -334,15 +261,27 @@
               class="px-6 py-2 text-sm font-medium text-primary bg-primary/10 rounded-full hover:bg-primary/20 transition-colors disabled:opacity-50"
             >
               {#if isLoading}
-                Loading...
+                Memuat...
               {:else}
                 Muat Lebih Banyak
               {/if}
             </button>
           </div>
         {/if}
+      {:else if activeTab === "monthly"}
+        <MonthlyTransactionSummary
+          {transactions}
+          currency={booksStore.activeBook?.base_currency}
+          loading={isLoading}
+        />
+      {:else if activeTab === "total"}
+        <TransactionTotalSummary
+          {transactions}
+          currency={booksStore.activeBook?.base_currency}
+          loading={isLoading}
+        />
       {/if}
-    </Card>
+    </div>
   {:else}
     <!-- Loading Skeleton when books not yet initialized -->
     <EmptyState title="Pilih Buku" description="Pilih buku di sidebar dulu ya.">
@@ -364,6 +303,18 @@
     </EmptyState>
   {/if}
 </div>
+
+<!-- Filter Modal -->
+<TransactionFilterModal
+  open={showFilterModal}
+  onClose={() => (showFilterModal = false)}
+  pockets={booksStore.pockets}
+  {selectedPocketId}
+  {selectedType}
+  {startDate}
+  {endDate}
+  onApply={handleFilterApply}
+/>
 
 <!-- Transaction Detail Sheet -->
 <TransactionDetailSheet

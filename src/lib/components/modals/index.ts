@@ -10,3 +10,5 @@ export { default as InviteMemberModal } from './InviteMemberModal.svelte';
 export { default as MembersListModal } from './MembersListModal.svelte';
 export { default as ExportModal } from './ExportModal.svelte';
 export { default as ImportWizard } from './ImportWizard.svelte';
+export { default as TransactionFilterModal } from './TransactionFilterModal.svelte';
+

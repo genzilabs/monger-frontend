@@ -1,14 +1,13 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
-  import { onMount } from "svelte";
-  import { booksStore, uiStore, transactionsStore } from "$lib/stores";
+  import { booksStore } from "$lib/stores";
   import {
     UserHeader,
     BalanceHeroCard,
     PendingTransfers,
     PendingInvitations,
     RecentTransactions,
-    CategoryPieChart,
+    CategoryBreakdownCard,
   } from "$lib/components/dashboard";
   import PocketListItem from "$lib/components/pockets/PocketListItem.svelte";
   import { PlusIcon } from "$lib/icons";
@@ -16,7 +15,6 @@
   import { EmptyState, PrivacyToggle } from "$lib/components/ui";
   import {
     transactionsApi,
-    type DailyBreakdown,
     type CategoryBreakdown,
   } from "$lib/api/transactions";
 
@@ -29,8 +27,6 @@
   let summaryLoading = $state(true);
 
   // Chart state
-  type ChartTab = "income" | "expense";
-  let activeTab = $state<ChartTab>("expense");
   let incomeBreakdown = $state<CategoryBreakdown[]>([]);
   let expenseBreakdown = $state<CategoryBreakdown[]>([]);
   let chartLoading = $state(true);
@@ -38,10 +34,6 @@
   // Computed values
   let totalBalance = $derived(
     booksStore.pockets.reduce((sum, p) => sum + p.balance_cents, 0),
-  );
-
-  let currentBreakdown = $derived(
-    activeTab === "income" ? incomeBreakdown : expenseBreakdown,
   );
 
   async function loadDashboardData() {
@@ -134,78 +126,12 @@
     />
 
     <!-- 3. Category Breakdown Chart -->
-    <div class="w-full bg-surface rounded-2xl border border-border p-4">
-      <div class="flex items-center justify-between mb-6">
-        <div class="flex items-center gap-2">
-          <h3 class="text-sm font-semibold text-foreground">
-            Analisis Pengeluaran
-          </h3>
-          <PrivacyToggle />
-        </div>
-
-        <!-- Tabs -->
-        <div class="flex p-1 bg-surface-elevated rounded-lg">
-          <button
-            onclick={() => (activeTab = "income")}
-            class="px-3 py-1 text-xs font-medium rounded-md transition-all {activeTab ===
-            'income'
-              ? 'bg-surface shadow-sm text-primary'
-              : 'text-muted hover:text-foreground'}"
-          >
-            Pemasukan
-          </button>
-          <button
-            onclick={() => (activeTab = "expense")}
-            class="px-3 py-1 text-xs font-medium rounded-md transition-all {activeTab ===
-            'expense'
-              ? 'bg-surface shadow-sm text-primary'
-              : 'text-muted hover:text-foreground'}"
-          >
-            Pengeluaran
-          </button>
-        </div>
-      </div>
-
-      {#if chartLoading}
-        <div class="h-48 flex items-center justify-center">
-          <div
-            class="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"
-          ></div>
-        </div>
-      {:else if currentBreakdown.length === 0}
-        <div
-          class="h-48 flex flex-col items-center justify-center text-muted text-sm gap-2"
-        >
-          <div
-            class="w-10 h-10 rounded-full bg-surface-elevated flex items-center justify-center"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="w-5 h-5 opacity-50"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              ><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path
-                d="M22 12A10 10 0 0 0 12 2v10z"
-              ></path></svg
-            >
-          </div>
-          <span
-            >Belum ada data {activeTab === "income"
-              ? "pemasukan"
-              : "pengeluaran"} bulan ini</span
-          >
-        </div>
-      {:else}
-        <CategoryPieChart
-          data={currentBreakdown}
-          type={activeTab}
-          currency={booksStore.activeBook.base_currency}
-          loading={chartLoading}
-        />
-      {/if}
-    </div>
+    <CategoryBreakdownCard
+      {incomeBreakdown}
+      {expenseBreakdown}
+      currency={booksStore.activeBook.base_currency}
+      loading={chartLoading}
+    />
 
     <!-- 4. Invitations & Transfers -->
     <PendingInvitations />

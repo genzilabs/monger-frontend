@@ -76,12 +76,16 @@
     function getRoleBadgeClasses(role: string) {
         switch (role) {
             case "admin":
-                return "bg-primary/20 text-primary";
+                return "bg-primary/10 text-primary";
             case "editor":
-                return "bg-emerald-500/20 text-emerald-400";
+                return "bg-emerald-500/10 text-emerald-600";
             default:
-                return "bg-muted/30 text-muted";
+                return "bg-muted/20 text-muted";
         }
+    }
+
+    function getTypeLabel(type: string) {
+        return type === "book" ? "Buku" : "Kantong";
     }
 </script>
 
@@ -95,35 +99,51 @@
 
         <div class="space-y-3">
             {#each invitations as invitation (invitation.id)}
-                <div class="p-4 bg-surface rounded-2xl border border-border">
-                    <div class="flex items-start justify-between gap-4">
+                <div class="bg-surface rounded-2xl border border-border p-4">
+                    <div class="flex items-start gap-3">
+                        <!-- Icon -->
+                        <div
+                            class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"
+                        >
+                            <svg
+                                class="w-5 h-5 text-primary"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
+                            </svg>
+                        </div>
+
+                        <!-- Content -->
                         <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-2 flex-wrap">
+                            <div class="flex items-center gap-2 flex-wrap mb-1">
                                 <span
-                                    class="text-xs uppercase font-semibold tracking-wider text-muted"
-                                >
-                                    {invitation.type}
-                                </span>
-                                <span
-                                    class="text-xs px-2 py-0.5 rounded-full capitalize {getRoleBadgeClasses(
+                                    class="text-xs px-2 py-0.5 rounded-full {getRoleBadgeClasses(
                                         invitation.role,
                                     )}"
                                 >
                                     {invitation.role}
                                 </span>
+                                <span class="text-xs text-muted">
+                                    {getTypeLabel(invitation.type)}
+                                </span>
                             </div>
 
-                            <h3
-                                class="font-semibold text-foreground mt-1 truncate"
-                            >
+                            <h4 class="font-semibold text-foreground truncate">
                                 {invitation.target_name || "Unknown"}
-                            </h3>
+                            </h4>
 
-                            <p class="text-sm text-muted mt-1">
-                                Invited by <span class="text-secondary"
+                            <p class="text-sm text-secondary mt-0.5">
+                                Diundang oleh <span class="text-foreground"
                                     >{invitation.inviter_name ||
                                         invitation.inviter_email ||
-                                        "Someone"}</span
+                                        "Seseorang"}</span
                                 >
                             </p>
 
@@ -133,42 +153,31 @@
                                 </p>
                             {/if}
 
-                            <div
-                                class="flex items-center gap-3 mt-2 text-xs text-muted"
-                            >
-                                <span
-                                    >Received {formatDate(
-                                        invitation.created_at,
-                                    )}</span
-                                >
-                                {#if invitation.expires_at}
-                                    <span
-                                        >• Expires {formatDate(
-                                            invitation.expires_at,
-                                        )}</span
-                                    >
-                                {/if}
-                            </div>
+                            <p class="text-xs text-muted mt-2">
+                                Diterima {formatDate(invitation.created_at)}
+                            </p>
                         </div>
                     </div>
 
                     <!-- Action Buttons -->
                     <div class="flex gap-2 mt-4">
                         <Button
-                            variant="primary"
-                            fullWidth
-                            loading={processingId === invitation.id}
-                            onclick={() => handleAccept(invitation.id)}
-                        >
-                            Accept
-                        </Button>
-                        <Button
-                            variant="secondary"
+                            variant="outline"
+                            size="sm"
                             fullWidth
                             disabled={processingId === invitation.id}
                             onclick={() => handleReject(invitation.id)}
                         >
-                            Decline
+                            Tolak
+                        </Button>
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            fullWidth
+                            loading={processingId === invitation.id}
+                            onclick={() => handleAccept(invitation.id)}
+                        >
+                            Terima
                         </Button>
                     </div>
                 </div>

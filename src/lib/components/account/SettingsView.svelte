@@ -1,7 +1,12 @@
 <script lang="ts">
   import { browser } from "$app/environment";
   import { Card, Button } from "$lib/components/ui";
-  import { CheckIcon, ChevronRightIcon } from "$lib/icons";
+  import { CheckIcon, ChevronRightIcon, CalendarIcon } from "$lib/icons";
+  import {
+    transactionSettingsStore,
+    type WeekendHandling,
+    type WeeklyStartDay,
+  } from "$lib/stores/transactionSettings.svelte";
 
   // Get current locale from localStorage
   let currentLocale = $state("id");
@@ -21,7 +26,6 @@
     showLanguageSelector = false;
     if (browser) {
       localStorage.setItem("monger:locale", code);
-      // Reload the page to apply the new locale
       window.location.reload();
     }
   }
@@ -29,6 +33,7 @@
   const currentLanguage = $derived(
     languages.find((l) => l.code === currentLocale) || languages[0],
   );
+
   import { ExportModal, ImportWizard } from "$lib/components/modals";
   import { booksStore, toastStore } from "$lib/stores";
   import { Download, Upload, FileDown } from "lucide-svelte";
@@ -42,7 +47,7 @@
 
   // Get selected book
   const selectedBook = $derived(
-    booksStore.books.find((b) => b.id === selectedBookId)
+    booksStore.books.find((b) => b.id === selectedBookId),
   );
 
   // Auto-select active book if available
@@ -77,6 +82,26 @@
       toastStore.success("Data berhasil diimpor!");
     }
   }
+
+  // Check if selected day is weekend
+  const isSelectedDayWeekend = $derived(
+    transactionSettingsStore.isWeekend(
+      transactionSettingsStore.monthlyResetDay,
+    ),
+  );
+
+  // Weekend handling options
+  const weekendOptions: { value: WeekendHandling; label: string }[] = [
+    { value: "none", label: "Tetap di tanggal tersebut" },
+    { value: "prev_friday", label: "Pindah ke Jumat sebelumnya" },
+    { value: "next_monday", label: "Pindah ke Senin berikutnya" },
+  ];
+
+  // Weekly start day options
+  const weeklyStartOptions: { value: WeeklyStartDay; label: string }[] = [
+    { value: "monday", label: "Senin" },
+    { value: "sunday", label: "Minggu" },
+  ];
 </script>
 
 <div class="space-y-6 animate-fade-in">
@@ -149,6 +174,104 @@
     Perubahan bahasa akan dimuat ulang setelah dipilih.
   </p>
 
+  <!-- Transaction Display Settings -->
+  <div class="space-y-3">
+    <h3 class="text-lg font-semibold text-foreground">Tampilan Transaksi</h3>
+
+    <Card class="p-4 space-y-5">
+      <!-- Monthly Start Date -->
+      <div>
+        <div class="flex items-center gap-2 mb-2">
+          <CalendarIcon size={16} class="text-primary" />
+          <label for="reset-day" class="font-medium text-foreground">
+            Tanggal Awal Periode Bulanan
+          </label>
+        </div>
+        <p class="text-xs text-secondary mb-3">
+          Ringkasan bulanan dimulai dari tanggal ini. Hanya mengubah tampilan,
+          tidak menghapus atau mengubah data transaksi.
+        </p>
+        <div class="flex items-center gap-3">
+          <select
+            id="reset-day"
+            value={transactionSettingsStore.monthlyResetDay}
+            onchange={(e) =>
+              transactionSettingsStore.setMonthlyResetDay(
+                Number((e.target as HTMLSelectElement).value),
+              )}
+            class="flex-1 px-4 py-3 bg-surface border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            {#each Array.from({ length: 28 }, (_, i) => i + 1) as day}
+              <option value={day}>Tanggal {day}</option>
+            {/each}
+          </select>
+          <span class="text-sm text-muted shrink-0">setiap bulan</span>
+        </div>
+      </div>
+
+      <!-- Weekend Handling (conditional) -->
+      {#if isSelectedDayWeekend}
+        <div class="border-t border-border pt-4">
+          <p class="text-sm text-foreground mb-2">
+            Tanggal {transactionSettingsStore.monthlyResetDay} jatuh di akhir pekan
+          </p>
+          <p class="text-xs text-secondary mb-3">
+            Bagaimana bila tanggal tersebut jatuh di hari Sabtu atau Minggu?
+          </p>
+          <div class="space-y-2">
+            {#each weekendOptions as option}
+              <button
+                onclick={() =>
+                  transactionSettingsStore.setWeekendHandling(option.value)}
+                class="w-full flex items-center justify-between p-3 rounded-xl border transition-colors {transactionSettingsStore.weekendHandling ===
+                option.value
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border hover:bg-surface-elevated'}"
+              >
+                <span
+                  class="text-sm {transactionSettingsStore.weekendHandling ===
+                  option.value
+                    ? 'text-foreground font-medium'
+                    : 'text-secondary'}">{option.label}</span
+                >
+                {#if transactionSettingsStore.weekendHandling === option.value}
+                  <CheckIcon size={16} class="text-primary" />
+                {/if}
+              </button>
+            {/each}
+          </div>
+        </div>
+      {/if}
+
+      <!-- Divider -->
+      <div class="border-t border-border"></div>
+
+      <!-- Weekly Start Day -->
+      <div>
+        <label class="font-medium text-foreground mb-2 block">
+          Hari Pertama Minggu
+        </label>
+        <p class="text-xs text-secondary mb-3">
+          Menentukan kapan minggu baru dimulai untuk ringkasan mingguan.
+        </p>
+        <div class="flex gap-2">
+          {#each weeklyStartOptions as option}
+            <button
+              onclick={() =>
+                transactionSettingsStore.setWeeklyStartDay(option.value)}
+              class="flex-1 py-3 px-4 rounded-xl border text-sm font-medium transition-colors {transactionSettingsStore.weeklyStartDay ===
+              option.value
+                ? 'border-primary bg-primary text-white'
+                : 'border-border text-secondary hover:bg-surface-elevated hover:text-foreground'}"
+            >
+              {option.label}
+            </button>
+          {/each}
+        </div>
+      </div>
+    </Card>
+  </div>
+
   <!-- Data Management Section -->
   <div class="space-y-3">
     <h3 class="text-lg font-semibold text-foreground">Kelola Data</h3>
@@ -156,7 +279,10 @@
     <Card class="p-4 space-y-4">
       <!-- Book Selector -->
       <div>
-        <label for="book-select" class="block text-sm font-medium text-secondary mb-2">
+        <label
+          for="book-select"
+          class="block text-sm font-medium text-secondary mb-2"
+        >
           Pilih Buku
         </label>
         <select
@@ -215,8 +341,8 @@
       </div>
 
       <p class="text-xs text-muted">
-        Ekspor transaksi ke CSV untuk backup atau analisis.
-        Impor transaksi dari file CSV menggunakan template yang disediakan.
+        Ekspor transaksi ke CSV untuk backup atau analisis. Impor transaksi dari
+        file CSV menggunakan template yang disediakan.
       </p>
     </Card>
   </div>
