@@ -157,3 +157,4 @@ export { default as AvatarUpload } from './AvatarUpload.svelte';
 export { default as EmptyState } from './EmptyState.svelte';
 export { default as MoneyInput } from './MoneyInput.svelte';
 export { default as PrivacyToggle } from './PrivacyToggle.svelte';
+export { default as CalendarSelect } from './CalendarSelect.svelte';

@@ -5,6 +5,7 @@
   import { goto } from "$app/navigation";
   import type { Transaction } from "$lib/types/transaction";
   import { untrack } from "svelte";
+  import { calculateSignificance } from "$lib/utils/significance";
 
   let isLoading = $derived(transactionsStore.isLoading);
 
@@ -23,14 +24,19 @@
   interface DateGroup {
     label: string;
     fullDate: string;
+    dateKey: string;
     transactions: Transaction[];
     income: number;
     expense: number;
   }
 
+  function getDateKey(dateStr: string): string {
+    return new Date(dateStr).toISOString().split("T")[0];
+  }
+
   function getDateInfo(
     dateStr: string,
-  ): { label: string; fullDate: string } | null {
+  ): { label: string; fullDate: string; dateKey: string } | null {
     const date = new Date(dateStr);
     const now = new Date();
     const yesterday = new Date();
@@ -48,9 +54,11 @@
       month: "short",
     });
 
-    if (isToday) return { label: "Hari ini", fullDate };
-    if (isYesterday) return { label: "Kemarin", fullDate };
-    if (isTwoDaysAgo) return { label: fullDate, fullDate };
+    const dateKey = getDateKey(dateStr);
+
+    if (isToday) return { label: "Hari ini", fullDate, dateKey };
+    if (isYesterday) return { label: "Kemarin", fullDate, dateKey };
+    if (isTwoDaysAgo) return { label: fullDate, fullDate, dateKey };
     return null;
   }
 
@@ -70,11 +78,12 @@
       if (txDate >= twoDaysAgo) {
         const dateInfo = getDateInfo(tx.date);
         if (dateInfo) {
-          const key = dateInfo.label;
+          const key = dateInfo.dateKey;
           if (!groupsMap[key]) {
             groupsMap[key] = {
               label: dateInfo.label,
               fullDate: dateInfo.fullDate,
+              dateKey: dateInfo.dateKey,
               transactions: [],
               income: 0,
               expense: 0,
@@ -89,8 +98,40 @@
         }
       }
     }
-    return Object.values(groupsMap);
+    // Return sorted by date (newest first)
+    return Object.values(groupsMap).sort(
+      (a, b) => new Date(b.dateKey).getTime() - new Date(a.dateKey).getTime(),
+    );
   });
+
+  // Build a lookup map for previous day's values
+  const previousDayValues = $derived.by(() => {
+    const map: Record<string, { expense: number; income: number }> = {};
+    for (let i = 0; i < recentGroups.length - 1; i++) {
+      const current = recentGroups[i];
+      const previous = recentGroups[i + 1];
+      map[current.dateKey] = {
+        expense: previous.expense,
+        income: previous.income,
+      };
+    }
+    return map;
+  });
+
+  // Calculate significance for a group
+  function getSignificance(group: DateGroup) {
+    const prev = previousDayValues[group.dateKey];
+    if (!prev) {
+      return {
+        expense: { isSignificant: false, direction: "none" as const },
+        income: { isSignificant: false, direction: "none" as const },
+      };
+    }
+    return {
+      expense: calculateSignificance(group.expense, prev.expense),
+      income: calculateSignificance(group.income, prev.income),
+    };
+  }
 
   // Calculate overall totals for last 3 days
   const totals = $derived.by(() => {
@@ -135,46 +176,24 @@
       Transaksi Terkini
     </h3>
 
-    <!-- Overall Income/Expense Totals -->
+    <!-- Overall Income/Expense Totals (no arrows at header level) -->
     <div class="flex items-center gap-3 text-xs">
       <!-- Expense -->
-      <div class="flex items-center gap-1">
-        <svg
-          class="w-3 h-3 text-red-500"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M5 10l7-7m0 0l7 7m-7-7v18"
-          />
-        </svg>
-        <span class="text-red-500 font-medium"
-          >{formatAmount(totals.expense)}</span
-        >
-      </div>
+      {#if totals.expense > 0}
+        <div class="flex items-center gap-1">
+          <span class="text-muted font-medium"
+            >{formatAmount(totals.expense)}</span
+          >
+        </div>
+      {/if}
       <!-- Income -->
-      <div class="flex items-center gap-1">
-        <svg
-          class="w-3 h-3 text-emerald-500"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M19 14l-7 7m0 0l-7-7m7 7V3"
-          />
-        </svg>
-        <span class="text-emerald-500 font-medium"
-          >{formatAmount(totals.income)}</span
-        >
-      </div>
+      {#if totals.income > 0}
+        <div class="flex items-center gap-1">
+          <span class="text-muted font-medium"
+            >{formatAmount(totals.income)}</span
+          >
+        </div>
+      {/if}
     </div>
   </div>
 
@@ -215,6 +234,7 @@
     </EmptyState>
   {:else}
     {#each recentGroups as group}
+      {@const sig = getSignificance(group)}
       <div class="space-y-2">
         <!-- Date Header with Per-Date Totals -->
         <div
@@ -224,44 +244,48 @@
             {group.label}
           </h4>
 
-          <!-- Per-Date Totals -->
+          <!-- Per-Date Totals with conditional significance arrows -->
           <div class="flex items-center gap-2.5 text-xs">
             {#if group.expense > 0}
               <div class="flex items-center gap-1">
-                <svg
-                  class="w-2.5 h-2.5 text-red-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  stroke-width="2.5"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M5 10l7-7m0 0l7 7m-7-7v18"
-                  />
-                </svg>
-                <span class="text-red-400 font-medium tabular-nums"
+                {#if sig.expense.isSignificant && sig.expense.direction === "up"}
+                  <svg
+                    class="w-2.5 h-2.5 text-red-400/70 opacity-80"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M5 10l7-7m0 0l7 7m-7-7v18"
+                    />
+                  </svg>
+                {/if}
+                <span class="text-muted font-medium tabular-nums"
                   >{formatCompact(group.expense)}</span
                 >
               </div>
             {/if}
             {#if group.income > 0}
               <div class="flex items-center gap-1">
-                <svg
-                  class="w-2.5 h-2.5 text-emerald-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  stroke-width="2.5"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                  />
-                </svg>
-                <span class="text-emerald-400 font-medium tabular-nums"
+                {#if sig.income.isSignificant && sig.income.direction === "down"}
+                  <svg
+                    class="w-2.5 h-2.5 text-emerald-400/70 opacity-80"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                    />
+                  </svg>
+                {/if}
+                <span class="text-muted font-medium tabular-nums"
                   >{formatCompact(group.income)}</span
                 >
               </div>

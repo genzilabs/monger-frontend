@@ -3,6 +3,7 @@
     import { EmptyState } from "$lib/components/ui";
     import type { Transaction } from "$lib/types/transaction";
     import { privacyStore } from "$lib/stores";
+    import { calculateSignificance } from "$lib/utils/significance";
 
     interface Props {
         transactions: Transaction[];
@@ -20,8 +21,14 @@
 
     interface DateGroup {
         label: string;
+        dateKey: string; // ISO date for comparison
         transactions: Transaction[];
         expense: number;
+        income: number;
+    }
+
+    function getDateKey(dateStr: string): string {
+        return new Date(dateStr).toISOString().split("T")[0];
     }
 
     function getGroupLabel(dateStr: string): string {
@@ -42,7 +49,7 @@
         });
     }
 
-    // Group transactions by date with expense totals
+    // Group transactions by date with expense and income totals
     const groups = $derived.by(() => {
         const groupsMap: Record<string, DateGroup> = {};
         const sorted = [...transactions].sort(
@@ -50,21 +57,59 @@
         );
 
         for (const tx of sorted) {
+            const dateKey = getDateKey(tx.date);
             const label = getGroupLabel(tx.date);
-            if (!groupsMap[label]) {
-                groupsMap[label] = {
+            if (!groupsMap[dateKey]) {
+                groupsMap[dateKey] = {
                     label,
+                    dateKey,
                     transactions: [],
                     expense: 0,
+                    income: 0,
                 };
             }
-            groupsMap[label].transactions.push(tx);
+            groupsMap[dateKey].transactions.push(tx);
             if (tx.type === "expense") {
-                groupsMap[label].expense += tx.amount_cents;
+                groupsMap[dateKey].expense += tx.amount_cents;
+            } else if (tx.type === "income") {
+                groupsMap[dateKey].income += tx.amount_cents;
             }
         }
-        return Object.values(groupsMap);
+        // Return sorted by date (newest first)
+        return Object.values(groupsMap).sort(
+            (a, b) =>
+                new Date(b.dateKey).getTime() - new Date(a.dateKey).getTime(),
+        );
     });
+
+    // Build a lookup map for previous day's values
+    const previousDayValues = $derived.by(() => {
+        const map: Record<string, { expense: number; income: number }> = {};
+        for (let i = 0; i < groups.length - 1; i++) {
+            const current = groups[i];
+            const previous = groups[i + 1];
+            map[current.dateKey] = {
+                expense: previous.expense,
+                income: previous.income,
+            };
+        }
+        return map;
+    });
+
+    // Calculate significance for a group
+    function getSignificance(group: DateGroup) {
+        const prev = previousDayValues[group.dateKey];
+        if (!prev) {
+            return {
+                expense: { isSignificant: false, direction: "none" as const },
+                income: { isSignificant: false, direction: "none" as const },
+            };
+        }
+        return {
+            expense: calculateSignificance(group.expense, prev.expense),
+            income: calculateSignificance(group.income, prev.income),
+        };
+    }
 
     function formatCompact(cents: number): string {
         if (privacyStore.hideAmounts) return "••••";
@@ -135,8 +180,9 @@
         </EmptyState>
     {:else}
         {#each groups as group}
+            {@const sig = getSignificance(group)}
             <div class="space-y-2">
-                <!-- Date Header as Divider with Expense Total -->
+                <!-- Date Header as Divider with Totals -->
                 <div
                     class="flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur py-2 z-10"
                 >
@@ -146,27 +192,56 @@
                         {group.label}
                     </h4>
 
-                    {#if group.expense > 0}
-                        <div class="flex items-center gap-1">
-                            <svg
-                                class="w-2.5 h-2.5 text-red-400"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                                stroke-width="2.5"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M5 10l7-7m0 0l7 7m-7-7v18"
-                                />
-                            </svg>
-                            <span
-                                class="text-xs text-red-400 font-medium tabular-nums"
-                                >{formatCompact(group.expense)}</span
-                            >
-                        </div>
-                    {/if}
+                    <div class="flex items-center gap-2.5 text-xs">
+                        <!-- Expense total with conditional arrow -->
+                        {#if group.expense > 0}
+                            <div class="flex items-center gap-1">
+                                {#if sig.expense.isSignificant && sig.expense.direction === "up"}
+                                    <svg
+                                        class="w-2.5 h-2.5 text-red-400/70 opacity-80"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        stroke-width="2.5"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            d="M5 10l7-7m0 0l7 7m-7-7v18"
+                                        />
+                                    </svg>
+                                {/if}
+                                <span
+                                    class="text-xs text-muted font-medium tabular-nums"
+                                    >{formatCompact(group.expense)}</span
+                                >
+                            </div>
+                        {/if}
+                        <!-- Income total with conditional arrow -->
+                        {#if group.income > 0}
+                            <div class="flex items-center gap-1">
+                                {#if sig.income.isSignificant && sig.income.direction === "down"}
+                                    <svg
+                                        class="w-2.5 h-2.5 text-emerald-400/70 opacity-80"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        stroke-width="2.5"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                                        />
+                                    </svg>
+                                {/if}
+                                <span
+                                    class="text-xs text-muted font-medium tabular-nums"
+                                    >{formatCompact(group.income)}</span
+                                >
+                            </div>
+                        {/if}
+                    </div>
                 </div>
 
                 <div

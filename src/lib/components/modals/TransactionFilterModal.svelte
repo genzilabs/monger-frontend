@@ -1,5 +1,9 @@
 <script lang="ts">
-    import { ResponsiveModal, Button, Combobox } from "$lib/components/ui";
+    import {
+        ResponsiveModal,
+        Button,
+        CalendarSelect,
+    } from "$lib/components/ui";
     import type { Pocket } from "$lib/types";
 
     interface Props {
@@ -64,16 +68,8 @@
         localEndDate = "";
     }
 
-    const pocketOptions = $derived([
-        { value: "", label: "Semua Kantong" },
-        ...pockets.map((p) => ({
-            value: p.id,
-            label: p.name,
-        })),
-    ]);
-
     const typeOptions = [
-        { value: "all", label: "Semua Tipe" },
+        { value: "all", label: "Semua" },
         { value: "income", label: "Pemasukan" },
         { value: "expense", label: "Pengeluaran" },
         { value: "transfer", label: "Transfer" },
@@ -81,19 +77,13 @@
 </script>
 
 <ResponsiveModal {open} {onClose} title="Filter Transaksi">
-    <div class="space-y-5">
+    <div class="space-y-6 overflow-auto">
         <!-- Pocket Filter -->
-        <div>
-            <label
-                for="pocket-filter"
-                class="block text-sm font-medium text-secondary mb-2"
-            >
-                Kantong
-            </label>
+        <div class="space-y-2">
+            <p class="text-sm font-medium text-foreground">Kantong</p>
             <select
-                id="pocket-filter"
                 bind:value={localPocketId}
-                class="w-full px-4 py-3 bg-surface border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                class="w-full px-4 py-3 bg-surface border border-border rounded-xl text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
             >
                 <option value={null}>Semua Kantong</option>
                 {#each pockets as pocket}
@@ -103,10 +93,8 @@
         </div>
 
         <!-- Type Filter -->
-        <div>
-            <p class="block text-sm font-medium text-secondary mb-2">
-                Tipe Transaksi
-            </p>
+        <div class="space-y-2">
+            <p class="text-sm font-medium text-foreground">Tipe Transaksi</p>
             <div
                 class="grid grid-cols-2 gap-2"
                 role="group"
@@ -128,35 +116,22 @@
             </div>
         </div>
 
-        <!-- Date Range -->
-        <div>
-            <p class="block text-sm font-medium text-secondary mb-2">
-                Rentang Tanggal
-            </p>
+        <!-- Date Range with CalendarSelect -->
+        <div class="space-y-3">
+            <p class="text-sm font-medium text-foreground">Rentang Tanggal</p>
             <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label
-                        for="start-date"
-                        class="block text-xs text-muted mb-1">Dari</label
-                    >
-                    <input
-                        id="start-date"
-                        type="date"
-                        bind:value={localStartDate}
-                        class="w-full px-3 py-2.5 bg-surface border border-border rounded-xl text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    />
-                </div>
-                <div>
-                    <label for="end-date" class="block text-xs text-muted mb-1"
-                        >Sampai</label
-                    >
-                    <input
-                        id="end-date"
-                        type="date"
-                        bind:value={localEndDate}
-                        class="w-full px-3 py-2.5 bg-surface border border-border rounded-xl text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    />
-                </div>
+                <CalendarSelect
+                    value={localStartDate}
+                    onSelect={(date) => (localStartDate = date)}
+                    placeholder="Dari"
+                    label="Dari"
+                />
+                <CalendarSelect
+                    value={localEndDate}
+                    onSelect={(date) => (localEndDate = date)}
+                    placeholder="Sampai"
+                    label="Sampai"
+                />
             </div>
         </div>
 
