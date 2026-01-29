@@ -8,9 +8,10 @@
         transactions: Transaction[];
         currency?: string;
         loading?: boolean;
+        onPeriodChange?: (startDate: string, endDate: string) => void;
     }
 
-    let { transactions, currency = "IDR", loading = false }: Props = $props();
+    let { transactions, currency = "IDR", loading = false, onPeriodChange }: Props = $props();
 
     // Current period state (month offset from current)
     let periodOffset = $state(0);
@@ -31,10 +32,8 @@
             transactionSettingsStore.getPeriodStart(referenceDate);
         const endDate = transactionSettingsStore.getPeriodEnd(referenceDate);
 
-        // Period label (e.g., "Feb 2026") - based on the month the period primarily falls in
-        const targetMonth = new Date(startDate);
-        targetMonth.setMonth(targetMonth.getMonth() + 1);
-        const label = targetMonth.toLocaleDateString("id-ID", {
+        // Period label (e.g., "Jan 2026") - use the start date's month
+        const label = startDate.toLocaleDateString("id-ID", {
             month: "long",
             year: "numeric",
         });
@@ -146,6 +145,23 @@
             maximumFractionDigits: 0,
         }).format(cents / 100);
     }
+
+    // Emit period change when dates change
+    $effect(() => {
+        if (onPeriodChange) {
+            // Format as YYYY-MM-DD in local timezone (not UTC)
+            const formatLocalDate = (date: Date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+            
+            const startStr = formatLocalDate(periodDates.start);
+            const endStr = formatLocalDate(periodDates.end);
+            onPeriodChange(startStr, endStr);
+        }
+    });
 </script>
 
 <!-- Period Summary - No background, spacing-based separation -->

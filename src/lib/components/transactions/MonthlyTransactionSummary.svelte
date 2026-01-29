@@ -32,8 +32,17 @@
         );
 
         // Find the earliest transaction date to determine period range
-        const earliestDate = new Date(sorted[sorted.length - 1].date);
-        const latestDate = new Date(sorted[0].date);
+        // Parse as local dates to avoid timezone issues
+        // Transaction dates are in ISO-8601 format: "2026-01-21T18:01:00+07:00"
+        const parseLocalDate = (dateStr: string) => {
+            const datePart = dateStr.split('T')[0]; // Extract "2026-01-21"
+            const [year, month, day] = datePart.split('-').map(Number);
+            return new Date(year, month - 1, day);
+        };
+        
+        const earliestDate = parseLocalDate(sorted[sorted.length - 1].date);
+        const latestDate = parseLocalDate(sorted[0].date);
+
 
         // Get the period start for the earliest transaction
         let periodStart = new Date(earliestDate);
@@ -42,6 +51,7 @@
             periodStart.setMonth(periodStart.getMonth() - 1);
         }
         periodStart.setHours(0, 0, 0, 0);
+
 
         // Create all periods from earliest to latest
         while (periodStart <= latestDate) {
@@ -61,20 +71,34 @@
         }
 
         // Assign transactions to periods
-        for (const tx of sorted) {
-            const txDate = new Date(tx.date);
 
+        for (const tx of sorted) {
+            // Parse date as local date to avoid timezone issues
+            // Transaction dates are in ISO-8601 format: "2026-01-21T18:01:00+07:00"
+            // Extract just the date part: "2026-01-21"
+            const datePart = tx.date.split('T')[0];
+            const [year, month, day] = datePart.split('-').map(Number);
+            const txDate = new Date(year, month - 1, day);
+
+
+            let matched = false;
             for (const [label, period] of periods) {
+
                 if (txDate >= period.startDate && txDate <= period.endDate) {
+
                     if (tx.type === "income") {
                         period.income += tx.amount_cents;
                     } else if (tx.type === "expense") {
                         period.expense += tx.amount_cents;
                     }
+                    matched = true;
                     break;
                 }
             }
+
         }
+
+
 
         // Return as array sorted by date desc, filter out empty periods
         return Array.from(periods.values())

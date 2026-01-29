@@ -5,6 +5,7 @@
         CalendarSelect,
     } from "$lib/components/ui";
     import type { Pocket } from "$lib/types";
+    import { categoriesStore } from "$lib/stores";
 
     interface Props {
         open: boolean;
@@ -13,12 +14,16 @@
         // Current filter values
         selectedPocketId: string | null;
         selectedType: "all" | "income" | "expense" | "transfer";
+        selectedCategoryId: string | null;
+        searchQuery: string;
         startDate: string;
         endDate: string;
         // Callbacks
         onApply: (filters: {
             pocketId: string | null;
             type: "all" | "income" | "expense" | "transfer";
+            categoryId: string | null;
+            search: string;
             startDate: string;
             endDate: string;
         }) => void;
@@ -30,6 +35,8 @@
         pockets,
         selectedPocketId,
         selectedType,
+        selectedCategoryId,
+        searchQuery,
         startDate,
         endDate,
         onApply,
@@ -38,6 +45,8 @@
     // Local state for editing
     let localPocketId = $state<string | null>(null);
     let localType = $state<"all" | "income" | "expense" | "transfer">("all");
+    let localCategoryId = $state<string | null>(null);
+    let localSearch = $state("");
     let localStartDate = $state("");
     let localEndDate = $state("");
 
@@ -46,6 +55,8 @@
         if (open) {
             localPocketId = selectedPocketId;
             localType = selectedType;
+            localCategoryId = selectedCategoryId;
+            localSearch = searchQuery;
             localStartDate = startDate;
             localEndDate = endDate;
         }
@@ -55,6 +66,8 @@
         onApply({
             pocketId: localPocketId,
             type: localType,
+            categoryId: localCategoryId,
+            search: localSearch,
             startDate: localStartDate,
             endDate: localEndDate,
         });
@@ -64,6 +77,8 @@
     function handleReset() {
         localPocketId = null;
         localType = "all";
+        localCategoryId = null;
+        localSearch = "";
         localStartDate = "";
         localEndDate = "";
     }
@@ -78,6 +93,17 @@
 
 <ResponsiveModal {open} {onClose} title="Filter Transaksi">
     <div class="space-y-6 overflow-auto">
+        <!-- Search Filter -->
+        <div class="space-y-2">
+            <p class="text-sm font-medium text-foreground">Cari</p>
+            <input
+                type="text"
+                bind:value={localSearch}
+                placeholder="Cari nama atau deskripsi transaksi..."
+                class="w-full px-4 py-3 bg-surface border border-border rounded-xl text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
+            />
+        </div>
+
         <!-- Pocket Filter -->
         <div class="space-y-2">
             <p class="text-sm font-medium text-foreground">Kantong</p>
@@ -114,6 +140,20 @@
                     </button>
                 {/each}
             </div>
+        </div>
+
+        <!-- Category Filter -->
+        <div class="space-y-2">
+            <p class="text-sm font-medium text-foreground">Kategori</p>
+            <select
+                bind:value={localCategoryId}
+                class="w-full px-4 py-3 bg-surface border border-border rounded-xl text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
+            >
+                <option value={null}>Semua Kategori</option>
+                {#each categoriesStore.categories as category}
+                    <option value={category.id}>{category.name}</option>
+                {/each}
+            </select>
         </div>
 
         <!-- Date Range with CalendarSelect -->

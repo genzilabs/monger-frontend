@@ -3,9 +3,19 @@ import type { CreateTransactionRequest, CreateTransferRequest, UpdateTransaction
 
 export interface ListByBookOptions {
 	limit?: number;
-	offset?: number;
+	cursor?: string; // Cursor for pagination (replaces offset)
 	search?: string;
 	type?: 'income' | 'expense' | 'transfer';
+	pocketId?: string;
+	categoryId?: string;
+	startDate?: string; // YYYY-MM-DD format
+	endDate?: string;   // YYYY-MM-DD format
+}
+
+export interface TransactionListResponse {
+	transactions: Transaction[];
+	next_cursor?: string;
+	has_more: boolean;
 }
 
 export interface MonthlySummary {
@@ -53,19 +63,26 @@ export const transactionsApi = {
 	listByPocket: (pocketId: string, options: ListByBookOptions = {}) => {
 		const params = new URLSearchParams();
 		params.set('limit', String(options.limit ?? 20));
-		params.set('offset', String(options.offset ?? 0));
+		if (options.cursor) params.set('cursor', options.cursor);
 		if (options.search) params.set('search', options.search);
 		if (options.type) params.set('type', options.type);
-		return client.get<Transaction[]>(`/pockets/${pocketId}/transactions?${params.toString()}`, true);
+		if (options.categoryId) params.set('category_id', options.categoryId);
+		if (options.startDate) params.set('start_date', options.startDate);
+		if (options.endDate) params.set('end_date', options.endDate);
+		return client.get<TransactionListResponse>(`/pockets/${pocketId}/transactions?${params.toString()}`, true);
 	},
 
 	listByBook: (bookId: string, options: ListByBookOptions = {}) => {
 		const params = new URLSearchParams();
 		params.set('limit', String(options.limit ?? 20));
-		params.set('offset', String(options.offset ?? 0));
+		if (options.cursor) params.set('cursor', options.cursor);
 		if (options.search) params.set('search', options.search);
 		if (options.type) params.set('type', options.type);
-		return client.get<Transaction[]>(`/books/${bookId}/transactions?${params.toString()}`, true);
+		if (options.pocketId) params.set('pocket_id', options.pocketId);
+		if (options.categoryId) params.set('category_id', options.categoryId);
+		if (options.startDate) params.set('start_date', options.startDate);
+		if (options.endDate) params.set('end_date', options.endDate);
+		return client.get<TransactionListResponse>(`/books/${bookId}/transactions?${params.toString()}`, true);
 	},
 
 	getMonthlySummary: (bookId: string, month: number, year: number) =>

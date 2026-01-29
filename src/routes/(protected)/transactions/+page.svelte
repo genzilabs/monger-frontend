@@ -1,20 +1,23 @@
 <script lang="ts">
   import { Card, EmptyState, PrivacyToggle } from "$lib/components/ui";
   import {
+    DailyTransactionList,
+    MonthlyTransactionSummary,
+    TransactionTotalSummary,
+    CalendarView,
+    PeriodSummary,
+  } from "$lib/components/transactions";
+  import {
     TransactionDetailSheet,
     EditTransactionModal,
     TransactionFilterModal,
   } from "$lib/components/modals";
-  import { booksStore, privacyStore } from "$lib/stores";
+  import { booksStore, categoriesStore } from "$lib/stores"; // privacyStore removed
   import {
     transactionsApi,
     type ListByBookOptions,
   } from "$lib/api/transactions";
   import type { Transaction } from "$lib/types/transaction";
-  import DailyTransactionList from "$lib/components/transactions/DailyTransactionList.svelte";
-  import MonthlyTransactionSummary from "$lib/components/transactions/MonthlyTransactionSummary.svelte";
-  import TransactionTotalSummary from "$lib/components/transactions/TransactionTotalSummary.svelte";
-  import PeriodSummary from "$lib/components/transactions/PeriodSummary.svelte";
   import { untrack } from "svelte";
   import { SlidersIcon } from "$lib/icons";
 
@@ -31,11 +34,14 @@
   // Filter state
   let selectedPocketId = $state<string | null>(null);
   let selectedType = $state<"all" | "income" | "expense" | "transfer">("all");
+  let selectedCategoryId = $state<string | null>(null);
+  let searchQuery = $state("");
   let startDate = $state("");
   let endDate = $state("");
   let showFilterModal = $state(false);
 
-  let offset = $state(0);
+  // Cursor pagination state
+  let nextCursor = $state<string | undefined>(undefined);
   const limit = 50; // Load more for grouping purposes
 
   // Track loaded book to prevent duplicate fetches
@@ -76,7 +82,7 @@
     if (!activeBook) return;
 
     if (reset) {
-      offset = 0;
+      nextCursor = undefined;
       transactions = [];
       hasMore = true;
     }
@@ -87,8 +93,12 @@
     try {
       const options: ListByBookOptions = {
         limit,
-        offset,
+        cursor: reset ? undefined : nextCursor,
+        search: searchQuery || undefined,
         type: selectedType !== "all" ? selectedType : undefined,
+        categoryId: selectedCategoryId || undefined,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
       };
 
       let result;
@@ -100,27 +110,18 @@
       }
 
       if (result.data) {
-        const newTxs = result.data || [];
-        // Filter by date range if specified
-        let filtered = newTxs;
-        if (startDate) {
-          const start = new Date(startDate);
-          start.setHours(0, 0, 0, 0);
-          filtered = filtered.filter((tx) => new Date(tx.date) >= start);
-        }
-        if (endDate) {
-          const end = new Date(endDate);
-          end.setHours(23, 59, 59, 999);
-          filtered = filtered.filter((tx) => new Date(tx.date) <= end);
-        }
+        const response = result.data;
+        const newTxs = response.transactions || [];
 
         if (reset) {
-          transactions = filtered;
+          transactions = newTxs;
         } else {
-          transactions = [...transactions, ...filtered];
+          transactions = [...transactions, ...newTxs];
         }
-        hasMore = newTxs.length === limit;
-        offset += newTxs.length;
+        
+        // Update cursor and hasMore from response
+        nextCursor = response.next_cursor;
+        hasMore = response.has_more;
       } else if (result.error) {
         error = result.error.error;
       }
@@ -134,11 +135,15 @@
   function handleFilterApply(filters: {
     pocketId: string | null;
     type: "all" | "income" | "expense" | "transfer";
+    categoryId: string | null;
+    search: string;
     startDate: string;
     endDate: string;
   }) {
     selectedPocketId = filters.pocketId;
     selectedType = filters.type;
+    selectedCategoryId = filters.categoryId;
+    searchQuery = filters.search;
     startDate = filters.startDate;
     endDate = filters.endDate;
     loadTransactions(true);
@@ -154,9 +159,18 @@
   const hasActiveFilters = $derived(
     selectedPocketId !== null ||
       selectedType !== "all" ||
+      selectedCategoryId !== null ||
+      searchQuery !== "" ||
       startDate !== "" ||
       endDate !== "",
   );
+
+  // Track if period has been initialized
+  let periodInitialized = $state(false);
+  
+  // Track period dates for calendar view
+  let currentPeriodStart = $state<Date>(new Date());
+  let currentPeriodEnd = $state<Date>(new Date());
 
   // Load when active book changes (only when book ID actually changes)
   $effect(() => {
@@ -166,15 +180,41 @@
     if (currentBookId !== untrack(() => loadedBookId)) {
       loadedBookId = currentBookId;
       if (currentBookId) {
+        // Load categories for the filter modal
+        untrack(() => categoriesStore.load(currentBookId));
+        // Load transactions - PeriodSummary will set dates and reload if needed
         untrack(() => loadTransactions(true));
       }
     }
   });
 
+  // Auto-load more transactions when switching to monthly/total tabs
+  // These views need all transactions for proper aggregation
+  $effect(() => {
+    // Track the active tab
+    const tab = activeTab;
+    
+    // If we're on monthly or total tab and there are more transactions to load
+    if ((tab === "monthly" || tab === "total" || tab === "calendar") && hasMore && !isLoading) {
+      // Automatically load all remaining transactions
+      untrack(() => loadAllTransactions());
+    }
+  });
+
+  // Function to load all remaining transactions
+  async function loadAllTransactions() {
+    while (hasMore && !isLoading) {
+      await loadTransactions(false);
+      // Small delay to prevent overwhelming the server
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+  }
+
   const tabs = [
     { id: "daily" as TabType, label: "Harian" },
     { id: "monthly" as TabType, label: "Bulanan" },
     { id: "total" as TabType, label: "Total" },
+    { id: "calendar" as TabType, label: "Kalender" },
   ];
 </script>
 
@@ -240,6 +280,19 @@
       {transactions}
       currency={booksStore.activeBook?.base_currency}
       loading={isLoading}
+      onPeriodChange={(start, end) => {
+        // Update date filters when period navigation changes
+        startDate = start;
+        endDate = end;
+        // Store period dates for calendar view - parse as local dates
+        // Format is "YYYY-MM-DD", split and create local date
+        const [startYear, startMonth, startDay] = start.split('-').map(Number);
+        const [endYear, endMonth, endDay] = end.split('-').map(Number);
+        currentPeriodStart = new Date(startYear, startMonth - 1, startDay);
+        currentPeriodEnd = new Date(endYear, endMonth - 1, endDay);
+        periodInitialized = true;
+        loadTransactions(true);
+      }}
     />
 
     <!-- Tab Content -->
@@ -280,6 +333,14 @@
           currency={booksStore.activeBook?.base_currency}
           loading={isLoading}
         />
+      {:else if activeTab === "calendar"}
+        <CalendarView
+          {transactions}
+          currency={booksStore.activeBook?.base_currency}
+          loading={isLoading}
+          periodStart={currentPeriodStart}
+          periodEnd={currentPeriodEnd}
+        />
       {/if}
     </div>
   {:else}
@@ -311,6 +372,8 @@
   pockets={booksStore.pockets}
   {selectedPocketId}
   {selectedType}
+  {selectedCategoryId}
+  {searchQuery}
   {startDate}
   {endDate}
   onApply={handleFilterApply}

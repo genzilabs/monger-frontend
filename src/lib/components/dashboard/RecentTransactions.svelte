@@ -69,7 +69,12 @@
     twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
     twoDaysAgo.setHours(0, 0, 0, 0);
 
-    const sorted = [...(transactionsStore.transactions || [])].sort(
+    const txList = transactionsStore.transactions;
+    if (!Array.isArray(txList)) {
+      return [];
+    }
+
+    const sorted = [...txList].sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
     );
 

@@ -12,7 +12,6 @@
   let { open, onClose, title, children }: Props = $props();
 
   import { onMount } from "svelte";
-  import { fade } from "svelte/transition";
   
   let internalOpen = $state(false); 
   let isMounted = false;
@@ -25,8 +24,8 @@
   let snapPoints = $derived.by(() => {
       if (!viewportHeight || !contentHeight) return [0.5, 1];
       
-      const fraction = (contentHeight + 30) / viewportHeight;
-      const safeFraction = Math.max(Math.min(fraction, 0.9), 0.3);
+      const fraction = (contentHeight + 60) / viewportHeight; // Add padding for handle and margins
+      const safeFraction = Math.max(Math.min(fraction, 0.95), 0.3);
       
       return [safeFraction, 1];
   });
@@ -53,12 +52,6 @@
       window.visualViewport.addEventListener('scroll', updateViewportHeight);
     }
     window.addEventListener('resize', updateViewportHeight);
-    
-    if (open) {
-      setTimeout(() => {
-        internalOpen = true;
-      }, 150);
-    }
 
     return () => {
       if (window.visualViewport) {
@@ -69,14 +62,10 @@
     };
   });
 
+  // Sync internal state with prop
   $effect(() => {
     if (isMounted) {
-      if (open && !internalOpen) {
-        internalOpen = true;
-      }
-      if (!open && internalOpen) {
-        internalOpen = false;
-      }
+      internalOpen = open;
     }
   });
 
@@ -97,15 +86,7 @@
     shouldScaleBackground={false}
 >
   <Drawer.Portal>
-    {#if internalOpen}
-        <div 
-            class="fixed inset-0 bg-black/60 z-[110]" 
-            transition:fade={{ duration: 200 }} 
-            onclick={() => onClose()}
-            role="dialog"
-            aria-modal="true"
-        ></div>
-    {/if}
+    <Drawer.Overlay class="fixed inset-0 bg-black/60 z-[110]" />
     <Drawer.Content 
         class="drawer-content bg-background flex flex-col rounded-t-[10px] fixed bottom-0 left-0 right-0 z-[111] outline-none"
         style="max-height: {viewportHeight ? viewportHeight + 'px' : '100vh'};"
