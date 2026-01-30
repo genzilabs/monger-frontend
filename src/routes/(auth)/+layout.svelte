@@ -1,10 +1,13 @@
 <script lang="ts">
   import { page } from "$app/stores";
+  import { goto } from "$app/navigation";
+  import { browser } from "$app/environment";
   import { onMount } from "svelte";
   import { fade } from "svelte/transition";
   import logoOnly from "$lib/assets/Logo/logo-only.webp";
 
   let { children } = $props();
+  let isReady = $state(false);
 
   // Pages that should show back button
   const showBackButton = $derived(
@@ -32,6 +35,17 @@
   let currentIndex = $state(0);
 
   onMount(() => {
+    if (browser) {
+      // First-time visitors should see welcome slides first
+      const hasSeenWelcome = localStorage.getItem("hasSeenWelcome");
+      if (!hasSeenWelcome) {
+        goto("/welcome");
+        return;
+      }
+    }
+    
+    isReady = true;
+    
     const interval = setInterval(() => {
       currentIndex = (currentIndex + 1) % carouselItems.length;
     }, 15000);

@@ -4,34 +4,33 @@
   import { onMount } from "svelte";
 
   let { children } = $props();
-  let isAuthorized = $state(false);
+  let isReady = $state(false);
 
   onMount(() => {
     if (browser) {
-      // Onboarding should only be shown to authenticated users
+      // Check if already seen welcome
+      const hasSeenWelcome = localStorage.getItem("hasSeenWelcome");
       const accessToken = localStorage.getItem("monger_access_token");
-      if (!accessToken) {
-        // Not authenticated - redirect to auth
-        goto("/auth");
-        return;
-      }
-
-      // Check if already completed onboarding
-      const hasCompletedOnboarding = localStorage.getItem(
-        "hasCompletedOnboarding"
-      );
-      if (hasCompletedOnboarding) {
-        // Already completed - go to dashboard
+      
+      if (hasSeenWelcome && accessToken) {
+        // Already seen welcome AND logged in - go to dashboard
         goto("/dashboard");
         return;
       }
-
-      isAuthorized = true;
+      
+      if (hasSeenWelcome && !accessToken) {
+        // Already seen welcome but not logged in - go to auth
+        goto("/auth");
+        return;
+      }
+      
+      // Show welcome for first-time visitors
+      isReady = true;
     }
   });
 </script>
 
-{#if isAuthorized}
+{#if isReady}
   <!-- Solid primary background for onboarding -->
   <div class="min-h-screen bg-primary md:flex">
     <!-- Left Panel - Supporting Info (Desktop Only) -->

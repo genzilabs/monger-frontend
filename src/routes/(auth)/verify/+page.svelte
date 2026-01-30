@@ -98,12 +98,8 @@
           );
         }
 
-        // After registration, redirect to onboarding
-        if (isPostRegister && browser) {
-          goto("/welcome");
-        } else {
-          goto("/dashboard");
-        }
+        // After authentication, redirect to dashboard
+        goto("/dashboard");
       }
     } catch {
       error = "Ada gangguan sebentar. Coba lagi nanti ya.";

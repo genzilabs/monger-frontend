@@ -36,9 +36,9 @@
 
   function completeOnboarding() {
     if (browser) {
-      localStorage.setItem("hasCompletedOnboarding", "true");
+      localStorage.setItem("hasSeenWelcome", "true");
     }
-    goto("/dashboard");
+    goto("/auth");
   }
 
   function nextSlide() {

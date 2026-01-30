@@ -19,11 +19,10 @@
 
       const accessToken = localStorage.getItem("monger_access_token");
       if (accessToken) {
-        const hasCompletedOnboarding = localStorage.getItem(
-          "hasCompletedOnboarding",
-        );
-        goto(hasCompletedOnboarding ? "/dashboard" : "/welcome");
+        // Logged in - go to dashboard
+        goto("/dashboard");
       }
+      // Otherwise, show the landing page
     }
   });
 
