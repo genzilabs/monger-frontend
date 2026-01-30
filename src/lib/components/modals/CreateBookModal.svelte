@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Button, ResponsiveModal } from "$lib/components/ui";
-  import { booksStore } from "$lib/stores";
+  import { booksStore, onboardingStore } from "$lib/stores";
 
   interface Props {
     open: boolean;
@@ -25,6 +25,9 @@
     if (book) {
       resetForm();
       onClose();
+      
+      // Notify onboarding that book was created
+      onboardingStore.completeAction("book_created");
     }
     isCreating = false;
   }

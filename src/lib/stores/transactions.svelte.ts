@@ -185,8 +185,9 @@ function createTransactionsStore() {
 				updated_at: new Date().toISOString()
 			};
 
-			// Optimistically add to list
-			state.transactions = [optimisticTx, ...state.transactions];
+			// Optimistically add to list (ensure transactions is an array)
+			const currentTxs = Array.isArray(state.transactions) ? state.transactions : [];
+			state.transactions = [optimisticTx, ...currentTxs];
 
 			try {
 				const result = await transactionsApi.create(data);

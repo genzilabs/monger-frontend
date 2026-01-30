@@ -9,4 +9,5 @@ export { authStore } from './auth.svelte';
 export { booksStore } from './books.svelte';
 export { updatesStore } from './updates.svelte';
 export { privacyStore } from './privacy.svelte';
+export { onboardingStore } from './onboarding.svelte';
 

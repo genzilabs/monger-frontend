@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Button, ResponsiveModal, MoneyInput } from "$lib/components/ui";
   import DynamicIcon from "$lib/components/ui/DynamicIcon.svelte";
-  import { booksStore } from "$lib/stores";
+  import { booksStore, onboardingStore } from "$lib/stores";
   import { onMount } from "svelte";
 
   interface Props {
@@ -59,6 +59,9 @@
     if (pocket) {
       resetForm();
       onClose();
+      
+      // Notify onboarding that pocket was created
+      onboardingStore.completeAction("pocket_created");
     }
     isCreating = false;
   }

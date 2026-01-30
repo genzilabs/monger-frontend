@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
-  import { authStore, booksStore } from "$lib/stores";
+  import { authStore, booksStore, onboardingStore } from "$lib/stores";
   import { notificationsStore } from "$lib/stores/notifications.svelte";
   import {
     ChevronLeftIcon,
@@ -81,6 +81,7 @@
     <!-- Center Section: Book Selector -->
     <div class="absolute left-1/2 -translate-x-1/2 z-30">
         <button
+          id="book-switcher"
           onclick={() => (showBookSwitcher = !showBookSwitcher)}
           class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface border border-transparent hover:border-border transition-all active:scale-95 max-w-40 {showBookSwitcher ? 'border-primary/20 bg-primary/5' : ''}"
         >
@@ -161,9 +162,15 @@
             {#each booksStore.books as book}
               <button 
                 onclick={() => {
+                  console.log("[Header] Book clicked, calling completeAction");
                   booksStore.setActiveBook(book);
                   showBookSwitcher = false;
-                  goto("/dashboard");
+                  // Notify onboarding
+                  onboardingStore.completeAction("book_selected");
+                  // Only navigate if not already on dashboard
+                  if (!window.location.pathname.includes('/dashboard')) {
+                    setTimeout(() => goto("/dashboard"), 100);
+                  }
                 }}
                 class="w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left {booksStore.activeBook?.id === book.id ? 'bg-primary/10' : 'hover:bg-muted/10'}"
               >

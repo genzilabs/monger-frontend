@@ -31,6 +31,7 @@
   <!-- Floating Add Button (above the bar) -->
   <div class="absolute left-1/2 -translate-x-1/2 -top-7 z-10">
     <button
+      id="add-transaction-btn"
       onclick={() => uiStore.openTransactionModal("expense")}
       class="flex items-center justify-center w-16 h-16 bg-primary hover:bg-primary-hover text-white rounded-full shadow-lg transition-colors cursor-pointer"
       aria-label="Tambah Transaksi"
@@ -78,6 +79,7 @@
 
       <!-- Transaction -->
       <a
+        id="nav-transactions"
         href={navItems[1].href}
         class="flex flex-col items-center justify-center gap-0.5 flex-1 py-2
 					{isActive(navItems[1].href) ? 'text-primary' : 'text-muted'}"
@@ -103,6 +105,7 @@
 
       <!-- Kantong -->
       <a
+        id="nav-pockets"
         href={navItems[2].href}
         class="flex flex-col items-center justify-center gap-0.5 flex-1 py-2
 					{isActive(navItems[2].href) ? 'text-primary' : 'text-muted'}"
@@ -125,6 +128,7 @@
 
       <!-- Menu -->
       <a
+        id="nav-menu"
         href={navItems[3].href}
         class="flex flex-col items-center justify-center gap-0.5 flex-1 py-2
 					{isActive(navItems[3].href) ? 'text-primary' : 'text-muted'}"

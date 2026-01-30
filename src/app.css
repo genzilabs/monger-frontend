@@ -119,6 +119,7 @@
 
   /* PWA standalone mode: Prevent layout shift on keyboard open */
   @media all and (display-mode: standalone) {
+
     html,
     body {
       /* Use dynamic viewport height for PWA */
@@ -135,6 +136,7 @@
 
   /* Respect reduced motion preferences */
   @media (prefers-reduced-motion: reduce) {
+
     *,
     *::before,
     *::after {
@@ -259,34 +261,22 @@
 @keyframes enter {
   from {
     opacity: var(--tw-enter-opacity, 1);
-    transform: translate3d(
-        var(--tw-enter-translate-x, 0),
+    transform: translate3d(var(--tw-enter-translate-x, 0),
         var(--tw-enter-translate-y, 0),
-        0
-      )
-      scale3d(
+        0) scale3d(var(--tw-enter-scale, 1),
         var(--tw-enter-scale, 1),
-        var(--tw-enter-scale, 1),
-        var(--tw-enter-scale, 1)
-      )
-      rotate(var(--tw-enter-rotate, 0));
+        var(--tw-enter-scale, 1)) rotate(var(--tw-enter-rotate, 0));
   }
 }
 
 @keyframes exit {
   to {
     opacity: var(--tw-exit-opacity, 1);
-    transform: translate3d(
-        var(--tw-exit-translate-x, 0),
+    transform: translate3d(var(--tw-exit-translate-x, 0),
         var(--tw-exit-translate-y, 0),
-        0
-      )
-      scale3d(
+        0) scale3d(var(--tw-exit-scale, 1),
         var(--tw-exit-scale, 1),
-        var(--tw-exit-scale, 1),
-        var(--tw-exit-scale, 1)
-      )
-      rotate(var(--tw-exit-rotate, 0));
+        var(--tw-exit-scale, 1)) rotate(var(--tw-exit-rotate, 0));
   }
 }
 
@@ -418,4 +408,106 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border-width: 0;
+}
+
+/* ========================================
+   Driver.js Walkthrough Custom Styles
+   ======================================== */
+.driver-popover.monger-walkthrough-popover {
+  background: #ffffff;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e2e8f0;
+  max-width: 320px;
+}
+
+.driver-popover.monger-walkthrough-popover .driver-popover-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.5rem;
+}
+
+.driver-popover.monger-walkthrough-popover .driver-popover-description {
+  font-size: 0.875rem;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.driver-popover.monger-walkthrough-popover .driver-popover-progress-text {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: 0.75rem;
+}
+
+.driver-popover.monger-walkthrough-popover .driver-popover-navigation-btns {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.driver-popover.monger-walkthrough-popover .driver-popover-prev-btn {
+  flex: 1;
+  padding: 0.625rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  background: #f8fafc;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.driver-popover.monger-walkthrough-popover .driver-popover-prev-btn:hover {
+  background: #e2e8f0;
+}
+
+.driver-popover.monger-walkthrough-popover .driver-popover-next-btn,
+.driver-popover.monger-walkthrough-popover .driver-popover-done-btn {
+  flex: 1;
+  padding: 0.625rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  background: #20a39e;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.driver-popover.monger-walkthrough-popover .driver-popover-next-btn:hover,
+.driver-popover.monger-walkthrough-popover .driver-popover-done-btn:hover {
+  background: #188987;
+}
+
+.driver-popover.monger-walkthrough-popover .driver-popover-close-btn {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.5rem;
+  background: #f8fafc;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  transition: all 0.2s;
+}
+
+.driver-popover.monger-walkthrough-popover .driver-popover-close-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.driver-popover.monger-walkthrough-popover .driver-popover-arrow-side-left.driver-popover-arrow,
+.driver-popover.monger-walkthrough-popover .driver-popover-arrow-side-right.driver-popover-arrow,
+.driver-popover.monger-walkthrough-popover .driver-popover-arrow-side-top.driver-popover-arrow,
+.driver-popover.monger-walkthrough-popover .driver-popover-arrow-side-bottom.driver-popover-arrow {
+  border-color: #ffffff;
 }

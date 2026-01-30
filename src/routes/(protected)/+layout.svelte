@@ -1,6 +1,6 @@
 <script lang="ts">
   import { BottomNavbar, Sidebar, Header } from "$lib/components/ui";
-  import { authStore, booksStore, uiStore, updatesStore } from "$lib/stores";
+  import { authStore, booksStore, uiStore, updatesStore, onboardingStore } from "$lib/stores";
   import { pinStore } from "$lib/stores/pin.svelte";
   import PINGuard from "$lib/components/auth/PINGuard.svelte";
   import UpdateModal from "$lib/components/updates/UpdateModal.svelte";
@@ -99,9 +99,14 @@
           {#each booksStore.books as book}
             <button
               onclick={() => {
+                console.log("[Layout] Book clicked, calling completeAction");
                 booksStore.setActiveBook(book);
                 showBookSwitcher = false;
-                goto("/dashboard");
+                onboardingStore.completeAction("book_selected");
+                // Only navigate if not on dashboard
+                if (!window.location.pathname.includes('/dashboard')) {
+                  goto("/dashboard");
+                }
               }}
               class="w-full flex items-center gap-3 p-3 rounded-2xl transition-colors text-left {booksStore
                 .activeBook?.id === book.id

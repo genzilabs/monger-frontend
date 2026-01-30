@@ -12,6 +12,7 @@
     transactionsStore,
     categoriesStore,
     toastStore,
+    onboardingStore,
   } from "$lib/stores";
   import type { Category, Subcategory } from "$lib/types/category";
   import { untrack } from "svelte";
@@ -311,6 +312,10 @@
       }
       // Refresh transaction list
       await transactionsStore.refresh();
+      
+      // Notify onboarding that transaction was created
+      onboardingStore.completeAction("transaction_created");
+      
       resetForm();
       onClose();
     }

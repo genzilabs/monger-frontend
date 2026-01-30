@@ -1,6 +1,6 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
-  import { booksStore } from "$lib/stores";
+  import { booksStore, onboardingStore } from "$lib/stores";
   import {
     UserHeader,
     BalanceHeroCard,
@@ -17,6 +17,7 @@
     transactionsApi,
     type CategoryBreakdown,
   } from "$lib/api/transactions";
+  import "driver.js/dist/driver.css";
 
   // Modal state
   let showCreatePocketModal = $state(false);
@@ -88,6 +89,41 @@
       loadDashboardData();
     }
   });
+
+  // Expose for debugging
+  if (typeof window !== 'undefined') {
+    (window as any).onboardingStore = onboardingStore;
+  }
+
+  // Track if we've already tried to trigger this session
+  let hasTriggeredOnboarding = false;
+
+  // Start onboarding for users after store is initialized
+  $effect(() => {
+    const hasBooks = booksStore.books.length > 0;
+    const hasPockets = booksStore.pockets.length > 0;
+    // We don't easily know if user has transactions without API call, 
+    // so check based on income/expense being non-zero after load
+    const hasTransactions = monthlyIncome > 0 || monthlyExpense > 0;
+    
+    console.log("[Dashboard] Onboarding check - isInitialized:", booksStore.isInitialized, "isLoading:", booksStore.isLoading, "hasBooks:", hasBooks, "hasPockets:", hasPockets, "hasTransactions:", hasTransactions);
+    
+    // Start when store is initialized and not loading
+    if (booksStore.isInitialized && !booksStore.isLoading && !hasTriggeredOnboarding) {
+      hasTriggeredOnboarding = true;
+      
+      // Sync onboarding state with app state
+      onboardingStore.syncWithAppState(hasBooks, hasPockets, hasTransactions);
+      
+      // Show onboarding if not completed
+      if (!onboardingStore.isCompleted) {
+        console.log("[Dashboard] Showing onboarding step:", onboardingStore.currentStep);
+        setTimeout(() => {
+          onboardingStore.showCurrentStep();
+        }, 600);
+      }
+    }
+  });
 </script>
 
 <svelte:head>
@@ -116,35 +152,40 @@
     <UserHeader loading={booksStore.isLoading} />
 
     <!-- 2. Total Net Worth Card with Monthly Income/Expense -->
-    <BalanceHeroCard
-      balance={totalBalance}
-      currency={booksStore.activeBook.base_currency}
-      bookName={booksStore.activeBook.name}
-      income={monthlyIncome}
-      expense={monthlyExpense}
-      loading={booksStore.isLoading || summaryLoading}
-    />
+    <div id="balance-card">
+      <BalanceHeroCard
+        balance={totalBalance}
+        currency={booksStore.activeBook.base_currency}
+        bookName={booksStore.activeBook.name}
+        income={monthlyIncome}
+        expense={monthlyExpense}
+        loading={booksStore.isLoading || summaryLoading}
+      />
+    </div>
 
     <!-- 3. Category Breakdown Chart -->
-    <CategoryBreakdownCard
-      {incomeBreakdown}
-      {expenseBreakdown}
-      currency={booksStore.activeBook.base_currency}
-      loading={chartLoading}
-    />
+    <div id="expense-chart">
+      <CategoryBreakdownCard
+        {incomeBreakdown}
+        {expenseBreakdown}
+        currency={booksStore.activeBook.base_currency}
+        loading={chartLoading}
+      />
+    </div>
 
     <!-- 4. Invitations & Transfers -->
     <PendingInvitations />
     <PendingTransfers />
 
     <!-- 5. Your Pockets -->
-    <div class="space-y-3">
+    <div id="pocket-section" class="space-y-3">
       <div class="flex justify-between items-center">
         <div class="flex items-center gap-2">
           <h3 class="text-sm font-semibold text-foreground">Kantong Kamu</h3>
           <PrivacyToggle />
         </div>
         <button
+          id="add-pocket-btn"
           onclick={() => (showCreatePocketModal = true)}
           class="text-xs text-primary font-medium"
         >
