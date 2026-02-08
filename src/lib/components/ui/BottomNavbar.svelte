@@ -30,6 +30,7 @@
 <nav class="fixed bottom-0 left-0 right-0 z-[50]">
   <!-- Floating Add Button (above the bar) -->
   <div class="absolute left-1/2 -translate-x-1/2 -top-7 z-10">
+    <!-- Main Add Transaction Button -->
     <button
       id="add-transaction-btn"
       onclick={() => uiStore.openTransactionModal("expense")}

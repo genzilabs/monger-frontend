@@ -8,4 +8,5 @@ export { p2pApi } from './p2p';
 export { categoriesApi } from './categories';
 export { notificationsApi } from './notifications';
 export { recurringApi } from './recurring';
+export { receiptsApi } from './receipts';
 

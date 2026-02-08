@@ -13,16 +13,22 @@
   import { goto } from "$app/navigation";
   import { onMount } from "svelte";
   import CreateBookModal from "$lib/components/modals/CreateBookModal.svelte";
+  import type { ReceiptScan } from "$lib/api/receipts";
 
   let { children } = $props();
 
   let showBookSwitcher = $state(false);
   let showCreateBookModal = $state(false);
   let showNotificationModal = $state(false);
+  let showReceiptScanner = $state(false);
+  let showReceiptConfirm = $state(false);
+  let scannedReceipt: ReceiptScan | null = $state(null);
 
   // Lazy load modals only when needed
   let CreateTransactionModal: any = $state(null);
   let NotificationModal: any = $state(null);
+  let ReceiptScanner: any = $state(null);
+  let ReceiptConfirmModal: any = $state(null);
 
   $effect(() => {
     if (uiStore.isTransactionModalOpen && !CreateTransactionModal) {
@@ -40,6 +46,44 @@
         NotificationModal = m.default;
       });
     }
+  });
+
+  $effect(() => {
+    if (showReceiptScanner && !ReceiptScanner) {
+      import("$lib/components/modals/ReceiptScanner.svelte").then((m) => {
+        ReceiptScanner = m.default;
+      });
+    }
+  });
+
+  $effect(() => {
+    if (showReceiptConfirm && !ReceiptConfirmModal) {
+      import("$lib/components/modals/ReceiptConfirmModal.svelte").then((m) => {
+        ReceiptConfirmModal = m.default;
+      });
+    }
+  });
+
+  async function handleScanComplete(scan: ReceiptScan) {
+    scannedReceipt = scan;
+    showReceiptScanner = false;
+    
+    // Load the confirmation modal if not already loaded
+    if (!ReceiptConfirmModal) {
+      const m = await import("$lib/components/modals/ReceiptConfirmModal.svelte");
+      ReceiptConfirmModal = m.default;
+    }
+    
+    showReceiptConfirm = true;
+  }
+
+  function openReceiptScanner() {
+    showReceiptScanner = true;
+  }
+
+  // Expose scanner function to uiStore
+  $effect(() => {
+    uiStore.openReceiptScanner = openReceiptScanner;
   });
 
   onMount(async () => {
@@ -211,4 +255,24 @@
   />
 {/if}
 
+{#if ReceiptScanner}
+  <ReceiptScanner
+    open={showReceiptScanner}
+    onClose={() => (showReceiptScanner = false)}
+    onScanComplete={handleScanComplete}
+  />
+{/if}
+
+{#if ReceiptConfirmModal}
+  <ReceiptConfirmModal
+    open={showReceiptConfirm}
+    onClose={() => {
+      showReceiptConfirm = false;
+      scannedReceipt = null;
+    }}
+    receiptScan={scannedReceipt}
+  />
+{/if}
+
 <UpdateModal />
+
