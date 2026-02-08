@@ -1,0 +1,15 @@
+[Unit]
+Description=Monger Frontend (SvelteKit + Bun)
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/var/www/monger-frontend
+ExecStart=/root/.bun/bin/bun run ./index.js
+Restart=on-failure
+RestartSec=5
+Environment=PORT=3000
+
+[Install]
+WantedBy=multi-user.target
