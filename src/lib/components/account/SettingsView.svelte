@@ -35,10 +35,11 @@
   );
 
   import { ExportModal, ImportWizard } from "$lib/components/modals";
-  import { booksStore, toastStore } from "$lib/stores";
+  import { booksStore, toastStore, authStore } from "$lib/stores";
   import { booksApi } from "$lib/api";
-  import { Download, Upload, FileDown } from "lucide-svelte";
+  import { Download, Upload, FileDown, MessageCircle, Copy, Unlink, RefreshCw } from "lucide-svelte";
   import { downloadImportTemplate, downloadBlob } from "$lib/api/dataTransfer";
+  import { authApi, type TelegramLinkStatus } from "$lib/api/auth";
 
   // Modal states
   let showExportModal = $state(false);
@@ -139,6 +140,93 @@
     { value: "monday", label: "Senin" },
     { value: "sunday", label: "Minggu" },
   ];
+
+  // Telegram linking state
+  let telegramStatus = $state<TelegramLinkStatus | null>(null);
+  let telegramCode = $state<string | null>(null);
+  let telegramCodeExpires = $state<Date | null>(null);
+  let isLoadingTelegram = $state(false);
+  let isGeneratingCode = $state(false);
+  let isUnlinking = $state(false);
+  let isUpdatingTelegramSettings = $state(false);
+  let selectedTelegramBookId = $state<string | null>(null);
+  let selectedTelegramPocketId = $state<string | null>(null);
+
+  // Fetch Telegram link status on mount
+  $effect(() => {
+    if (browser && authStore.isAuthenticated) {
+      fetchTelegramStatus();
+    }
+  });
+
+  async function fetchTelegramStatus() {
+    isLoadingTelegram = true;
+    const result = await authApi.getTelegramStatus();
+    if (result.data) {
+      telegramStatus = result.data;
+      selectedTelegramBookId = result.data.default_book_id;
+      selectedTelegramPocketId = result.data.default_pocket_id;
+    }
+    isLoadingTelegram = false;
+  }
+
+  async function generateTelegramCode() {
+    isGeneratingCode = true;
+    const result = await authApi.generateTelegramCode();
+    if (result.data) {
+      telegramCode = result.data.code;
+      telegramCodeExpires = new Date(result.data.expires_at);
+      toastStore.success('Kode berhasil dibuat!');
+    } else {
+      toastStore.error(result.error?.error || 'Gagal membuat kode');
+    }
+    isGeneratingCode = false;
+  }
+
+  async function unlinkTelegram() {
+    isUnlinking = true;
+    const result = await authApi.unlinkTelegram();
+    if (result.data) {
+      telegramStatus = { linked: false, platform: 'telegram', chat_id: null, linked_at: null, default_book_id: null, default_book_name: null, default_pocket_id: null, default_pocket_name: null };
+      telegramCode = null;
+      selectedTelegramBookId = null;
+      selectedTelegramPocketId = null;
+      toastStore.success('Telegram berhasil diputus');
+    } else {
+      toastStore.error(result.error?.error || 'Gagal memutus Telegram');
+    }
+    isUnlinking = false;
+  }
+
+  async function updateTelegramDefaults() {
+    if (!selectedTelegramBookId) return;
+    isUpdatingTelegramSettings = true;
+    const result = await authApi.updateTelegramSettings({
+      default_book_id: selectedTelegramBookId,
+      default_pocket_id: selectedTelegramPocketId || undefined,
+    });
+    if (result.data) {
+      toastStore.success('Pengaturan Telegram disimpan');
+      fetchTelegramStatus();
+    } else {
+      toastStore.error(result.error?.error || 'Gagal menyimpan pengaturan');
+    }
+    isUpdatingTelegramSettings = false;
+  }
+
+  // Get pockets for selected Telegram book
+  const telegramPockets = $derived(
+    selectedTelegramBookId
+      ? booksStore.pockets.filter((p) => p.book_id === selectedTelegramBookId)
+      : []
+  );
+
+  function copyCode() {
+    if (telegramCode) {
+      navigator.clipboard.writeText(telegramCode);
+      toastStore.success('Kode disalin!');
+    }
+  }
 </script>
 
 <div class="space-y-6 animate-fade-in">
@@ -385,6 +473,149 @@
         Ekspor transaksi ke CSV untuk backup atau analisis. Impor transaksi dari
         file CSV menggunakan template yang disediakan.
       </p>
+    </Card>
+  </div>
+
+  <!-- Connect Telegram Section -->
+  <div class="space-y-3">
+    <h3 class="text-lg font-semibold text-foreground">Hubungkan Telegram</h3>
+
+    <Card class="p-4 space-y-4">
+      {#if isLoadingTelegram}
+        <div class="flex items-center justify-center py-4">
+          <RefreshCw class="w-5 h-5 text-muted animate-spin" />
+        </div>
+      {:else if telegramStatus?.linked}
+        <!-- Telegram Connected -->
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-[#0088cc]/10 rounded-xl flex items-center justify-center">
+            <MessageCircle class="w-5 h-5 text-[#0088cc]" />
+          </div>
+          <div class="flex-1">
+            <p class="font-medium text-foreground">Telegram Terhubung</p>
+            <p class="text-xs text-secondary">Chat ID: {telegramStatus.chat_id}</p>
+          </div>
+          <Button
+            variant="destructive"
+            size="sm"
+            onclick={unlinkTelegram}
+            loading={isUnlinking}
+          >
+            {#snippet icon()}
+              <Unlink size={16} />
+            {/snippet}
+            Putus
+          </Button>
+        </div>
+        <p class="text-xs text-muted mb-4">
+          Kamu bisa mengirim foto struk atau ketik langsung seperti "Makan 50k" ke bot Telegram.
+        </p>
+
+        <!-- Default Book/Pocket Settings -->
+        <div class="border-t border-border pt-4 space-y-3">
+          <p class="text-sm font-medium text-foreground">Pengaturan Default</p>
+          
+          <div class="space-y-2">
+            <label class="text-xs text-secondary">Buku Default</label>
+            <select
+              class="w-full p-2.5 rounded-lg bg-surface-elevated border border-border text-foreground text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              bind:value={selectedTelegramBookId}
+              onchange={() => { selectedTelegramPocketId = null; if (selectedTelegramBookId) booksStore.loadPockets(selectedTelegramBookId); }}
+            >
+              <option value={null}>Pilih buku...</option>
+              {#each booksStore.books as book}
+                <option value={book.id}>{book.name}</option>
+              {/each}
+            </select>
+          </div>
+
+          {#if selectedTelegramBookId && telegramPockets.length > 0}
+            <div class="space-y-2">
+              <label class="text-xs text-secondary">Pocket Default</label>
+              <select
+                class="w-full p-2.5 rounded-lg bg-surface-elevated border border-border text-foreground text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                bind:value={selectedTelegramPocketId}
+              >
+                <option value={null}>Semua pocket (auto-detect)</option>
+                {#each telegramPockets as pocket}
+                  <option value={pocket.id}>{pocket.name}</option>
+                {/each}
+              </select>
+            </div>
+          {/if}
+
+          <Button
+            variant="primary"
+            size="sm"
+            fullWidth
+            onclick={updateTelegramDefaults}
+            loading={isUpdatingTelegramSettings}
+            disabled={!selectedTelegramBookId}
+          >
+            Simpan Pengaturan
+          </Button>
+        </div>
+      {:else}
+        <!-- Telegram Not Connected -->
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 bg-muted/30 rounded-xl flex items-center justify-center">
+            <MessageCircle class="w-5 h-5 text-muted" />
+          </div>
+          <div class="flex-1">
+            <p class="font-medium text-foreground">Telegram Belum Terhubung</p>
+            <p class="text-xs text-secondary">Hubungkan untuk log transaksi via chat</p>
+          </div>
+        </div>
+
+        {#if telegramCode}
+          <!-- Code Display -->
+          <div class="bg-surface-elevated border border-border rounded-xl p-4 text-center">
+            <p class="text-xs text-secondary mb-2">Kode Verifikasi (berlaku 5 menit)</p>
+            <div class="flex items-center justify-center gap-3">
+              <span class="text-3xl font-mono font-bold text-foreground tracking-widest">
+                {telegramCode}
+              </span>
+              <button
+                onclick={copyCode}
+                class="p-2 hover:bg-muted/30 rounded-lg transition-colors"
+                title="Salin kode"
+              >
+                <Copy class="w-5 h-5 text-muted" />
+              </button>
+            </div>
+            <p class="text-xs text-muted mt-3">
+              Kirim <code class="bg-muted/30 px-1 rounded">/link {telegramCode}</code> ke bot
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            fullWidth
+            onclick={generateTelegramCode}
+            loading={isGeneratingCode}
+          >
+            {#snippet icon()}
+              <RefreshCw size={18} />
+            {/snippet}
+            Buat Kode Baru
+          </Button>
+        {:else}
+          <Button
+            variant="primary"
+            fullWidth
+            onclick={generateTelegramCode}
+            loading={isGeneratingCode}
+          >
+            {#snippet icon()}
+              <MessageCircle size={18} />
+            {/snippet}
+            Hubungkan Telegram
+          </Button>
+        {/if}
+
+        <p class="text-xs text-muted">
+          Cari <strong>@MongerBot</strong> di Telegram, lalu kirim kode verifikasi dengan perintah /link.
+        </p>
+      {/if}
     </Card>
   </div>
 </div>

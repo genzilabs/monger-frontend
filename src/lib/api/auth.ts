@@ -109,5 +109,58 @@ export const authApi = {
 	 */
 	updatePINSettings(data: UpdatePINSettingsRequest) {
 		return apiClient.patch<User>('/auth/pin/settings', data, true);
+	},
+
+	// Telegram linking
+
+	/**
+	 * Get Telegram link status
+	 */
+	getTelegramStatus() {
+		return apiClient.get<TelegramLinkStatus>('/auth/telegram/status', true);
+	},
+
+	/**
+	 * Generate Telegram link code
+	 */
+	generateTelegramCode() {
+		return apiClient.post<TelegramLinkCode>('/auth/telegram/link', undefined, true);
+	},
+
+	/**
+	 * Unlink Telegram account
+	 */
+	unlinkTelegram() {
+		return apiClient.delete<MessageResponse>('/auth/telegram/unlink', true);
+	},
+
+	/**
+	 * Update Telegram default book and pocket settings
+	 */
+	updateTelegramSettings(data: UpdateTelegramSettingsRequest) {
+		return apiClient.patch<MessageResponse>('/auth/telegram/settings', data, true);
 	}
 };
+
+// Telegram types
+export interface TelegramLinkStatus {
+	linked: boolean;
+	platform: string;
+	chat_id: string | null;
+	linked_at: string | null;
+	default_book_id: string | null;
+	default_book_name: string | null;
+	default_pocket_id: string | null;
+	default_pocket_name: string | null;
+}
+
+export interface TelegramLinkCode {
+	code: string;
+	expires_at: string;
+	expires_in: number;
+}
+
+export interface UpdateTelegramSettingsRequest {
+	default_book_id?: string;
+	default_pocket_id?: string;
+}
