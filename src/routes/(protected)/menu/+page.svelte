@@ -10,92 +10,112 @@
     TagIcon,
     CreditCardIcon,
     RepeatIcon,
-    GlobeIcon,
     PaperPlaneIcon,
     MessageIcon,
+    ChevronRightIcon,
   } from "$lib/icons";
-  import { Card } from "$lib/components/ui";
   import { getLatestVersion } from "$lib/data/updates";
   import { authStore } from "$lib/stores";
   import { goto } from "$app/navigation";
 
-  const menuItems = [
+  const menuSections = [
     {
-      label: "Profil",
-      href: "/account?view=profile",
-      icon: UserIcon,
-      color: "text-indigo-600",
-      bg: "bg-indigo-50",
+      title: "Akun",
+      items: [
+        {
+          label: "Profil Saya",
+          href: "/account?view=profile",
+          icon: UserIcon,
+          color: "text-indigo-600",
+          bg: "bg-indigo-100",
+        },
+        {
+          label: "Keamanan",
+          href: "/account?view=security",
+          icon: ShieldIcon,
+          color: "text-rose-600",
+          bg: "bg-rose-100",
+        },
+      ],
     },
     {
-      label: "Pengaturan",
-      href: "/account?view=settings",
-      icon: SettingsIcon,
-      color: "text-orange-600",
-      bg: "bg-orange-50",
+      title: "Pengelolaan",
+      items: [
+        {
+          label: "Buku",
+          href: "/books",
+          icon: BookIcon,
+          color: "text-blue-600",
+          bg: "bg-blue-100",
+        },
+        {
+          label: "Kantong",
+          href: "/pockets",
+          icon: WalletIcon,
+          color: "text-emerald-600",
+          bg: "bg-emerald-100",
+        },
+        {
+          label: "Transaksi Rutin",
+          href: "/recurring",
+          icon: RepeatIcon,
+          color: "text-teal-600",
+          bg: "bg-teal-100",
+        },
+        {
+          label: "Undangan",
+          href: "/invitations",
+          icon: PaperPlaneIcon,
+          color: "text-yellow-600",
+          bg: "bg-yellow-100",
+        },
+      ],
     },
     {
-      label: "Buku",
-      href: "/books",
-      icon: BookIcon,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
+      title: "Preferensi",
+      items: [
+        {
+          label: "Kategori",
+          href: "/settings/categories",
+          icon: TagIcon,
+          color: "text-purple-600",
+          bg: "bg-purple-100",
+        },
+        {
+          label: "Tipe Kantong",
+          href: "/settings/pocket-types",
+          icon: CreditCardIcon,
+          color: "text-sky-600",
+          bg: "bg-sky-100",
+        },
+        {
+          label: "Pengaturan App",
+          href: "/account?view=settings",
+          icon: SettingsIcon,
+          color: "text-orange-600",
+          bg: "bg-orange-100",
+        },
+      ],
     },
+
     {
-      label: "Rutin",
-      href: "/recurring",
-      icon: RepeatIcon,
-      color: "text-teal-600",
-      bg: "bg-teal-50",
-    },
-    {
-      label: "Kantong",
-      href: "/pockets",
-      icon: WalletIcon,
-      color: "text-emerald-600",
-      bg: "bg-emerald-50",
-    },
-    {
-      label: "Tipe Dompet",
-      href: "/settings/pocket-types",
-      icon: CreditCardIcon,
-      color: "text-sky-600",
-      bg: "bg-sky-50",
-    },
-    {
-      label: "Kategori",
-      href: "/settings/categories",
-      icon: TagIcon,
-      color: "text-purple-600",
-      bg: "bg-purple-50",
-    },
-    {
-      label: "Keamanan",
-      href: "/account?view=security",
-      icon: ShieldIcon,
-      color: "text-rose-600",
-      bg: "bg-rose-50",
-    },
-    {
-      label: "Undangan",
-      href: "/invitations",
-      icon: PaperPlaneIcon,
-      color: "text-yellow-600",
-      bg: "bg-yellow-50",
-    },
-    {
-      label: "Beri Feedback",
-      href: "/feedback",
-      icon: MessageIcon,
-      color: "text-violet-600",
-      bg: "bg-violet-50",
-    },
-    {
-      label: "Pembaruan",
-      href: "/menu/updates",
-      icon: BellIcon, // Reusing BellIcon, but semantically could be a different one
-      color: "text-lime-600",
-      bg: "bg-lime-50",
+      title: "Lainnya",
+      items: [
+        {
+          label: "Pembaruan",
+          href: "/menu/updates",
+          icon: BellIcon,
+          color: "text-lime-600",
+          bg: "bg-lime-100",
+        },
+        {
+          label: "Beri Masukan",
+          href: "/feedback",
+          icon: MessageIcon,
+          color: "text-violet-600",
+          bg: "bg-violet-100",
+        },
+      ],
     },
   ];
 </script>
@@ -104,98 +124,50 @@
   <title>Menu - Monger</title>
 </svelte:head>
 
-<div class="container mx-auto space-y-6 pb-24 md:pb-6">
-  <div class="flex items-center justify-between">
+<div class="container mx-auto space-y-6 md:pb-6">
+  <div class="flex items-center justify-between px-1">
     <div>
       <h1 class="text-2xl font-bold text-foreground">Menu</h1>
-      <p class="text-secondary">Semua fitur dalam satu tempat.</p>
+      <p class="text-sm text-secondary mt-1">Semua fitur dalam satu tempat.</p>
     </div>
-    <!-- Clean Header: No Action Button Here -->
   </div>
 
-  <div class="grid grid-cols-3 gap-4">
-    {#each menuItems as item}
-      <a
-        href={item.href}
-        class="flex flex-col items-center justify-center p-4 gap-3 bg-surface rounded-2xl border border-transparent hover:border-border transition-all active:scale-95 text-center group"
-      >
+  <div class="space-y-6">
+    {#each menuSections as section}
+      <div class="space-y-2">
+        <h2
+          class="text-xs font-semibold text-muted uppercase tracking-wider px-1"
+        >
+          {section.title}
+        </h2>
         <div
-          class="{item.bg} {item.color} w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 shadow-sm"
+          class="bg-surface rounded-2xl border border-border overflow-hidden divide-y divide-border shadow-sm"
         >
-          <item.icon size={24} />
+          {#each section.items as item}
+            <a
+              href={item.href}
+              class="flex items-center gap-3 p-4 hover:bg-muted/30 transition-colors active:bg-muted/50 group"
+            >
+              <div
+                class="{item.bg} {item.color} w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+              >
+                <item.icon size={18} />
+              </div>
+              <span class="text-sm font-medium text-foreground flex-1">
+                {item.label}
+              </span>
+              <ChevronRightIcon size={16} class="text-muted/50" />
+            </a>
+          {/each}
         </div>
-        <span class="text-xs font-medium text-foreground leading-tight">
-          {item.label}
-        </span>
-      </a>
-    {/each}
-
-    <!-- Placeholder for Collab (Simulated) -->
-    <button
-      onclick={() => alert("Fitur Kolaborasi akan segera hadir!")}
-      class="flex flex-col items-center justify-center p-4 gap-3 bg-surface rounded-2xl border border-transparent hover:border-border transition-all active:scale-95 text-center group"
-    >
-      <div
-        class="bg-cyan-50 text-cyan-600 w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 shadow-sm"
-      >
-        <!-- Inline Users Icon -->
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          ><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle
-            cx="9"
-            cy="7"
-            r="4"
-          ></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path
-            d="M16 3.13a4 4 0 0 1 0 7.75"
-          ></path></svg
-        >
       </div>
-      <span class="text-xs font-medium text-foreground leading-tight">
-        Kolaborasi
-      </span>
-    </button>
+    {/each}
   </div>
 
-  <div class="pt-6">
-    <button
-      onclick={async () => {
-        await authStore.logout();
-        goto("/auth", { replaceState: true });
-      }}
-      class="w-full flex items-center justify-center gap-2 p-4 rounded-xl border-2 border-red-300 text-red-500 font-medium hover:border-red-400 hover:text-red-600 hover:bg-red-50 transition-colors bg-transparent"
-    >
-      <LogOutIcon size={18} />
-      <span>Keluar Aplikasi</span>
-    </button>
-
-    <!-- Legal Links -->
-    <div class="flex items-center justify-center gap-4 pt-4">
-      <a
-        href="/terms"
-        class="text-sm text-muted hover:text-foreground transition-colors"
-      >
-        Ketentuan Layanan
-      </a>
-      <a
-        href="/privacy"
-        class="text-sm text-muted hover:text-foreground transition-colors"
-      >
-        Kebijakan Privasi
-      </a>
-    </div>
-
-    <p
-      class="text-center text-[10px] text-muted-foreground mt-6 tracking-widest opacity-60"
-    >
-      Monger<br /> Versi: {getLatestVersion()}<br /> By Genzi Meraih Mimpi
+  <div class="pt-8 pb-4 flex flex-col items-center gap-6">
+    <!-- Version Info -->
+    <p class="text-[10px] text-muted-foreground tracking-widest opacity-60">
+      Monger v{getLatestVersion()} • By Genzi Meraih Mimpi
     </p>
   </div>
 </div>

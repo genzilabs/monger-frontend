@@ -1,7 +1,18 @@
 <script lang="ts">
   import { browser } from "$app/environment";
-  import { Card, Button, NativeSelect } from "$lib/components/ui";
-  import { CheckIcon, ChevronRightIcon, CalendarIcon } from "$lib/icons";
+  import { NativeSelect } from "$lib/components/ui";
+  import {
+    CheckIcon,
+    ChevronRightIcon,
+    CalendarIcon,
+    GlobeIcon,
+    BankIcon,
+    CreditCardIcon,
+    LogOutIcon,
+    SmartphoneIcon,
+    MessageIcon,
+    RepeatIcon,
+  } from "$lib/icons";
   import {
     transactionSettingsStore,
     type WeekendHandling,
@@ -37,9 +48,18 @@
   import { ExportModal, ImportWizard } from "$lib/components/modals";
   import { booksStore, toastStore, authStore } from "$lib/stores";
   import { booksApi } from "$lib/api";
-  import { Download, Upload, FileDown, MessageCircle, Copy, Unlink, RefreshCw } from "lucide-svelte";
+  import {
+    Download,
+    Upload,
+    FileDown,
+    MessageCircle,
+    RefreshCw,
+    Unlink,
+    Copy,
+  } from "lucide-svelte";
   import { downloadImportTemplate, downloadBlob } from "$lib/api/dataTransfer";
   import { authApi, type TelegramLinkStatus } from "$lib/api/auth";
+  import { goto } from "$app/navigation";
 
   // Modal states
   let showExportModal = $state(false);
@@ -176,9 +196,9 @@
     if (result.data) {
       telegramCode = result.data.code;
       telegramCodeExpires = new Date(result.data.expires_at);
-      toastStore.success('Kode berhasil dibuat!');
+      toastStore.success("Kode berhasil dibuat!");
     } else {
-      toastStore.error(result.error?.error || 'Gagal membuat kode');
+      toastStore.error(result.error?.error || "Gagal membuat kode");
     }
     isGeneratingCode = false;
   }
@@ -187,13 +207,22 @@
     isUnlinking = true;
     const result = await authApi.unlinkTelegram();
     if (result.data) {
-      telegramStatus = { linked: false, platform: 'telegram', chat_id: null, linked_at: null, default_book_id: null, default_book_name: null, default_pocket_id: null, default_pocket_name: null };
+      telegramStatus = {
+        linked: false,
+        platform: "telegram",
+        chat_id: null,
+        linked_at: null,
+        default_book_id: null,
+        default_book_name: null,
+        default_pocket_id: null,
+        default_pocket_name: null,
+      };
       telegramCode = null;
       selectedTelegramBookId = null;
       selectedTelegramPocketId = null;
-      toastStore.success('Telegram berhasil diputus');
+      toastStore.success("Telegram berhasil diputus");
     } else {
-      toastStore.error(result.error?.error || 'Gagal memutus Telegram');
+      toastStore.error(result.error?.error || "Gagal memutus Telegram");
     }
     isUnlinking = false;
   }
@@ -206,10 +235,10 @@
       default_pocket_id: selectedTelegramPocketId || undefined,
     });
     if (result.data) {
-      toastStore.success('Pengaturan Telegram disimpan');
+      toastStore.success("Pengaturan Telegram disimpan");
       fetchTelegramStatus();
     } else {
-      toastStore.error(result.error?.error || 'Gagal menyimpan pengaturan');
+      toastStore.error(result.error?.error || "Gagal menyimpan pengaturan");
     }
     isUpdatingTelegramSettings = false;
   }
@@ -218,206 +247,183 @@
   const telegramPockets = $derived(
     selectedTelegramBookId
       ? booksStore.pockets.filter((p) => p.book_id === selectedTelegramBookId)
-      : []
+      : [],
   );
 
   function copyCode() {
     if (telegramCode) {
       navigator.clipboard.writeText(telegramCode);
-      toastStore.success('Kode disalin!');
+      toastStore.success("Kode disalin!");
     }
   }
 </script>
 
-<div class="space-y-6 animate-fade-in">
-  <div class="flex items-center gap-3">
+<div class="space-y-6 animate-fade-in pb-12">
+  <div class="flex items-center gap-3 px-1">
     <h2 class="text-xl font-bold text-foreground">Pengaturan</h2>
   </div>
 
-  <!-- Language & Currency Settings -->
-  <Card class="divide-y divide-border overflow-hidden">
-    <!-- Language Setting -->
-    <button
-      onclick={() => (showLanguageSelector = !showLanguageSelector)}
-      class="w-full p-4 flex items-center justify-between hover:bg-surface-elevated transition-colors"
+  <!-- Preferensi Umum -->
+  <div class="space-y-2">
+    <h3 class="text-xs font-semibold text-muted uppercase tracking-wider px-1">
+      Preferensi Umum
+    </h3>
+    <div
+      class="bg-surface rounded-2xl border border-border overflow-hidden divide-y divide-border shadow-sm"
     >
-      <div class="text-left">
-        <p class="font-medium text-foreground">Bahasa</p>
-        <p class="text-xs text-secondary">{currentLanguage.name}</p>
-      </div>
-      <div class="flex items-center gap-2">
-        <div
-          class="px-3 py-1 bg-surface-elevated rounded text-xs font-mono text-muted"
-        >
-          {currentLanguage.short}
-        </div>
-        <ChevronRightIcon
-          size={16}
-          class="text-muted transition-transform {showLanguageSelector
-            ? 'rotate-90'
-            : ''}"
-        />
-      </div>
-    </button>
-
-    <!-- Language Selector (Expandable) -->
-    {#if showLanguageSelector}
-      <div class="bg-muted/30 border-t border-border">
-        {#each languages as lang}
-          <button
-            onclick={() => selectLanguage(lang.code)}
-            class="w-full flex items-center justify-between p-4 hover:bg-surface-elevated transition-colors border-b border-border last:border-b-0"
-          >
-            <span
-              class="font-medium {currentLocale === lang.code
-                ? 'text-primary'
-                : 'text-foreground'}">{lang.name}</span
-            >
-            {#if currentLocale === lang.code}
-              <CheckIcon size={18} class="text-primary" />
-            {/if}
-          </button>
-        {/each}
-      </div>
-    {/if}
-
-    <!-- Currency Setting -->
-    <div class="p-4 flex items-center justify-between">
-      <div>
-        <p class="font-medium text-foreground">Mata Uang</p>
-        <p class="text-xs text-secondary">Rupiah Indonesia</p>
-      </div>
-      <div
-        class="px-3 py-1 bg-surface-elevated rounded text-xs font-mono text-muted"
+      <!-- Bahasa -->
+      <button
+        onclick={() => (showLanguageSelector = !showLanguageSelector)}
+        class="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
       >
-        IDR
-      </div>
-    </div>
-  </Card>
-
-  <p class="text-xs text-muted text-center">
-    Perubahan bahasa akan dimuat ulang setelah dipilih.
-  </p>
-
-  <!-- Transaction Display Settings -->
-  <div class="space-y-3">
-    <h3 class="text-lg font-semibold text-foreground">Tampilan Transaksi</h3>
-
-    <Card class="p-4 space-y-5">
-      <!-- Monthly Start Date -->
-      <div>
-        <div class="flex items-center gap-2 mb-2">
-          <CalendarIcon size={16} class="text-primary" />
-          <label for="reset-day" class="font-medium text-foreground">
-            Tanggal Awal Periode Bulanan
-          </label>
-        </div>
-        <p class="text-xs text-secondary mb-3">
-          Transaksi akan dikelompokkan berdasarkan periode ini. Contoh: tanggal
-          25 berarti periode 25 Jan - 24 Feb dihitung sebagai 1 bulan.
-        </p>
         <div class="flex items-center gap-3">
-          <div class="flex-1">
-            <NativeSelect
-              name="reset-day"
-              bind:value={selectedMonthStartDay}
-              disabled={!booksStore.activeBook || isSavingMonthStartDay}
-              placeholder="Pilih tanggal"
-              wrapperClass="w-full"
-              onchange={(e) =>
-                handleMonthStartDayChange(
-                  (e.target as HTMLSelectElement).value,
-                )}
-            >
-              {#each Array.from({ length: 28 }, (_, i) => i + 1) as day}
-                <option value={String(day)}>{day}</option>
-              {/each}
-            </NativeSelect>
+          <div
+            class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0"
+          >
+            <GlobeIcon size={18} />
           </div>
-          <span class="text-sm text-muted shrink-0">setiap bulan</span>
+          <span class="text-sm font-medium text-foreground">Bahasa</span>
         </div>
-      </div>
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-muted">{currentLanguage.name}</span>
+          <ChevronRightIcon
+            size={16}
+            class="text-muted/50 transition-transform {showLanguageSelector
+              ? 'rotate-90'
+              : ''}"
+          />
+        </div>
+      </button>
 
-      <!-- Weekend Handling (conditional) -->
-      {#if isSelectedDayWeekend}
-        <div class="border-t border-border pt-4">
-          <p class="text-sm text-foreground mb-2">
-            Tanggal {transactionSettingsStore.monthlyResetDay} jatuh di akhir pekan
-          </p>
-          <p class="text-xs text-secondary mb-3">
-            Bagaimana bila tanggal tersebut jatuh di hari Sabtu atau Minggu?
-          </p>
-          <div class="space-y-2">
-            {#each weekendOptions as option}
-              <button
-                onclick={() =>
-                  transactionSettingsStore.setWeekendHandling(option.value)}
-                class="w-full flex items-center justify-between p-3 rounded-xl border transition-colors {transactionSettingsStore.weekendHandling ===
-                option.value
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border hover:bg-surface-elevated'}"
+      {#if showLanguageSelector}
+        <div class="bg-muted/10 border-t border-border">
+          {#each languages as lang}
+            <button
+              onclick={() => selectLanguage(lang.code)}
+              class="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/20 transition-colors border-b border-border/50 last:border-b-0 pl-14"
+            >
+              <span
+                class="text-sm {currentLocale === lang.code
+                  ? 'text-primary font-medium'
+                  : 'text-foreground'}"
               >
-                <span
-                  class="text-sm {transactionSettingsStore.weekendHandling ===
-                  option.value
-                    ? 'text-foreground font-medium'
-                    : 'text-secondary'}">{option.label}</span
-                >
-                {#if transactionSettingsStore.weekendHandling === option.value}
-                  <CheckIcon size={16} class="text-primary" />
-                {/if}
-              </button>
-            {/each}
-          </div>
+                {lang.name}
+              </span>
+              {#if currentLocale === lang.code}
+                <CheckIcon size={16} class="text-primary" />
+              {/if}
+            </button>
+          {/each}
         </div>
       {/if}
 
-      <!-- Divider -->
-      <div class="border-t border-border"></div>
+      <!-- Mata Uang -->
+      <div class="flex items-center justify-between p-4">
+        <div class="flex items-center gap-3">
+          <div
+            class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0"
+          >
+            <BankIcon size={18} />
+          </div>
+          <span class="text-sm font-medium text-foreground">Mata Uang</span>
+        </div>
+        <span class="text-sm text-muted">IDR (Rupiah)</span>
+      </div>
+    </div>
+  </div>
 
-      <!-- Weekly Start Day -->
-      <div>
-        <label class="font-medium text-foreground mb-2 block">
-          Hari Pertama Minggu
-        </label>
-        <p class="text-xs text-secondary mb-3">
-          Menentukan kapan minggu baru dimulai untuk ringkasan mingguan.
-        </p>
-        <div class="flex gap-2">
+  <!-- Tampilan Transaksi -->
+  <div class="space-y-2">
+    <h3 class="text-xs font-semibold text-muted uppercase tracking-wider px-1">
+      Tampilan Transaksi
+    </h3>
+    <div
+      class="bg-surface rounded-2xl border border-border overflow-hidden divide-y divide-border shadow-sm"
+    >
+      <!-- Awal Periode Bulanan -->
+      <div class="p-4 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div
+            class="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center shrink-0"
+          >
+            <CalendarIcon size={18} />
+          </div>
+          <div>
+            <p class="text-sm font-medium text-foreground">
+              Awal Periode Bulanan
+            </p>
+            <p class="text-[10px] text-muted-foreground mt-0.5">
+              Tanggal mulai reset budget
+            </p>
+          </div>
+        </div>
+        <div class="w-20">
+          <NativeSelect
+            name="reset-day"
+            bind:value={selectedMonthStartDay}
+            disabled={!booksStore.activeBook || isSavingMonthStartDay}
+            wrapperClass="w-full"
+            onchange={(e) =>
+              handleMonthStartDayChange((e.target as HTMLSelectElement).value)}
+          >
+            {#each Array.from({ length: 28 }, (_, i) => i + 1) as day}
+              <option value={String(day)}>{day}</option>
+            {/each}
+          </NativeSelect>
+        </div>
+      </div>
+
+      <!-- Awal Minggu -->
+      <div class="p-4 flex flex-col gap-3">
+        <div class="flex items-center gap-3">
+          <div
+            class="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0"
+          >
+            <RepeatIcon size={18} />
+          </div>
+          <div>
+            <p class="text-sm font-medium text-foreground">Awal Minggu</p>
+            <p class="text-[10px] text-muted-foreground mt-0.5">
+              Hari pertama dalam ringkasan mingguan
+            </p>
+          </div>
+        </div>
+        <div class="flex gap-2 pl-11">
           {#each weeklyStartOptions as option}
             <button
               onclick={() =>
                 transactionSettingsStore.setWeeklyStartDay(option.value)}
-              class="flex-1 py-3 px-4 rounded-xl border text-sm font-medium transition-colors {transactionSettingsStore.weeklyStartDay ===
+              class="flex-1 py-1.5 px-3 rounded-lg border text-xs font-medium transition-colors {transactionSettingsStore.weeklyStartDay ===
               option.value
                 ? 'border-primary bg-primary text-white'
-                : 'border-border text-secondary hover:bg-surface-elevated hover:text-foreground'}"
+                : 'border-border text-secondary hover:bg-muted/50'}"
             >
               {option.label}
             </button>
           {/each}
         </div>
       </div>
-    </Card>
+    </div>
   </div>
 
-  <!-- Data Management Section -->
-  <div class="space-y-3">
-    <h3 class="text-lg font-semibold text-foreground">Kelola Data</h3>
-
-    <Card class="p-4 space-y-4">
-      <!-- Book Selector -->
+  <!-- Kelola Data -->
+  <div class="space-y-2">
+    <h3 class="text-xs font-semibold text-muted uppercase tracking-wider px-1">
+      Kelola Data
+    </h3>
+    <div
+      class="bg-surface rounded-2xl border border-border overflow-hidden divide-y divide-border shadow-sm p-4 space-y-4"
+    >
       <div>
         <label
-          for="book-select"
-          class="block text-sm font-medium text-secondary mb-2"
+          for="d-book-select"
+          class="text-xs font-medium text-secondary mb-2 block"
+          >Pilih Buku</label
         >
-          Pilih Buku
-        </label>
         <select
-          id="book-select"
+          id="d-book-select"
           bind:value={selectedBookId}
-          class="w-full px-4 py-3 bg-surface border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          class="w-full px-3 py-2 bg-surface-elevated border border-border rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
         >
           {#if booksStore.books.length === 0}
             <option value={null}>Tidak ada buku</option>
@@ -429,98 +435,80 @@
         </select>
       </div>
 
-      <!-- Export/Import Actions -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <Button
-          variant="outline"
-          fullWidth
+        <button
           onclick={() => selectedBookId && (showExportModal = true)}
           disabled={!selectedBookId}
+          class="flex items-center justify-center gap-2 p-3 rounded-xl border border-border hover:bg-muted/30 transition-colors disabled:opacity-50 text-sm font-medium"
         >
-          {#snippet icon()}
-            <Download size={18} />
-          {/snippet}
-          Ekspor Data
-        </Button>
-
-        <Button
-          variant="outline"
-          fullWidth
+          <Download size={16} />
+          <span>Ekspor</span>
+        </button>
+        <button
           onclick={() => selectedBookId && (showImportWizard = true)}
           disabled={!selectedBookId}
+          class="flex items-center justify-center gap-2 p-3 rounded-xl border border-border hover:bg-muted/30 transition-colors disabled:opacity-50 text-sm font-medium"
         >
-          {#snippet icon()}
-            <Upload size={18} />
-          {/snippet}
-          Impor Data
-        </Button>
-
-        <Button
-          variant="outline"
-          fullWidth
+          <Upload size={16} />
+          <span>Impor</span>
+        </button>
+        <button
           onclick={handleDownloadTemplate}
-          loading={isDownloadingTemplate}
-          disabled={!selectedBookId}
+          disabled={!selectedBookId || isDownloadingTemplate}
+          class="flex items-center justify-center gap-2 p-3 rounded-xl border border-border hover:bg-muted/30 transition-colors disabled:opacity-50 text-sm font-medium"
         >
-          {#snippet icon()}
-            <FileDown size={18} />
-          {/snippet}
-          Unduh Template
-        </Button>
+          <FileDown size={16} />
+          <span>Template</span>
+        </button>
       </div>
-
-      <p class="text-xs text-muted">
-        Ekspor transaksi ke CSV untuk backup atau analisis. Impor transaksi dari
-        file CSV menggunakan template yang disediakan.
-      </p>
-    </Card>
+    </div>
   </div>
 
-  <!-- Connect Telegram Section -->
-  <div class="space-y-3">
-    <h3 class="text-lg font-semibold text-foreground">Hubungkan Telegram</h3>
-
-    <Card class="p-4 space-y-4">
+  <!-- Telegram Integration -->
+  <div class="space-y-2">
+    <h3 class="text-xs font-semibold text-muted uppercase tracking-wider px-1">
+      Integrasi Telegram
+    </h3>
+    <div
+      class="bg-surface rounded-2xl border border-border overflow-hidden p-4 shadow-sm"
+    >
       {#if isLoadingTelegram}
-        <div class="flex items-center justify-center py-4">
-          <RefreshCw class="w-5 h-5 text-muted animate-spin" />
+        <div class="flex justify-center py-4">
+          <RefreshCw class="animate-spin text-muted" />
         </div>
       {:else if telegramStatus?.linked}
-        <!-- Telegram Connected -->
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-[#0088cc]/10 rounded-xl flex items-center justify-center">
-            <MessageCircle class="w-5 h-5 text-[#0088cc]" />
+        <div class="flex items-center gap-3 mb-4">
+          <div
+            class="w-10 h-10 bg-sky-100 rounded-xl flex items-center justify-center text-sky-600"
+          >
+            <MessageCircle class="w-5 h-5" />
           </div>
           <div class="flex-1">
-            <p class="font-medium text-foreground">Telegram Terhubung</p>
-            <p class="text-xs text-secondary">Chat ID: {telegramStatus.chat_id}</p>
+            <p class="font-medium text-foreground">Terhubung</p>
+            <p class="text-xs text-secondary">
+              Chat ID: {telegramStatus.chat_id}
+            </p>
           </div>
-          <Button
-            variant="destructive"
-            size="sm"
+          <button
             onclick={unlinkTelegram}
-            loading={isUnlinking}
+            disabled={isUnlinking}
+            class="text-xs text-red-500 hover:text-red-600 font-medium px-3 py-1.5 rounded-lg border border-red-200 hover:bg-red-50 transition-colors"
           >
-            {#snippet icon()}
-              <Unlink size={16} />
-            {/snippet}
             Putus
-          </Button>
+          </button>
         </div>
-        <p class="text-xs text-muted mb-4">
-          Kamu bisa mengirim foto struk atau ketik langsung seperti "Makan 50k" ke bot Telegram.
-        </p>
 
-        <!-- Default Book/Pocket Settings -->
-        <div class="border-t border-border pt-4 space-y-3">
-          <p class="text-sm font-medium text-foreground">Pengaturan Default</p>
-          
-          <div class="space-y-2">
-            <label class="text-xs text-secondary">Buku Default</label>
+        <div class="space-y-3 pt-3 border-t border-border">
+          <div class="space-y-1">
+            <label class="text-xs text-secondary block">Buku Default</label>
             <select
-              class="w-full p-2.5 rounded-lg bg-surface-elevated border border-border text-foreground text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              class="w-full p-2 rounded-lg bg-surface-elevated border border-border text-sm"
               bind:value={selectedTelegramBookId}
-              onchange={() => { selectedTelegramPocketId = null; if (selectedTelegramBookId) booksStore.loadPockets(selectedTelegramBookId); }}
+              onchange={() => {
+                selectedTelegramPocketId = null;
+                if (selectedTelegramBookId)
+                  booksStore.loadPockets(selectedTelegramBookId);
+              }}
             >
               <option value={null}>Pilih buku...</option>
               {#each booksStore.books as book}
@@ -530,10 +518,10 @@
           </div>
 
           {#if selectedTelegramBookId && telegramPockets.length > 0}
-            <div class="space-y-2">
+            <div class="space-y-1">
               <label class="text-xs text-secondary">Pocket Default</label>
               <select
-                class="w-full p-2.5 rounded-lg bg-surface-elevated border border-border text-foreground text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                class="w-full p-2 rounded-lg bg-surface-elevated border border-border text-sm"
                 bind:value={selectedTelegramPocketId}
               >
                 <option value={null}>Semua pocket (auto-detect)</option>
@@ -544,79 +532,84 @@
             </div>
           {/if}
 
-          <Button
-            variant="primary"
-            size="sm"
-            fullWidth
+          <button
             onclick={updateTelegramDefaults}
-            loading={isUpdatingTelegramSettings}
-            disabled={!selectedTelegramBookId}
+            disabled={isUpdatingTelegramSettings || !selectedTelegramBookId}
+            class="w-full py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
-            Simpan Pengaturan
-          </Button>
+            {isUpdatingTelegramSettings ? "Menyimpan..." : "Simpan Pengaturan"}
+          </button>
         </div>
       {:else}
-        <!-- Telegram Not Connected -->
-        <div class="flex items-center gap-3 mb-4">
-          <div class="w-10 h-10 bg-muted/30 rounded-xl flex items-center justify-center">
-            <MessageCircle class="w-5 h-5 text-muted" />
-          </div>
-          <div class="flex-1">
-            <p class="font-medium text-foreground">Telegram Belum Terhubung</p>
-            <p class="text-xs text-secondary">Hubungkan untuk log transaksi via chat</p>
-          </div>
-        </div>
-
-        {#if telegramCode}
-          <!-- Code Display -->
-          <div class="bg-surface-elevated border border-border rounded-xl p-4 text-center">
-            <p class="text-xs text-secondary mb-2">Kode Verifikasi (berlaku 5 menit)</p>
-            <div class="flex items-center justify-center gap-3">
-              <span class="text-3xl font-mono font-bold text-foreground tracking-widest">
-                {telegramCode}
-              </span>
-              <button
-                onclick={copyCode}
-                class="p-2 hover:bg-muted/30 rounded-lg transition-colors"
-                title="Salin kode"
-              >
-                <Copy class="w-5 h-5 text-muted" />
-              </button>
+        <div class="text-center space-y-4">
+          <div class="flex justify-center">
+            <div
+              class="w-12 h-12 bg-muted/20 rounded-full flex items-center justify-center"
+            >
+              <MessageCircle class="w-6 h-6 text-muted" />
             </div>
-            <p class="text-xs text-muted mt-3">
-              Kirim <code class="bg-muted/30 px-1 rounded">/link {telegramCode}</code> ke bot
+          </div>
+          <div>
+            <p class="font-medium text-foreground">Hubungkan Telegram</p>
+            <p class="text-xs text-muted-foreground mt-1">
+              Catat transaksi langsung dari chat Telegram.
             </p>
           </div>
-          <Button
-            variant="outline"
-            fullWidth
-            onclick={generateTelegramCode}
-            loading={isGeneratingCode}
-          >
-            {#snippet icon()}
-              <RefreshCw size={18} />
-            {/snippet}
-            Buat Kode Baru
-          </Button>
-        {:else}
-          <Button
-            variant="primary"
-            fullWidth
-            onclick={generateTelegramCode}
-            loading={isGeneratingCode}
-          >
-            {#snippet icon()}
-              <MessageCircle size={18} />
-            {/snippet}
-            Hubungkan Telegram
-          </Button>
-        {/if}
 
-        <p class="text-xs text-muted">
-          Cari <strong>@MongerBot</strong> di Telegram, lalu kirim kode verifikasi dengan perintah /link.
-        </p>
+          {#if telegramCode}
+            <div
+              class="bg-surface-elevated p-3 rounded-xl border border-border"
+            >
+              <div class="flex items-center justify-center gap-3 mb-2">
+                <code class="text-xl font-bold tracking-widest"
+                  >{telegramCode}</code
+                >
+                <button
+                  onclick={copyCode}
+                  class="p-1.5 hover:bg-muted/20 rounded-md"
+                >
+                  <Copy size={16} />
+                </button>
+              </div>
+              <p class="text-[10px] text-muted">
+                Kirim <code>/link {telegramCode}</code> ke bot
+              </p>
+            </div>
+          {:else}
+            <button
+              onclick={generateTelegramCode}
+              disabled={isGeneratingCode}
+              class="w-full py-2.5 bg-sky-500 text-white rounded-xl text-sm font-medium hover:bg-sky-600 transition-colors disabled:opacity-50"
+            >
+              Buat Kode Penghubung
+            </button>
+          {/if}
+        </div>
       {/if}
-    </Card>
+    </div>
+  </div>
+
+  <!-- Logout Section (Moved Here) -->
+  <div class="pt-8 flex flex-col items-center gap-6">
+    <button
+      onclick={async () => {
+        if (
+          !confirm(
+            "Apakah Anda yakin ingin keluar? Pastikan data Anda sudah tersimpan.",
+          )
+        )
+          return;
+        await authStore.logout();
+        goto("/auth", { replaceState: true });
+      }}
+      class="w-full flex items-center justify-center gap-2 p-3 rounded-xl border-2 border-red-100 text-red-500 font-medium hover:border-red-200 hover:text-red-600 hover:bg-red-50 transition-colors"
+    >
+      <LogOutIcon size={18} />
+      <span>Keluar dari Akun</span>
+    </button>
+    <p class="text-[10px] text-muted-foreground tracking-widest opacity-50">
+      Monger v2.0 • Genzi Meraih Mimpi
+    </p>
   </div>
 </div>
 
