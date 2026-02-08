@@ -9,9 +9,9 @@
  */
 
 import { transactionsApi, type ListByBookOptions } from '$lib/api/transactions';
-import type { 
-	Transaction, 
-	CreateTransactionRequest, 
+import type {
+	Transaction,
+	CreateTransactionRequest,
 	CreateTransferRequest
 } from '$lib/types/transaction';
 import { toastStore } from './toast.svelte';
@@ -63,7 +63,6 @@ function createTransactionsStore() {
 			try {
 				const result = await transactionsApi.listByPocket(pocketId, {
 					limit: state.limit,
-					offset: state.offset,
 					...options
 				});
 
@@ -72,15 +71,17 @@ function createTransactionsStore() {
 				}
 
 				if (result.data) {
-					const newTransactions = result.data;
-					
+					// API returns { transactions: [], next_cursor?, has_more }
+					const response = result.data;
+					const newTransactions = response.transactions || [];
+
 					if (reset) {
 						state.transactions = newTransactions;
 					} else {
 						state.transactions = [...state.transactions, ...newTransactions];
 					}
 
-					state.hasMore = newTransactions.length >= state.limit;
+					state.hasMore = response.has_more ?? (newTransactions.length >= state.limit);
 					state.offset += newTransactions.length;
 				}
 
@@ -109,7 +110,6 @@ function createTransactionsStore() {
 			try {
 				const result = await transactionsApi.listByBook(bookId, {
 					limit: state.limit,
-					offset: state.offset,
 					...options
 				});
 
@@ -118,15 +118,17 @@ function createTransactionsStore() {
 				}
 
 				if (result.data) {
-					const newTransactions = result.data;
-					
+					// API returns { transactions: [], next_cursor?, has_more }
+					const response = result.data;
+					const newTransactions = response.transactions || [];
+
 					if (reset) {
 						state.transactions = newTransactions;
 					} else {
 						state.transactions = [...state.transactions, ...newTransactions];
 					}
 
-					state.hasMore = newTransactions.length >= state.limit;
+					state.hasMore = response.has_more ?? (newTransactions.length >= state.limit);
 					state.offset += newTransactions.length;
 				}
 
@@ -191,7 +193,7 @@ function createTransactionsStore() {
 
 			try {
 				const result = await transactionsApi.create(data);
-				
+
 				if (result.error) {
 					throw new Error(result.error.error || 'Failed to create transaction');
 				}
@@ -225,7 +227,7 @@ function createTransactionsStore() {
 
 			try {
 				const result = await transactionsApi.transfer(data);
-				
+
 				if (result.error) {
 					throw new Error(result.error.error || 'Failed to create transfer');
 				}
@@ -247,13 +249,13 @@ function createTransactionsStore() {
 		async deleteTransaction(id: string) {
 			// Store for rollback
 			const previousTransactions = [...state.transactions];
-			
+
 			// Optimistically remove
 			state.transactions = state.transactions.filter(tx => tx.id !== id);
 
 			try {
 				const result = await transactionsApi.delete(id);
-				
+
 				if (result.error) {
 					throw new Error(result.error.error || 'Failed to delete transaction');
 				}

@@ -82,12 +82,17 @@
     return null;
   }
 
-  // Filter transactions to only show last 3 days and group them with totals
+  // Filter transactions to show recent activity (Today, Yesterday, and up to 2 days ago)
   const recentGroups = $derived.by(() => {
     const groupsMap: Record<string, DateGroup> = {};
-    const twoDaysAgo = new Date();
-    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-    twoDaysAgo.setHours(0, 0, 0, 0);
+    const now = new Date();
+
+    // Create date boundaries
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    const twoDaysAgo = new Date(today);
+    twoDaysAgo.setDate(today.getDate() - 2);
 
     const txList = transactionsStore.transactions;
     if (!Array.isArray(txList)) {
@@ -101,26 +106,45 @@
 
     for (const tx of sorted) {
       const txDate = parseLocalDate(tx.date);
-      if (txDate >= twoDaysAgo) {
-        const dateInfo = getDateInfo(tx.date);
-        if (dateInfo) {
-          const key = dateInfo.dateKey;
-          if (!groupsMap[key]) {
-            groupsMap[key] = {
-              label: dateInfo.label,
-              fullDate: dateInfo.fullDate,
-              dateKey: dateInfo.dateKey,
-              transactions: [],
-              income: 0,
-              expense: 0,
-            };
-          }
-          groupsMap[key].transactions.push(tx);
-          if (tx.type === "income") {
-            groupsMap[key].income += tx.amount_cents;
-          } else if (tx.type === "expense") {
-            groupsMap[key].expense += tx.amount_cents;
-          }
+      const txDateOnly = new Date(
+        txDate.getFullYear(),
+        txDate.getMonth(),
+        txDate.getDate(),
+      );
+
+      // Check if transaction is within the last 3 days (including today)
+      const isToday = txDateOnly.getTime() === today.getTime();
+      const isYesterday = txDateOnly.getTime() === yesterday.getTime();
+      const isTwoDaysAgo = txDateOnly.getTime() === twoDaysAgo.getTime();
+
+      if (isToday || isYesterday || isTwoDaysAgo) {
+        const dateKey = getDateKey(tx.date);
+        const fullDate = txDate.toLocaleDateString("id-ID", {
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+        });
+
+        let label: string;
+        if (isToday) label = "Hari ini";
+        else if (isYesterday) label = "Kemarin";
+        else label = fullDate;
+
+        if (!groupsMap[dateKey]) {
+          groupsMap[dateKey] = {
+            label,
+            fullDate,
+            dateKey,
+            transactions: [],
+            income: 0,
+            expense: 0,
+          };
+        }
+        groupsMap[dateKey].transactions.push(tx);
+        if (tx.type === "income") {
+          groupsMap[dateKey].income += tx.amount_cents;
+        } else if (tx.type === "expense") {
+          groupsMap[dateKey].expense += tx.amount_cents;
         }
       }
     }

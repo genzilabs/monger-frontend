@@ -109,6 +109,13 @@
           bg: "bg-lime-100",
         },
         {
+          label: "Tentang Monger",
+          href: "/about",
+          icon: ShieldIcon,
+          color: "text-indigo-600",
+          bg: "bg-indigo-100",
+        },
+        {
           label: "Beri Masukan",
           href: "/feedback",
           icon: MessageIcon,
@@ -118,6 +125,35 @@
       ],
     },
   ];
+
+  /*
+   * Share functionality
+   */
+  async function shareApp() {
+    const shareData = {
+      title: "Monger - Catat Keuanganmu",
+      text: "Yuk atur keuangan lebih mudah dengan Monger! Aplikasi pencatat keuangan yang simpel dan modern.",
+      url: window.location.origin, // Or specific landing page URL
+    };
+
+    if (navigator.share && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.error("Error sharing:", err);
+      }
+    } else {
+      // Fallback: Copy to clipboard
+      try {
+        await navigator.clipboard.writeText(
+          `${shareData.text}\n${shareData.url}`,
+        );
+        alert("Link berhasil disalin ke clipboard!");
+      } catch (err) {
+        console.error("Failed to copy:", err);
+      }
+    }
+  }
 </script>
 
 <svelte:head>
@@ -162,6 +198,31 @@
         </div>
       </div>
     {/each}
+  </div>
+
+  <!-- Social Share Section -->
+  <div class="space-y-2">
+    <h2 class="text-xs font-semibold text-muted uppercase tracking-wider px-1">
+      Bagikan
+    </h2>
+    <div
+      class="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm"
+    >
+      <button
+        onclick={shareApp}
+        class="w-full flex items-center gap-3 p-4 hover:bg-muted/30 transition-colors active:bg-muted/50 group"
+      >
+        <div
+          class="bg-pink-100 text-pink-600 w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+        >
+          <PaperPlaneIcon size={18} />
+        </div>
+        <span class="text-sm font-medium text-foreground flex-1 text-left">
+          Ajak Teman Pakai Monger
+        </span>
+        <ChevronRightIcon size={16} class="text-muted/50" />
+      </button>
+    </div>
   </div>
 
   <div class="pt-8 pb-4 flex flex-col items-center gap-6">

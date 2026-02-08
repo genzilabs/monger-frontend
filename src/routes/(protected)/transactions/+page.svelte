@@ -12,7 +12,7 @@
     EditTransactionModal,
     TransactionFilterModal,
   } from "$lib/components/modals";
-  import { booksStore, categoriesStore } from "$lib/stores"; // privacyStore removed
+  import { booksStore, categoriesStore, uiStore } from "$lib/stores";
   import {
     transactionsApi,
     type ListByBookOptions,
@@ -185,6 +185,17 @@
         // Load transactions - PeriodSummary will set dates and reload if needed
         untrack(() => loadTransactions(true));
       }
+    }
+  });
+
+  // Refresh when a transaction is created from the global modal
+  let lastRefreshTrigger = $state(0);
+  $effect(() => {
+    const trigger = uiStore.transactionRefreshTrigger;
+    if (trigger > untrack(() => lastRefreshTrigger)) {
+      lastRefreshTrigger = trigger;
+      // Reload transactions
+      untrack(() => loadTransactions(true));
     }
   });
 

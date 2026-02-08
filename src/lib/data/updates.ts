@@ -19,6 +19,19 @@ export interface Update {
 
 export const UPDATES: Update[] = [
   {
+    version: "0.6.0-alpha",
+    date: "2026-02-08",
+    title: "Menu Baru dan Perbaikan Bug",
+    description: "Kami menambahkan fitur berbagi aplikasi, halaman Tentang, dan memperbaiki bug penting pada tampilan transaksi.",
+    changes: [
+      { text: "Bagikan Monger ke teman dengan satu ketukan" },
+      { text: "Halaman 'Tentang Monger' dengan info versi dan misi" },
+      { text: "Perbaikan: Transaksi terkini di dashboard sekarang muncul dengan benar" },
+      { text: "Perbaikan: Daftar transaksi langsung refresh setelah input baru" },
+      { text: "Tampilan menu berbagi diselaraskan dengan gaya lainnya" },
+    ],
+  },
+  {
     version: "0.5.0-alpha",
     date: "2026-02-08",
     title: "Keamanan dan Perbaikan Dashboard",

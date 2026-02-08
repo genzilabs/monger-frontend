@@ -87,6 +87,7 @@ export {
 
 // Native Select (simple, reliable)
 export { NativeSelect } from './native-select';
+export { default as Select } from './Select.svelte';
 
 // Combobox (searchable select)
 export { Combobox, type ComboboxOption } from './combobox';

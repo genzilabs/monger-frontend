@@ -40,6 +40,10 @@ class OnboardingStore {
             localStorage.removeItem(STORAGE_KEY);
         }
     }
+    completeAction(action: string) {
+        // Placeholder for future onboarding logic tracking specific actions
+        console.log(`[Onboarding] Action completed: ${action}`);
+    }
 }
 
 export const onboardingStore = new OnboardingStore();
