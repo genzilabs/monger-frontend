@@ -8,7 +8,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: production  # Uses secrets from 'production' environment
+    environment: production
     
     steps:
       - name: Checkout
@@ -35,16 +35,24 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           source: "build/*,deploy/monger-frontend.service"
           target: "/var/www/monger-frontend"
-          strip_components: 1
-          rm: true
+          overwrite: true
 
-      - name: Restart Service
+      - name: Setup and Restart
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
+            # Move files to correct location
+            mv /var/www/monger-frontend/deploy/monger-frontend.service /var/www/monger-frontend/ 2>/dev/null || true
+            rm -rf /var/www/monger-frontend/deploy
+            
+            # Create .env from environment secret
+            cat > /var/www/monger-frontend/.env << 'EOF'
+            ${{ secrets.FRONTEND_ENV }}
+            EOF
+            
             sudo cp /var/www/monger-frontend/monger-frontend.service /etc/systemd/system/
             sudo systemctl daemon-reload
             sudo systemctl restart monger-frontend
