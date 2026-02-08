@@ -315,9 +315,6 @@
       // Refresh transaction list
       await transactionsStore.refresh();
 
-      // Notify onboarding that transaction was created
-      onboardingStore.completeAction("transaction_created");
-
       resetForm();
       onClose();
     }
