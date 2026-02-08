@@ -12,7 +12,9 @@
     transactionsStore,
     categoriesStore,
     toastStore,
+    uiStore,
   } from "$lib/stores";
+  import { Camera } from "lucide-svelte";
   import type { Category, Subcategory } from "$lib/types/category";
   import { untrack } from "svelte";
   import type { Pocket } from "$lib/types";
@@ -379,6 +381,21 @@
         Transfer
       </button>
     </div>
+
+    <!-- Scan Receipt Button (only for income/expense) -->
+    {#if type !== "transfer"}
+      <button
+        type="button"
+        onclick={() => {
+          onClose();
+          uiStore.scanReceipt();
+        }}
+        class="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-xl text-primary font-medium hover:from-primary/20 hover:to-primary/10 transition-all"
+      >
+        <Camera size={20} />
+        Scan Struk
+      </button>
+    {/if}
 
     <!-- Amount -->
     <div>

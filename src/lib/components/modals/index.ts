@@ -11,4 +11,7 @@ export { default as MembersListModal } from './MembersListModal.svelte';
 export { default as ExportModal } from './ExportModal.svelte';
 export { default as ImportWizard } from './ImportWizard.svelte';
 export { default as TransactionFilterModal } from './TransactionFilterModal.svelte';
+export { default as ReceiptScanner } from './ReceiptScanner.svelte';
+export { default as ReceiptConfirmModal } from './ReceiptConfirmModal.svelte';
+
 
