@@ -33,6 +33,7 @@ jobs:
         run: pnpm run build
         env:
           PUBLIC_API_URL: ${{ vars.PUBLIC_API_URL }}
+          PUBLIC_SENTRY_DSN: ${{ vars.PUBLIC_SENTRY_DSN }}
 
       - name: Deploy to VPS
         uses: appleboy/scp-action@v0.1.7
