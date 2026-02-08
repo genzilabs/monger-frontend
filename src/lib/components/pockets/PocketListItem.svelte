@@ -31,12 +31,12 @@
     <div>
       <div class="flex items-center gap-2 mb-0.5">
         <h3 class="font-semibold text-foreground">{pocket.name}</h3>
-        {#if pocket.role !== "owner"}
+        <!-- {#if pocket.role !== "owner"}
           <div
             class="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"
             title={pocket.role === "editor" ? "Editor" : pocket.role}
           ></div>
-        {/if}
+        {/if} -->
       </div>
       <p class="text-sm font-bold text-primary">
         {privacyStore.hideAmounts

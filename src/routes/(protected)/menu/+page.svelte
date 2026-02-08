@@ -166,9 +166,9 @@
 
   <div class="pt-6">
     <button
-      onclick={() => {
-        authStore.logout();
-        goto("/auth");
+      onclick={async () => {
+        await authStore.logout();
+        goto("/auth", { replaceState: true });
       }}
       class="w-full flex items-center justify-center gap-2 p-4 rounded-xl border-2 border-red-300 text-red-500 font-medium hover:border-red-400 hover:text-red-600 hover:bg-red-50 transition-colors bg-transparent"
     >

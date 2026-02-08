@@ -2,9 +2,11 @@
   import { Button, ResponsiveModal } from "$lib/components/ui";
   import { NativeSelect } from "$lib/components/ui/native-select";
   import { collaborationApi } from "$lib/api";
+  import { booksStore, authStore } from "$lib/stores";
   import type { BookMember, CollaborationRole } from "$lib/types";
-  import { Pencil, Check, X, Trash2 } from "lucide-svelte";
+  import { Pencil, Check, X, Trash2, LogOut } from "lucide-svelte";
   import { onMount } from "svelte";
+  import { goto } from "$app/navigation";
 
   interface Props {
     open: boolean;
@@ -20,9 +22,11 @@
   let isLoading = $state(true);
   let error = $state<string | null>(null);
   let confirmingRemove = $state<string | null>(null);
+  let confirmingLeave = $state(false);
   let editingMemberId = $state<string | null>(null);
   let editingRole = $state<string>("");
   let isUpdating = $state(false);
+  let isLeaving = $state(false);
 
   $effect(() => {
     if (open && bookId) {
@@ -68,25 +72,43 @@
 
   async function saveRole(userId: string) {
     if (!editingRole) return;
-    
+
     isUpdating = true;
     error = null;
 
     const result = await collaborationApi.updateBookMember(bookId, userId, {
-      role: editingRole as CollaborationRole
+      role: editingRole as CollaborationRole,
     });
 
     if (result.error) {
       error = (result.error as any).error || "Failed to update role";
     } else {
       // Update local state
-      members = members.map(m => 
-        m.user_id === userId ? { ...m, role: editingRole as CollaborationRole } : m
+      members = members.map((m) =>
+        m.user_id === userId
+          ? { ...m, role: editingRole as CollaborationRole }
+          : m,
       );
       cancelEditing();
     }
-    
+
     isUpdating = false;
+  }
+
+  async function handleLeaveBook() {
+    isLeaving = true;
+    const result = await booksStore.leaveBook(bookId);
+    if (result) {
+      onClose();
+      // If no books left, redirect to create-book page
+      if (result === "no-books") {
+        goto("/create-book");
+      } else {
+        goto("/dashboard");
+      }
+    }
+    isLeaving = false;
+    confirmingLeave = false;
   }
 
   function getRoleBadgeClasses(role: string) {
@@ -205,45 +227,45 @@
               {:else}
                 <span
                   class="text-xs px-2 py-1 rounded-full capitalize {getRoleBadgeClasses(
-                    member.role
+                    member.role,
                   )}"
                 >
                   {member.role}
                 </span>
 
                 {#if isOwner && member.role !== "owner"}
-                   {#if confirmingRemove !== member.user_id}
+                  {#if confirmingRemove !== member.user_id}
+                    <button
+                      onclick={() => startEditing(member)}
+                      class="p-1.5 text-muted hover:text-primary transition-colors"
+                      title="Edit Role"
+                    >
+                      <Pencil size={14} />
+                    </button>
+
+                    <button
+                      onclick={() => (confirmingRemove = member.user_id)}
+                      class="p-1.5 text-muted hover:text-red-400 transition-colors"
+                      title="Remove Member"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  {:else}
+                    <div class="flex items-center gap-1 animate-fade-in">
                       <button
-                        onclick={() => startEditing(member)}
-                        class="p-1.5 text-muted hover:text-primary transition-colors"
-                        title="Edit Role"
+                        onclick={() => handleRemoveMember(member.user_id)}
+                        class="px-2 py-1 text-xs bg-red-500 text-white rounded-lg hover:bg-red-600"
                       >
-                        <Pencil size={14} />
+                        Hapus
                       </button>
-                      
                       <button
-                        onclick={() => (confirmingRemove = member.user_id)}
-                        class="p-1.5 text-muted hover:text-red-400 transition-colors"
-                        title="Remove Member"
+                        onclick={() => (confirmingRemove = null)}
+                        class="px-2 py-1 text-xs bg-surface border border-border text-muted rounded-lg hover:bg-surface-elevated"
                       >
-                       <Trash2 size={14} />
+                        Batal
                       </button>
-                   {:else}
-                      <div class="flex items-center gap-1 animate-fade-in">
-                        <button
-                          onclick={() => handleRemoveMember(member.user_id)}
-                          class="px-2 py-1 text-xs bg-red-500 text-white rounded-lg hover:bg-red-600"
-                        >
-                          Hapus
-                        </button>
-                        <button
-                          onclick={() => (confirmingRemove = null)}
-                          class="px-2 py-1 text-xs bg-surface border border-border text-muted rounded-lg hover:bg-surface-elevated"
-                        >
-                          Batal
-                        </button>
-                      </div>
-                   {/if}
+                    </div>
+                  {/if}
                 {/if}
               {/if}
             </div>
@@ -253,25 +275,62 @@
     {/if}
   </div>
 
-  <div class="flex gap-3 mt-6">
-    {#if isOwner}
-      <Button variant="primary" fullWidth onclick={onInvite}>
-        <svg
-          class="w-4 h-4 mr-2"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="2"
+  <div class="flex flex-col gap-3 mt-6">
+    {#if !isOwner}
+      {#if confirmingLeave}
+        <div
+          class="flex gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-xl animate-fade-in"
         >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-          />
-        </svg>
-        Undang Anggota
-      </Button>
+          <p class="flex-1 text-sm text-red-400">
+            Yakin mau keluar dari buku ini?
+          </p>
+          <button
+            onclick={handleLeaveBook}
+            disabled={isLeaving}
+            class="px-3 py-1.5 text-xs font-medium bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50"
+          >
+            {isLeaving ? "..." : "Ya, Keluar"}
+          </button>
+          <button
+            onclick={() => (confirmingLeave = false)}
+            disabled={isLeaving}
+            class="px-3 py-1.5 text-xs font-medium bg-surface border border-border text-muted rounded-lg hover:bg-surface-elevated"
+          >
+            Batal
+          </button>
+        </div>
+      {:else}
+        <Button
+          variant="danger"
+          fullWidth
+          onclick={() => (confirmingLeave = true)}
+        >
+          <LogOut class="w-4 h-4 mr-2" />
+          Keluar dari Buku
+        </Button>
+      {/if}
     {/if}
-    <Button variant="secondary" fullWidth onclick={onClose}>Tutup</Button>
+
+    <div class="flex gap-3">
+      {#if isOwner}
+        <Button variant="primary" fullWidth onclick={onInvite}>
+          <svg
+            class="w-4 h-4 mr-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+            />
+          </svg>
+          Undang Anggota
+        </Button>
+      {/if}
+      <Button variant="secondary" fullWidth onclick={onClose}>Tutup</Button>
+    </div>
   </div>
 </ResponsiveModal>

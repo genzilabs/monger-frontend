@@ -42,7 +42,7 @@
 
   // Check if current user is owner
   const isOwner = $derived(
-    booksStore.activeBook?.owner_id === authStore.user?.id
+    booksStore.activeBook?.owner_id === authStore.user?.id,
   );
 
   const filters = [
@@ -95,12 +95,15 @@
     if (!bookId) return;
     isDeleting = true;
     try {
-      const result = await booksApi.delete(bookId);
-      if (result.data) {
-        toastStore.success("Buku berhasil dihapus");
-        goto("/dashboard");
-      } else {
-        toastStore.error(result.error?.error || "Gagal menghapus buku");
+      const result = await booksStore.deleteBook(bookId);
+      if (result) {
+        showDeleteConfirm = false;
+        // If no books left, redirect to create-book page
+        if (result === "no-books") {
+          goto("/create-book");
+        } else {
+          goto("/dashboard");
+        }
       }
     } catch (e) {
       toastStore.error("Terjadi kesalahan");
@@ -143,28 +146,29 @@
                 >BUKU</span
               >
               <div class="flex items-center">
-                  <h1 class="text-2xl font-bold text-foreground">
-                    {booksStore.activeBook.name}
-                  </h1>
-                  {#if hasCollaborators}
-                    <span
-                      class="ml-2 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 text-xs font-medium border border-blue-500/20"
-                    >
-                      Kolaborasi
-                    </span>
-                  {/if}
+                <h1 class="text-2xl font-bold text-foreground">
+                  {booksStore.activeBook.name}
+                </h1>
+                {#if hasCollaborators}
+                  <span
+                    class="ml-2 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 text-xs font-medium border border-blue-500/20"
+                  >
+                    Kolaborasi
+                  </span>
+                {/if}
               </div>
             </div>
             <div class="flex items-center gap-3">
               {#if hasCollaborators}
-                <div 
-                  class="cursor-pointer" 
+                <div
+                  class="cursor-pointer"
                   onclick={() => (showMembersModal = true)}
                   role="button"
                   tabindex="0"
-                  onkeydown={(e) => e.key === 'Enter' && (showMembersModal = true)}
+                  onkeydown={(e) =>
+                    e.key === "Enter" && (showMembersModal = true)}
                 >
-                  <MemberStack members={members} maxDisplay={3} size="sm" />
+                  <MemberStack {members} maxDisplay={3} size="sm" />
                 </div>
               {/if}
               <button
@@ -183,7 +187,7 @@
             <span class="text-4xl font-bold tracking-tight text-foreground">
               {formatBalance(
                 getTotalBalance(),
-                booksStore.activeBook.base_currency
+                booksStore.activeBook.base_currency,
               )}
             </span>
           </div>
@@ -288,21 +292,23 @@
                     {pocket.type_slug.replace("-", " ")}
                   </p>
                 </div>
-                </div>
               </div>
-              <div class="flex items-center gap-3">
-                 {#if pocket.role !== 'owner'}
-                    <div class="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 text-[10px] font-bold border border-blue-500/20 uppercase tracking-wider">
-                      {pocket.role === 'editor' ? 'Editor' : pocket.role}
-                    </div>
-                 {/if}
-                 <p
+            </div>
+            <div class="flex items-center gap-3">
+              <!-- {#if pocket.role !== "owner"}
+                <div
+                  class="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 text-[10px] font-bold border border-blue-500/20 uppercase tracking-wider"
+                >
+                  {pocket.role === "editor" ? "Editor" : pocket.role}
+                </div>
+              {/if} -->
+              <p
                 class="text-lg font-bold text-foreground"
                 class:text-red-500={pocket.balance_cents < 0}
               >
                 {formatBalance(
                   pocket.balance_cents,
-                  booksStore.activeBook?.base_currency
+                  booksStore.activeBook?.base_currency,
                 )}
               </p>
             </div>

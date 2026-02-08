@@ -22,7 +22,7 @@
   import { SlidersIcon } from "$lib/icons";
 
   // Tab state
-  type TabType = "daily" | "monthly" | "total";
+  type TabType = "daily" | "monthly" | "total" | "calendar";
   let activeTab = $state<TabType>("daily");
 
   // State
@@ -118,7 +118,7 @@
         } else {
           transactions = [...transactions, ...newTxs];
         }
-        
+
         // Update cursor and hasMore from response
         nextCursor = response.next_cursor;
         hasMore = response.has_more;
@@ -167,7 +167,7 @@
 
   // Track if period has been initialized
   let periodInitialized = $state(false);
-  
+
   // Track period dates for calendar view
   let currentPeriodStart = $state<Date>(new Date());
   let currentPeriodEnd = $state<Date>(new Date());
@@ -193,9 +193,13 @@
   $effect(() => {
     // Track the active tab
     const tab = activeTab;
-    
+
     // If we're on monthly or total tab and there are more transactions to load
-    if ((tab === "monthly" || tab === "total" || tab === "calendar") && hasMore && !isLoading) {
+    if (
+      (tab === "monthly" || tab === "total" || tab === "calendar") &&
+      hasMore &&
+      !isLoading
+    ) {
       // Automatically load all remaining transactions
       untrack(() => loadAllTransactions());
     }
@@ -206,7 +210,7 @@
     while (hasMore && !isLoading) {
       await loadTransactions(false);
       // Small delay to prevent overwhelming the server
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
   }
 
@@ -286,8 +290,8 @@
         endDate = end;
         // Store period dates for calendar view - parse as local dates
         // Format is "YYYY-MM-DD", split and create local date
-        const [startYear, startMonth, startDay] = start.split('-').map(Number);
-        const [endYear, endMonth, endDay] = end.split('-').map(Number);
+        const [startYear, startMonth, startDay] = start.split("-").map(Number);
+        const [endYear, endMonth, endDay] = end.split("-").map(Number);
         currentPeriodStart = new Date(startYear, startMonth - 1, startDay);
         currentPeriodEnd = new Date(endYear, endMonth - 1, endDay);
         periodInitialized = true;

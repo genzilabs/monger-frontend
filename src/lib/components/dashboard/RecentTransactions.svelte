@@ -30,14 +30,34 @@
     expense: number;
   }
 
+  // Parse date string to local date
+  // For UTC datetime strings (ending in Z or with timezone offset),
+  // we convert to local time first, then extract the local date
+  function parseLocalDate(dateStr: string): Date {
+    // If it's just a date (YYYY-MM-DD), parse as local time (midnight local)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      const [year, month, day] = dateStr.split("-").map(Number);
+      return new Date(year, month - 1, day);
+    }
+    // For datetime strings (with time/timezone), parse as-is to get correct local date
+    // new Date() will convert UTC to local timezone automatically
+    const date = new Date(dateStr);
+    // Return a new date with just the local date components (midnight local)
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  }
+
   function getDateKey(dateStr: string): string {
-    return new Date(dateStr).toISOString().split("T")[0];
+    const date = parseLocalDate(dateStr);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   }
 
   function getDateInfo(
     dateStr: string,
   ): { label: string; fullDate: string; dateKey: string } | null {
-    const date = new Date(dateStr);
+    const date = parseLocalDate(dateStr);
     const now = new Date();
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
@@ -75,11 +95,12 @@
     }
 
     const sorted = [...txList].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+      (a, b) =>
+        parseLocalDate(b.date).getTime() - parseLocalDate(a.date).getTime(),
     );
 
     for (const tx of sorted) {
-      const txDate = new Date(tx.date);
+      const txDate = parseLocalDate(tx.date);
       if (txDate >= twoDaysAgo) {
         const dateInfo = getDateInfo(tx.date);
         if (dateInfo) {

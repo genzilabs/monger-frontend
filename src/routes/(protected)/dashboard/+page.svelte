@@ -91,7 +91,7 @@
   });
 
   // Expose for debugging
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     (window as any).onboardingStore = onboardingStore;
   }
 
@@ -102,25 +102,37 @@
   $effect(() => {
     const hasBooks = booksStore.books.length > 0;
     const hasPockets = booksStore.pockets.length > 0;
-    // We don't easily know if user has transactions without API call, 
+    // We don't easily know if user has transactions without API call,
     // so check based on income/expense being non-zero after load
     const hasTransactions = monthlyIncome > 0 || monthlyExpense > 0;
-    
-    console.log("[Dashboard] Onboarding check - isInitialized:", booksStore.isInitialized, "isLoading:", booksStore.isLoading, "hasBooks:", hasBooks, "hasPockets:", hasPockets, "hasTransactions:", hasTransactions);
-    
+
+    console.log(
+      "[Dashboard] Onboarding check - isInitialized:",
+      booksStore.isInitialized,
+      "isLoading:",
+      booksStore.isLoading,
+      "hasBooks:",
+      hasBooks,
+      "hasPockets:",
+      hasPockets,
+      "hasTransactions:",
+      hasTransactions,
+    );
+
     // Start when store is initialized and not loading
-    if (booksStore.isInitialized && !booksStore.isLoading && !hasTriggeredOnboarding) {
+    if (
+      booksStore.isInitialized &&
+      !booksStore.isLoading &&
+      !hasTriggeredOnboarding
+    ) {
       hasTriggeredOnboarding = true;
-      
-      // Sync onboarding state with app state
-      onboardingStore.syncWithAppState(hasBooks, hasPockets, hasTransactions);
-      
+
       // Show onboarding if not completed
-      if (!onboardingStore.isCompleted) {
-        console.log("[Dashboard] Showing onboarding step:", onboardingStore.currentStep);
-        setTimeout(() => {
-          onboardingStore.showCurrentStep();
-        }, 600);
+      if (!onboardingStore.completed) {
+        console.log(
+          "[Dashboard] Showing onboarding step:",
+          onboardingStore.currentStep,
+        );
       }
     }
   });

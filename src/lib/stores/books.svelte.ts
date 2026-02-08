@@ -59,7 +59,7 @@ function createBooksStore() {
 		 */
 		async initialize() {
 			if (state.isInitialized) return;
-			
+
 			state.isLoading = true;
 			state.error = null;
 			try {
@@ -68,7 +68,7 @@ function createBooksStore() {
 
 				if (booksResult.data) {
 					state.books = booksResult.data.books || [];
-					
+
 					// Restore active book from localStorage
 					if (typeof window !== 'undefined') {
 						const savedBookId = localStorage.getItem(ACTIVE_BOOK_KEY);
@@ -135,7 +135,7 @@ function createBooksStore() {
 		 */
 		async setActiveBook(book: Book | null) {
 			state.activeBook = book;
-			
+
 			// Persist to localStorage
 			if (typeof window !== 'undefined') {
 				if (book) {
@@ -144,7 +144,7 @@ function createBooksStore() {
 					localStorage.removeItem(ACTIVE_BOOK_KEY);
 				}
 			}
-			
+
 			if (book) {
 				await Promise.all([
 					this.loadPockets(book.id),
@@ -257,7 +257,7 @@ function createBooksStore() {
 		},
 
 		/**
-		 * Create a new book
+		 * Create a new book and automatically set it as active
 		 */
 		async createBook(data: { name: string; description?: string; icon_slug?: string; base_currency?: string }) {
 			state.isLoading = true;
@@ -266,6 +266,14 @@ function createBooksStore() {
 				const result = await booksApi.create(data);
 				if (result.data) {
 					state.books = [...state.books, result.data];
+
+					// Auto-set new book as active
+					state.activeBook = result.data;
+					state.pockets = []; // New book has no pockets yet
+					if (typeof window !== 'undefined') {
+						localStorage.setItem(ACTIVE_BOOK_KEY, result.data.id);
+					}
+
 					toastStore.success('Buku berhasil dibuat!');
 					return result.data;
 				} else if (result.error) {
@@ -283,21 +291,40 @@ function createBooksStore() {
 
 		/**
 		 * Delete a book
+		 * Returns true on success, 'no-books' if no books left, false on error
 		 */
-		async deleteBook(id: string) {
+		async deleteBook(id: string): Promise<boolean | 'no-books'> {
 			state.isLoading = true;
 			state.error = null;
 			try {
 				const result = await booksApi.delete(id);
 				if (!result.error) {
 					state.books = state.books.filter((b) => b.id !== id);
+
+					// If deleting the active book, select next available book
 					if (state.activeBook?.id === id) {
-						state.activeBook = null;
-						state.pockets = [];
-						if (typeof window !== 'undefined') {
-							localStorage.removeItem(ACTIVE_BOOK_KEY);
+						if (state.books.length > 0) {
+							// Set first available book as active
+							const nextBook = state.books[0];
+							state.activeBook = nextBook;
+							state.pockets = [];
+							if (typeof window !== 'undefined') {
+								localStorage.setItem(ACTIVE_BOOK_KEY, nextBook.id);
+							}
+							// Load pockets for new active book
+							this.loadPockets(nextBook.id);
+						} else {
+							// No books left
+							state.activeBook = null;
+							state.pockets = [];
+							if (typeof window !== 'undefined') {
+								localStorage.removeItem(ACTIVE_BOOK_KEY);
+							}
+							toastStore.success('Buku berhasil dihapus');
+							return 'no-books';
 						}
 					}
+
 					toastStore.success('Buku berhasil dihapus');
 					return true;
 				} else {
@@ -307,6 +334,57 @@ function createBooksStore() {
 			} catch {
 				state.error = 'Failed to delete book';
 				toastStore.error('Gagal menghapus buku');
+			} finally {
+				state.isLoading = false;
+			}
+			return false;
+		},
+
+		/**
+		 * Leave a book (for members, not owners)
+		 * Returns true on success, 'no-books' if no books left, false on error
+		 */
+		async leaveBook(id: string): Promise<boolean | 'no-books'> {
+			state.isLoading = true;
+			state.error = null;
+			try {
+				const result = await booksApi.leave(id);
+				if (!result.error) {
+					state.books = state.books.filter((b) => b.id !== id);
+
+					// If leaving the active book, select next available book
+					if (state.activeBook?.id === id) {
+						if (state.books.length > 0) {
+							// Set first available book as active
+							const nextBook = state.books[0];
+							state.activeBook = nextBook;
+							state.pockets = [];
+							if (typeof window !== 'undefined') {
+								localStorage.setItem(ACTIVE_BOOK_KEY, nextBook.id);
+							}
+							// Load pockets for new active book
+							this.loadPockets(nextBook.id);
+						} else {
+							// No books left
+							state.activeBook = null;
+							state.pockets = [];
+							if (typeof window !== 'undefined') {
+								localStorage.removeItem(ACTIVE_BOOK_KEY);
+							}
+							toastStore.success('Berhasil keluar dari buku');
+							return 'no-books';
+						}
+					}
+
+					toastStore.success('Berhasil keluar dari buku');
+					return true;
+				} else {
+					state.error = result.error.error;
+					toastStore.error(result.error.error);
+				}
+			} catch {
+				state.error = 'Failed to leave book';
+				toastStore.error('Gagal keluar dari buku');
 			} finally {
 				state.isLoading = false;
 			}

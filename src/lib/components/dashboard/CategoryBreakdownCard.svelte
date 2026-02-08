@@ -26,33 +26,33 @@
 </script>
 
 <div class="w-full bg-surface rounded-2xl border border-border p-4">
-    <div class="flex items-center justify-between mb-6 gap-2">
-        <div class="flex items-center gap-2 shrink-0">
-            <h3 class="text-sm font-semibold text-foreground">
+    <div class="flex flex-wrap items-center justify-between mb-6 gap-2">
+        <div class="flex items-center gap-2 min-w-0">
+            <h3 class="text-sm font-semibold text-foreground truncate">
                 Analisis Pengeluaran
             </h3>
             <PrivacyToggle />
         </div>
 
-        <!-- Tabs - Responsive sizing for small screens -->
-        <div class="flex p-1 bg-surface-elevated rounded-lg shrink-0">
+        <!-- Tabs - More compact for very small screens -->
+        <div class="flex p-0.5 sm:p-1 bg-surface-elevated rounded-lg">
             <button
                 onclick={() => (activeTab = "income")}
-                class="px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-all whitespace-nowrap {activeTab ===
+                class="px-2 py-1 text-[11px] sm:text-xs font-semibold rounded-md transition-all whitespace-nowrap {activeTab ===
                 'income'
-                    ? 'bg-surface shadow-sm text-primary'
+                    ? 'bg-primary text-white shadow-sm'
                     : 'text-muted hover:text-foreground'}"
             >
-                Pemasukan
+                Masuk
             </button>
             <button
                 onclick={() => (activeTab = "expense")}
-                class="px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-all whitespace-nowrap {activeTab ===
+                class="px-2 py-1 text-[11px] sm:text-xs font-semibold rounded-md transition-all whitespace-nowrap {activeTab ===
                 'expense'
-                    ? 'bg-surface shadow-sm text-primary'
+                    ? 'bg-primary text-white shadow-sm'
                     : 'text-muted hover:text-foreground'}"
             >
-                Pengeluaran
+                Keluar
             </button>
         </div>
     </div>

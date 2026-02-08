@@ -11,10 +11,10 @@
 
   const identifier = $derived($page.url.searchParams.get("identifier") || "");
   const initialCooldown = $derived(
-    parseInt($page.url.searchParams.get("cooldown") || "60", 10)
+    parseInt($page.url.searchParams.get("cooldown") || "60", 10),
   );
-  const isPostRegister = $derived(
-    $page.url.searchParams.get("postRegister") === "true"
+  const isNewRegistration = $derived(
+    $page.url.searchParams.get("register") === "true",
   );
 
   let otp = $state("");
@@ -89,17 +89,20 @@
         return;
       }
 
-      if (isPostRegister || result.data) {
-        if (result.data) {
-          authStore.setAuth(
-            result.data.user,
-            result.data.access_token,
-            result.data.refresh_token
-          );
-        }
+      if (result.data) {
+        authStore.setAuth(
+          result.data.user,
+          result.data.access_token,
+          result.data.refresh_token,
+        );
 
-        // After authentication, redirect to dashboard
-        goto("/dashboard");
+        // For new registrations, redirect to create-book
+        // For login, redirect to dashboard
+        if (isNewRegistration) {
+          goto("/create-book");
+        } else {
+          goto("/dashboard");
+        }
       }
     } catch {
       error = "Ada gangguan sebentar. Coba lagi nanti ya.";

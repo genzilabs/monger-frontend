@@ -3,6 +3,8 @@
         ResponsiveModal,
         Button,
         CalendarSelect,
+        Combobox,
+        type ComboboxOption,
     } from "$lib/components/ui";
     import type { Pocket } from "$lib/types";
     import { categoriesStore } from "$lib/stores";
@@ -43,9 +45,9 @@
     }: Props = $props();
 
     // Local state for editing
-    let localPocketId = $state<string | null>(null);
+    let localPocketId = $state<string>("");
     let localType = $state<"all" | "income" | "expense" | "transfer">("all");
-    let localCategoryId = $state<string | null>(null);
+    let localCategoryId = $state<string>("");
     let localSearch = $state("");
     let localStartDate = $state("");
     let localEndDate = $state("");
@@ -53,20 +55,36 @@
     // Sync with props when modal opens
     $effect(() => {
         if (open) {
-            localPocketId = selectedPocketId;
+            localPocketId = selectedPocketId ?? "";
             localType = selectedType;
-            localCategoryId = selectedCategoryId;
+            localCategoryId = selectedCategoryId ?? "";
             localSearch = searchQuery;
             localStartDate = startDate;
             localEndDate = endDate;
         }
     });
 
+    // Build pocket options for Combobox
+    const pocketOptions = $derived<ComboboxOption[]>([
+        { value: "", label: "Semua Kantong" },
+        ...pockets.map((p) => ({ value: p.id, label: p.name })),
+    ]);
+
+    // Build category options for Combobox
+    const categoryOptions = $derived<ComboboxOption[]>([
+        { value: "", label: "Semua Kategori" },
+        ...categoriesStore.categories.map((c) => ({
+            value: c.id,
+            label: c.name,
+            icon: c.icon,
+        })),
+    ]);
+
     function handleApply() {
         onApply({
-            pocketId: localPocketId,
+            pocketId: localPocketId || null,
             type: localType,
-            categoryId: localCategoryId,
+            categoryId: localCategoryId || null,
             search: localSearch,
             startDate: localStartDate,
             endDate: localEndDate,
@@ -75,9 +93,9 @@
     }
 
     function handleReset() {
-        localPocketId = null;
+        localPocketId = "";
         localType = "all";
-        localCategoryId = null;
+        localCategoryId = "";
         localSearch = "";
         localStartDate = "";
         localEndDate = "";
@@ -105,18 +123,14 @@
         </div>
 
         <!-- Pocket Filter -->
-        <div class="space-y-2">
-            <p class="text-sm font-medium text-foreground">Kantong</p>
-            <select
-                bind:value={localPocketId}
-                class="w-full px-4 py-3 bg-surface border border-border rounded-xl text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
-            >
-                <option value={null}>Semua Kantong</option>
-                {#each pockets as pocket}
-                    <option value={pocket.id}>{pocket.name}</option>
-                {/each}
-            </select>
-        </div>
+        <Combobox
+            label="Kantong"
+            options={pocketOptions}
+            bind:value={localPocketId}
+            placeholder="Semua Kantong"
+            searchPlaceholder="Cari kantong..."
+            emptyMessage="Kantong tidak ditemukan"
+        />
 
         <!-- Type Filter -->
         <div class="space-y-2">
@@ -143,18 +157,14 @@
         </div>
 
         <!-- Category Filter -->
-        <div class="space-y-2">
-            <p class="text-sm font-medium text-foreground">Kategori</p>
-            <select
-                bind:value={localCategoryId}
-                class="w-full px-4 py-3 bg-surface border border-border rounded-xl text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
-            >
-                <option value={null}>Semua Kategori</option>
-                {#each categoriesStore.categories as category}
-                    <option value={category.id}>{category.name}</option>
-                {/each}
-            </select>
-        </div>
+        <Combobox
+            label="Kategori"
+            options={categoryOptions}
+            bind:value={localCategoryId}
+            placeholder="Semua Kategori"
+            searchPlaceholder="Cari kategori..."
+            emptyMessage="Kategori tidak ditemukan"
+        />
 
         <!-- Date Range with CalendarSelect -->
         <div class="space-y-3">

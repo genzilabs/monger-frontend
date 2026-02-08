@@ -1,6 +1,6 @@
 <script lang="ts">
   import { browser } from "$app/environment";
-  import { Card, Button } from "$lib/components/ui";
+  import { Card, Button, NativeSelect } from "$lib/components/ui";
   import { CheckIcon, ChevronRightIcon, CalendarIcon } from "$lib/icons";
   import {
     transactionSettingsStore,
@@ -36,6 +36,7 @@
 
   import { ExportModal, ImportWizard } from "$lib/components/modals";
   import { booksStore, toastStore } from "$lib/stores";
+  import { booksApi } from "$lib/api";
   import { Download, Upload, FileDown } from "lucide-svelte";
   import { downloadImportTemplate, downloadBlob } from "$lib/api/dataTransfer";
 
@@ -44,6 +45,42 @@
   let showImportWizard = $state(false);
   let selectedBookId = $state<string | null>(null);
   let isDownloadingTemplate = $state(false);
+
+  // Month start day state
+  let selectedMonthStartDay = $state<string>(
+    String(booksStore.activeBook?.month_start_day ?? 1),
+  );
+  let isSavingMonthStartDay = $state(false);
+
+  // Sync selectedMonthStartDay with activeBook
+  $effect(() => {
+    if (booksStore.activeBook) {
+      selectedMonthStartDay = String(booksStore.activeBook.month_start_day);
+    }
+  });
+
+  async function handleMonthStartDayChange(day: string) {
+    if (!booksStore.activeBook || isSavingMonthStartDay) return;
+
+    isSavingMonthStartDay = true;
+    const dayNum = Number(day);
+    const result = await booksApi.setMonthStartDay(
+      booksStore.activeBook.id,
+      dayNum,
+      booksStore.activeBook.version,
+    );
+
+    if (result.data) {
+      booksStore.activeBook.month_start_day = result.data.month_start_day;
+      booksStore.activeBook.version = result.data.version;
+      toastStore.success("Tanggal awal periode berhasil diubah");
+    } else {
+      // Revert on error
+      selectedMonthStartDay = String(booksStore.activeBook.month_start_day);
+      toastStore.error(result.error?.error || "Gagal mengubah pengaturan");
+    }
+    isSavingMonthStartDay = false;
+  }
 
   // Get selected book
   const selectedBook = $derived(
@@ -188,23 +225,27 @@
           </label>
         </div>
         <p class="text-xs text-secondary mb-3">
-          Ringkasan bulanan dimulai dari tanggal ini. Hanya mengubah tampilan,
-          tidak menghapus atau mengubah data transaksi.
+          Transaksi akan dikelompokkan berdasarkan periode ini. Contoh: tanggal
+          25 berarti periode 25 Jan - 24 Feb dihitung sebagai 1 bulan.
         </p>
         <div class="flex items-center gap-3">
-          <select
-            id="reset-day"
-            value={transactionSettingsStore.monthlyResetDay}
-            onchange={(e) =>
-              transactionSettingsStore.setMonthlyResetDay(
-                Number((e.target as HTMLSelectElement).value),
-              )}
-            class="flex-1 px-4 py-3 bg-surface border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            {#each Array.from({ length: 28 }, (_, i) => i + 1) as day}
-              <option value={day}>Tanggal {day}</option>
-            {/each}
-          </select>
+          <div class="flex-1">
+            <NativeSelect
+              name="reset-day"
+              bind:value={selectedMonthStartDay}
+              disabled={!booksStore.activeBook || isSavingMonthStartDay}
+              placeholder="Pilih tanggal"
+              wrapperClass="w-full"
+              onchange={(e) =>
+                handleMonthStartDayChange(
+                  (e.target as HTMLSelectElement).value,
+                )}
+            >
+              {#each Array.from({ length: 28 }, (_, i) => i + 1) as day}
+                <option value={String(day)}>{day}</option>
+              {/each}
+            </NativeSelect>
+          </div>
           <span class="text-sm text-muted shrink-0">setiap bulan</span>
         </div>
       </div>

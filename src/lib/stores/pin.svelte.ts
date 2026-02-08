@@ -27,9 +27,9 @@ function createPinStore() {
 		if (stored) {
 			try {
 				savedSettings = JSON.parse(stored);
-			} catch {}
+			} catch { }
 		}
-		
+
 		const lastActive = localStorage.getItem('monger_pin_last_active');
 		if (lastActive) {
 			savedLastActive = parseInt(lastActive, 10);
@@ -95,6 +95,12 @@ function createPinStore() {
 		get settings() {
 			return state.settings;
 		},
+		get hasPin() {
+			return state.settings.enabled;
+		},
+		get isInitialized() {
+			return state.isInitialized;
+		},
 
 		async initialize() {
 			if (state.isInitialized || !browser) return;
@@ -124,7 +130,7 @@ function createPinStore() {
 					// App went to background
 					state.lastActive = Date.now();
 					saveState();
-					
+
 					if (state.settings.enabled && state.settings.lock_timeout === 'immediate') {
 						state.isLocked = true;
 					}

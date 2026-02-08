@@ -61,5 +61,32 @@ export const tokenStorage = {
 	clearAll(): void {
 		this.clearTokens();
 		this.clearUser();
+	},
+
+	/**
+	 * Clear ALL monger-related localStorage data for complete logout
+	 * This ensures back button won't show stale data after logout
+	 */
+	clearAllAppData(): void {
+		if (!isClient()) return;
+
+		// Clear auth tokens and user
+		this.clearTokens();
+		this.clearUser();
+
+		// Clear all monger-related keys
+		const keysToRemove = [
+			'monger_active_book_id',
+			'monger_onboarding_completed',
+			'monger_pin_settings',
+			'monger_pin_last_active',
+			'monger_transaction_settings',
+			'monger_updates_last_seen',
+			'monger_privacy_hide_amounts',
+			'monger:locale',
+			'hasSeenWelcome'
+		];
+
+		keysToRemove.forEach(key => localStorage.removeItem(key));
 	}
 };

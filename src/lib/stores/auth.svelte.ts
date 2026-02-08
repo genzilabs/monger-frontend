@@ -54,7 +54,7 @@ function createAuthStore() {
 				if (storedUser && accessToken) {
 					// Set user immediately from storage (for offline/fast load)
 					state.user = storedUser;
-					
+
 					// Validate token by fetching profile (but don't logout on network error)
 					try {
 						const result = await authApi.getProfile();
@@ -113,8 +113,14 @@ function createAuthStore() {
 				// Ignore logout errors
 			} finally {
 				state.user = null;
-				tokenStorage.clearAll();
-				
+
+				// Clear ALL app data for clean logout (preserves locale for UX)
+				const savedLocale = typeof window !== 'undefined' ? localStorage.getItem('monger:locale') : null;
+				tokenStorage.clearAllAppData();
+				if (savedLocale && typeof window !== 'undefined') {
+					localStorage.setItem('monger:locale', savedLocale);
+				}
+
 				// Reset all other stores to prevent data persistence
 				booksStore.reset();
 				categoriesStore.reset();

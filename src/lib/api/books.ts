@@ -44,5 +44,22 @@ export const booksApi = {
 	 */
 	delete(id: string) {
 		return apiClient.delete(`/books/${id}`, true);
+	},
+
+	/**
+	 * Leave a book (for members, not owners)
+	 */
+	leave(id: string) {
+		return apiClient.post(`/books/${id}/leave`, {}, true);
+	},
+
+	/**
+	 * Set month start day for a book
+	 */
+	setMonthStartDay(id: string, monthStartDay: number, version: number) {
+		return apiClient.patch<Book>(`/books/${id}/month-start-day`, {
+			month_start_day: monthStartDay,
+			version
+		}, true);
 	}
 };

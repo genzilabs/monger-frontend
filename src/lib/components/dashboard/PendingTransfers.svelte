@@ -20,15 +20,21 @@
     try {
       const res = await p2pApi.list();
       if (res.data) {
-        // Sort by date desc
-        sentTransfers = (res.data.sent || []).sort(
-          (a: PendingTransfer, b: PendingTransfer) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-        );
-        receivedTransfers = (res.data.received || []).sort(
-          (a: PendingTransfer, b: PendingTransfer) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-        );
+        // Filter only pending transfers and sort by date desc
+        sentTransfers = (res.data.sent || [])
+          .filter((t: PendingTransfer) => t.status === "pending")
+          .sort(
+            (a: PendingTransfer, b: PendingTransfer) =>
+              new Date(b.created_at).getTime() -
+              new Date(a.created_at).getTime(),
+          );
+        receivedTransfers = (res.data.received || [])
+          .filter((t: PendingTransfer) => t.status === "pending")
+          .sort(
+            (a: PendingTransfer, b: PendingTransfer) =>
+              new Date(b.created_at).getTime() -
+              new Date(a.created_at).getTime(),
+          );
       }
     } catch (e) {
       console.error("Failed to load transfers", e);
@@ -224,18 +230,13 @@
                   </p>
                 </div>
               </div>
-              {#if tx.status === "pending"}
-                <button
-                  class="text-xs font-medium text-secondary hover:text-foreground px-2 py-1 shrink-0"
-                  onclick={() => handleCancel(tx.id)}
-                >
-                  Batalkan
-                </button>
-              {:else}
-                <span class="text-xs text-muted capitalize shrink-0">
-                  {tx.status}
-                </span>
-              {/if}
+              <Button
+                size="sm"
+                variant="danger"
+                onclick={() => handleCancel(tx.id)}
+              >
+                Batalkan
+              </Button>
             </div>
           {/each}
         </div>

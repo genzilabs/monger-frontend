@@ -50,6 +50,7 @@ export interface Invitation {
 	target_name?: string;
 	inviter_name?: string;
 	inviter_email?: string;
+	inviter_avatar?: string;
 	role: CollaborationRole;
 	status: InvitationStatus;
 	message?: string;

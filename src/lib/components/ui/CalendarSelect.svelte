@@ -68,8 +68,9 @@
             const isCurrentMonth = currentDate.getMonth() === month;
             const today = new Date();
             const isToday = currentDate.toDateString() === today.toDateString();
-            const isSelected =
-                value && currentDate.toISOString().split("T")[0] === value;
+            const isSelected = Boolean(
+                value && currentDate.toISOString().split("T")[0] === value,
+            );
 
             days.push({
                 date: currentDate,

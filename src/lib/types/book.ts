@@ -16,6 +16,7 @@ export interface Book {
 	description?: string;
 	icon_slug: string;
 	base_currency: string;
+	month_start_day: number;
 	version: number;
 	created_at: string;
 	updated_at: string;
@@ -35,16 +36,16 @@ export interface Pocket {
 	created_at: string;
 	updated_at: string;
 	vault?: Vault;
-    currency?: string;
+	currency?: string;
 }
 
 export interface PocketType {
-  id: string;
-  user_id?: string;
-  name: string;
-  slug: string;
-  icon_slug: string;
-  is_system: boolean;
+	id: string;
+	user_id?: string;
+	name: string;
+	slug: string;
+	icon_slug: string;
+	is_system: boolean;
 }
 
 // Request types
@@ -102,17 +103,17 @@ export interface PocketListResponse {
 }
 
 export interface CreatePocketTypeRequest {
-  name: string;
-  slug: string;
-  icon_slug: string;
+	name: string;
+	slug: string;
+	icon_slug: string;
 }
 
 export interface UpdatePocketTypeRequest {
-  name: string;
-  slug: string;
-  icon_slug: string;
+	name: string;
+	slug: string;
+	icon_slug: string;
 }
 
 export interface PocketTypeListResponse {
-  types: PocketType[];
+	types: PocketType[];
 }

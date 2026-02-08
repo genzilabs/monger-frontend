@@ -19,6 +19,18 @@ export interface Update {
 
 export const UPDATES: Update[] = [
   {
+    version: "0.5.0-alpha",
+    date: "2026-02-08",
+    title: "Keamanan dan Perbaikan Dashboard",
+    description: "Kami meningkatkan keamanan PIN Lock dan memperbaiki tampilan transaksi di dashboard agar lebih akurat.",
+    changes: [
+      { text: "PIN Lock tidak lagi menampilkan konten sebelum kunci aktif" },
+      { text: "Transfer pending hanya menampilkan yang berstatus menunggu" },
+      { text: "Undangan kolaborasi menampilkan foto pengirim" },
+      { text: "Transaksi terkini sekarang muncul dengan benar sesuai zona waktu" },
+    ],
+  },
+  {
     version: "0.4.0-alpha",
     date: "2026-01-29",
     title: "Tampilan Lebih Tenang",
