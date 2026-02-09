@@ -1,6 +1,6 @@
 <script lang="ts">
   import { browser } from "$app/environment";
-  import { NativeSelect } from "$lib/components/ui";
+  import { NativeSelect, Select } from "$lib/components/ui";
   import {
     CheckIcon,
     ChevronRightIcon,
@@ -358,18 +358,16 @@
           </div>
         </div>
         <div class="w-20">
-          <NativeSelect
-            name="reset-day"
-            bind:value={selectedMonthStartDay}
+          <Select
+            items={Array.from({ length: 28 }, (_, i) => ({
+              value: String(i + 1),
+              label: String(i + 1),
+            }))}
+            value={selectedMonthStartDay}
             disabled={!booksStore.activeBook || isSavingMonthStartDay}
-            wrapperClass="w-full"
-            onchange={(e) =>
-              handleMonthStartDayChange((e.target as HTMLSelectElement).value)}
-          >
-            {#each Array.from({ length: 28 }, (_, i) => i + 1) as day}
-              <option value={String(day)}>{day}</option>
-            {/each}
-          </NativeSelect>
+            onSelect={(item) => handleMonthStartDayChange(item.value)}
+            triggerClass="w-full"
+          />
         </div>
       </div>
 
@@ -420,23 +418,21 @@
           class="text-xs font-medium text-secondary mb-2 block"
           >Pilih Buku</label
         >
-        <select
-          id="d-book-select"
-          bind:value={selectedBookId}
-          class="w-full px-3 py-2 bg-surface-elevated border border-border rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-        >
-          {#if booksStore.books.length === 0}
-            <option value={null}>Tidak ada buku</option>
-          {:else}
-            {#each booksStore.books as book}
-              <option value={book.id}>{book.name}</option>
-            {/each}
-          {/if}
-        </select>
+        <Select
+          items={booksStore.books.map((b) => ({
+            value: b.id,
+            label: b.name,
+          }))}
+          value={selectedBookId || undefined}
+          placeholder="Pilih buku..."
+          onSelect={(item) => (selectedBookId = item.value)}
+          triggerClass="w-full bg-surface-elevated"
+        />
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <button
+          aria-label="Export data"
           onclick={() => selectedBookId && (showExportModal = true)}
           disabled={!selectedBookId}
           class="flex items-center justify-center gap-2 p-3 rounded-xl border border-border hover:bg-muted/30 transition-colors disabled:opacity-50 text-sm font-medium"
@@ -445,6 +441,7 @@
           <span>Ekspor</span>
         </button>
         <button
+          aria-label="Import data"
           onclick={() => selectedBookId && (showImportWizard = true)}
           disabled={!selectedBookId}
           class="flex items-center justify-center gap-2 p-3 rounded-xl border border-border hover:bg-muted/30 transition-colors disabled:opacity-50 text-sm font-medium"
@@ -453,6 +450,7 @@
           <span>Impor</span>
         </button>
         <button
+          aria-label="Download template"
           onclick={handleDownloadTemplate}
           disabled={!selectedBookId || isDownloadingTemplate}
           class="flex items-center justify-center gap-2 p-3 rounded-xl border border-border hover:bg-muted/30 transition-colors disabled:opacity-50 text-sm font-medium"
@@ -500,8 +498,12 @@
 
         <div class="space-y-3 pt-3 border-t border-border">
           <div class="space-y-1">
-            <label class="text-xs text-secondary block">Buku Default</label>
+            <label
+              for="telegram-book-select"
+              class="text-xs text-secondary block">Buku Default</label
+            >
             <select
+              id="telegram-book-select"
               class="w-full p-2 rounded-lg bg-surface-elevated border border-border text-sm"
               bind:value={selectedTelegramBookId}
               onchange={() => {
@@ -519,8 +521,11 @@
 
           {#if selectedTelegramBookId && telegramPockets.length > 0}
             <div class="space-y-1">
-              <label class="text-xs text-secondary">Pocket Default</label>
+              <label for="telegram-pocket-select" class="text-xs text-secondary"
+                >Pocket Default</label
+              >
               <select
+                id="telegram-pocket-select"
                 class="w-full p-2 rounded-lg bg-surface-elevated border border-border text-sm"
                 bind:value={selectedTelegramPocketId}
               >

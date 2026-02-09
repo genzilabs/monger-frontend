@@ -314,6 +314,8 @@
       }
       // Refresh transaction list
       await transactionsStore.refresh();
+      // Signal other pages to refresh their local state
+      uiStore.triggerTransactionRefresh();
 
       resetForm();
       onClose();
@@ -418,6 +420,7 @@
             type="button"
             role="switch"
             aria-checked={includeFee}
+            aria-label="Toggle transfer fee"
             class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 {includeFee
               ? 'bg-primary'
               : 'bg-muted'}"
@@ -427,7 +430,7 @@
               class="{includeFee
                 ? 'translate-x-6'
                 : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-            />
+            ></span>
           </button>
         </div>
         {#if includeFee}
@@ -525,6 +528,7 @@
               type="button"
               role="switch"
               aria-checked={isCrossBook}
+              aria-label="Toggle cross-book transfer"
               class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 {isCrossBook
                 ? 'bg-primary'
                 : 'bg-muted'}"
@@ -534,7 +538,7 @@
                 class="{isCrossBook
                   ? 'translate-x-6'
                   : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-              />
+              ></span>
             </button>
           </div>
         {/if}

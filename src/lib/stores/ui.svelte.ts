@@ -3,11 +3,13 @@ function createUIStore() {
 	let _transactionModalDefaultType = $state<'income' | 'expense'>('expense');
 	let _transactionModalPocketId = $state<string | undefined>(undefined);
 	let _openReceiptScanner: (() => void) | null = $state(null);
+	let _transactionRefreshTrigger = $state(0);
 
 	return {
 		get isTransactionModalOpen() { return _isTransactionModalOpen; },
 		get transactionModalDefaultType() { return _transactionModalDefaultType; },
 		get transactionModalPocketId() { return _transactionModalPocketId; },
+		get transactionRefreshTrigger() { return _transactionRefreshTrigger; },
 
 		openTransactionModal(type: 'income' | 'expense' = 'expense', pocketId?: string) {
 			_transactionModalDefaultType = type;
@@ -22,6 +24,11 @@ function createUIStore() {
 				_transactionModalDefaultType = 'expense';
 				_transactionModalPocketId = undefined;
 			}, 300);
+		},
+
+		// Signal that transactions were modified and pages should refresh
+		triggerTransactionRefresh() {
+			_transactionRefreshTrigger++;
 		},
 
 		// Receipt scanner - function is set by layout component
