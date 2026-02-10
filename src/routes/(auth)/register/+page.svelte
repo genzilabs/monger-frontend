@@ -72,7 +72,7 @@
 
     try {
       const result = await authApi.register({
-        email: email.trim(),
+        email: email.trim().toLowerCase(),
         phone: phone.trim() || undefined,
         password,
         name: name.trim(),
@@ -81,6 +81,25 @@
       });
 
       if (result.error) {
+        const errMsg = result.error.error.toLowerCase();
+        // If email already exists (user registered but may not have verified),
+        // send OTP and redirect to verify page
+        if (errMsg.includes("already") || errMsg.includes("exist")) {
+          toastStore.info("Email sudah terdaftar. Yuk verifikasi dulu!");
+          try {
+            const otpResult = await authApi.sendOTP(email.trim().toLowerCase());
+            const params = new URLSearchParams({
+              identifier: email.trim().toLowerCase(),
+              cooldown: String(otpResult.data?.cooldown_seconds || 60),
+              register: "true",
+            });
+            goto(`/verify?${params.toString()}`);
+          } catch {
+            // If sendOTP also fails, let user try login instead
+            error = "Email sudah terdaftar. Coba masuk ya.";
+          }
+          return;
+        }
         error = result.error.error;
         return;
       }
@@ -89,13 +108,13 @@
         // Only redirect to verify, DO NOT set auth store (api returns no tokens)
         toastStore.success("Akun dibuat! Masukkan kode OTP yang dikirim.");
 
-        // The API already sent the first OTP in Register logic, 
+        // The API already sent the first OTP in Register logic,
         // so we just go to verify page. We assume standard 60s cooldown.
-        // Or if we want to be safe, we can manually trigger sendOTP here, 
+        // Or if we want to be safe, we can manually trigger sendOTP here,
         // but backend register flow usually sends one.
-        
+
         const params = new URLSearchParams({
-          identifier: email.trim(),
+          identifier: email.trim().toLowerCase(),
           cooldown: "60", // Default assumption since register just sent one
           register: "true",
         });
