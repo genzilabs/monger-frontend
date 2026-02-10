@@ -1,6 +1,6 @@
 <script lang="ts">
     import { CategoryPieChart } from "$lib/components/dashboard";
-    import { PrivacyToggle } from "$lib/components/ui";
+    import { PrivacyToggle, Select } from "$lib/components/ui";
     import type { CategoryBreakdown } from "$lib/api/transactions";
 
     interface Props {
@@ -17,11 +17,35 @@
         loading = false,
     }: Props = $props();
 
-    type ChartTab = "income" | "expense";
-    let activeTab = $state<ChartTab>("expense");
+    type ChartTab = "all" | "expense" | "income";
+    let activeTab = $state<ChartTab>("all");
 
+    // For "all", combine both breakdowns into one array
     const currentBreakdown = $derived(
-        activeTab === "income" ? incomeBreakdown : expenseBreakdown,
+        activeTab === "all"
+            ? [...expenseBreakdown, ...incomeBreakdown]
+            : activeTab === "income"
+              ? incomeBreakdown
+              : expenseBreakdown,
+    );
+
+    // Map tab to chart type
+    const currentType = $derived<"income" | "expense" | "all">(
+        activeTab === "all" ? "all" : activeTab,
+    );
+
+    const selectItems = [
+        { value: "all", label: "Semua" },
+        { value: "expense", label: "Pengeluaran" },
+        { value: "income", label: "Pemasukan" },
+    ];
+
+    const emptyLabel = $derived(
+        activeTab === "all"
+            ? "transaksi"
+            : activeTab === "income"
+              ? "pemasukan"
+              : "pengeluaran",
     );
 </script>
 
@@ -29,31 +53,18 @@
     <div class="flex flex-wrap items-center justify-between mb-6 gap-2">
         <div class="flex items-center gap-2 min-w-0">
             <h3 class="text-sm font-semibold text-foreground truncate">
-                Analisis Pengeluaran
+                Statistik
             </h3>
             <PrivacyToggle />
         </div>
 
-        <!-- Tabs - More compact for very small screens -->
-        <div class="flex p-0.5 sm:p-1 bg-surface-elevated rounded-lg">
-            <button
-                onclick={() => (activeTab = "income")}
-                class="px-2 py-1 text-[11px] sm:text-xs font-semibold rounded-md transition-all whitespace-nowrap {activeTab ===
-                'income'
-                    ? 'bg-primary text-white shadow-sm'
-                    : 'text-muted hover:text-foreground'}"
-            >
-                Masuk
-            </button>
-            <button
-                onclick={() => (activeTab = "expense")}
-                class="px-2 py-1 text-[11px] sm:text-xs font-semibold rounded-md transition-all whitespace-nowrap {activeTab ===
-                'expense'
-                    ? 'bg-primary text-white shadow-sm'
-                    : 'text-muted hover:text-foreground'}"
-            >
-                Keluar
-            </button>
+        <!-- Dropdown Select -->
+        <div class="w-36">
+            <Select
+                items={selectItems}
+                bind:value={activeTab}
+                triggerClass="!py-1.5 !px-2.5 !text-xs !rounded-lg"
+            />
         </div>
     </div>
 
@@ -82,16 +93,12 @@
                     ></path></svg
                 >
             </div>
-            <span
-                >Belum ada data {activeTab === "income"
-                    ? "pemasukan"
-                    : "pengeluaran"} bulan ini</span
-            >
+            <span>Belum ada data {emptyLabel} bulan ini</span>
         </div>
     {:else}
         <CategoryPieChart
             data={currentBreakdown}
-            type={activeTab}
+            type={currentType}
             {currency}
             {loading}
         />

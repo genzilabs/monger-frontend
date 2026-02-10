@@ -10,7 +10,7 @@
 
   interface Props {
     data: CategoryBreakdown[];
-    type: "income" | "expense";
+    type: "income" | "expense" | "all";
     loading?: boolean;
     currency?: string;
   }
@@ -43,8 +43,33 @@
     "#FB7185", // Rose 400
   ];
 
-  function getColor(index: number, type: "income" | "expense"): string {
-    const palette = type === "income" ? incomeColors : expenseColors;
+  // Interleaved palette for combined "all" view
+  const allColors = [
+    "#F87171", // Red 400
+    "#10B981", // Emerald 500
+    "#FB923C", // Orange 400
+    "#3B82F6", // Blue 500
+    "#FACC15", // Yellow 400
+    "#8B5CF6", // Violet 500
+    "#E879F9", // Fuchsia 400
+    "#F59E0B", // Amber 500
+    "#A78BFA", // Violet 400
+    "#14B8A6", // Teal 500
+    "#F472B6", // Pink 400
+    "#6366F1", // Indigo 500
+    "#94A3B8", // Slate 400
+    "#84CC16", // Lime 500
+    "#FB7185", // Rose 400
+    "#0EA5E9", // Sky 500
+  ];
+
+  function getColor(index: number, type: "income" | "expense" | "all"): string {
+    const palette =
+      type === "all"
+        ? allColors
+        : type === "income"
+          ? incomeColors
+          : expenseColors;
     return palette[index % palette.length];
   }
 
@@ -101,7 +126,7 @@
             borderWidth: 1,
             titleFont: {
               size: 13,
-              weight: "600",
+              weight: "bold" as const,
               family: "'Inter', sans-serif",
             },
             bodyFont: { size: 12, family: "'Inter', sans-serif" },
