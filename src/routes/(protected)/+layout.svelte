@@ -67,13 +67,15 @@
   async function handleScanComplete(scan: ReceiptScan) {
     scannedReceipt = scan;
     showReceiptScanner = false;
-    
+
     // Load the confirmation modal if not already loaded
     if (!ReceiptConfirmModal) {
-      const m = await import("$lib/components/modals/ReceiptConfirmModal.svelte");
+      const m = await import(
+        "$lib/components/modals/ReceiptConfirmModal.svelte"
+      );
       ReceiptConfirmModal = m.default;
     }
-    
+
     showReceiptConfirm = true;
   }
 
@@ -116,12 +118,12 @@
   This prevents content flash during navigation and initial load
 -->
 {#if pinStore.isInitialized && (!pinStore.hasPin || !pinStore.isLocked)}
-  <div class="min-h-screen bg-background flex">
+  <div class="h-screen overflow-hidden bg-background flex">
     <!-- Desktop Sidebar -->
     <Sidebar />
 
     <!-- Main Content Area -->
-    <div class="flex-1 flex flex-col min-w-0">
+    <div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
       <Header
         bind:showBookSwitcher
         onNotificationClick={() => (showNotificationModal = true)}
@@ -275,4 +277,3 @@
 {/if}
 
 <UpdateModal />
-
