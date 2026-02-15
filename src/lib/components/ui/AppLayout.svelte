@@ -6,6 +6,7 @@
    */
   import { BottomNavbar } from "$lib/components/ui";
   import Sidebar from "./Sidebar.svelte";
+  import OfflineBanner from "./OfflineBanner.svelte";
   import type { Snippet } from "svelte";
 
   interface Props {
@@ -22,6 +23,7 @@
 
   <!-- Main Content Area -->
   <div class="flex-1 flex flex-col min-w-0">
+    <OfflineBanner />
     <!-- Optional Page Header -->
     {#if header}
       <header

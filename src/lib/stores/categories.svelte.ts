@@ -10,6 +10,7 @@
 
 import { categoriesApi } from '$lib/api/categories';
 import type { Category } from '$lib/types/category';
+import { db } from '$lib/db';
 
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache
 
@@ -71,14 +72,6 @@ function createCategoriesStore() {
 		 * @param forceRefresh - bypass cache
 		 */
 		async load(bookId: string, forceRefresh = false) {
-			// Return cached if valid and not forcing refresh
-			// Note: This basic cache doesn't track bookId, so switching books might show stale data if we don't handle it.
-			// Ideally we should cache by bookId or clear cache on book switch.
-			// For now, we will assume the caller handles valid book context or we could force refresh if needed.
-			// Improved: We could verify if the loaded categories belong to this book?
-			// But Category object has `book_id`.
-			
-			// Simple check: if we have categories, check if they match the requested bookId
 			const hasCategoriesForBook = state.categories.length > 0 && state.categories[0].book_id === bookId;
 
 			if (!forceRefresh && isCacheValid && hasCategoriesForBook) {
@@ -98,42 +91,31 @@ function createCategoriesStore() {
 				if (result.data?.categories) {
 					state.categories = result.data.categories;
 					state.lastFetched = Date.now();
+					try { await db.categories.bulkPut(JSON.parse(JSON.stringify(result.data.categories))); } catch { /* non-critical */ }
 				}
 
 				return state.categories;
 			} catch (e: any) {
 				state.error = e.message || 'Failed to load categories';
-				console.error('Categories load error:', e);
-				// Don't clear categories on error to show stale data if available?
-				// Or clear? Better to return empty if failed for a NEW book.
-				if (!hasCategoriesForBook) state.categories = [];
-				return [];
+
+				if (!hasCategoriesForBook) {
+					try {
+						const cached = await db.categories.where('book_id').equals(bookId).toArray();
+						if (cached.length > 0) {
+							state.categories = cached;
+							state.error = null;
+							return cached;
+						}
+					} catch { /* Dexie failure non-critical */ }
+					state.categories = [];
+				}
+
+				return state.categories;
 			} finally {
 				state.isLoading = false;
 			}
 		},
 		
-		/**
-		 * Create category
-		 */
-		async create(bookId: string, data: any) { // Using any avoiding import cycle or complex types here if needed
-             // Actually, I should use the proper type if I can import it without circular deps.
-             // It's already imported.
-             // But Wait, create is not defined in the store yet? 
-             // Ah, looking at the previous file view, `create` was NOT in the return object of `createCategoriesStore`.
-             // I only saw `load`, `invalidateCache`, `reset`.
-             // I should ADD `create` method to the store to be consistent with `booksStore`?
-             // Or maybe the component uses API directly?
-             // `booksStore` handles creation. `categoriesStore` seemingly does not based on the view?
-             // Let me re-read the `categories.svelte.ts` view.
-             // It ends at line 123. It did NOT have create.
-             // So I just need to update `load`.
-             // AND I should probably add `create` if I want to use the store for it.
-             // But if I update `load`, I'm good for now.
-             // Let's stick to updating `load`.
-             return []; // Dummy return to satisfy ReplacementContent requirement if I was doing more.
-        },
-
 		/**
 		 * Invalidate cache (force next load to fetch fresh data)
 		 */

@@ -202,25 +202,24 @@
   // Auto-load more transactions when switching to monthly/total tabs
   // These views need all transactions for proper aggregation
   $effect(() => {
-    // Track the active tab
     const tab = activeTab;
+    const hasError = error;
 
-    // If we're on monthly or total tab and there are more transactions to load
     if (
       (tab === "monthly" || tab === "total" || tab === "calendar") &&
       hasMore &&
-      !isLoading
+      !isLoading &&
+      !hasError
     ) {
-      // Automatically load all remaining transactions
       untrack(() => loadAllTransactions());
     }
   });
 
   // Function to load all remaining transactions
   async function loadAllTransactions() {
-    while (hasMore && !isLoading) {
+    while (hasMore && !isLoading && !error) {
       await loadTransactions(false);
-      // Small delay to prevent overwhelming the server
+      if (error) break;
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
   }

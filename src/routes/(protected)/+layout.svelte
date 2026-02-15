@@ -93,8 +93,9 @@
     // Initialize books after auth (blocking - need to check for empty books)
     if (!booksStore.isInitialized) await booksStore.initialize();
 
-    // Guard: If user has no books, redirect to create-book onboarding
-    if (booksStore.books.length === 0) {
+    // Guard: Only redirect to create-book if API succeeded but returned no books.
+    // Don't redirect on error (backend down) — show cached data or error state instead.
+    if (booksStore.books.length === 0 && !booksStore.error) {
       goto("/create-book", { replaceState: true });
       return;
     }

@@ -67,6 +67,7 @@
         type_slug: typeSlug,
         icon_slug: type?.icon_slug,
         color,
+        version: pocket.version,
       });
 
       if (res.data) {

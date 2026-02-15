@@ -7,6 +7,7 @@ import { booksApi } from '$lib/api/books';
 import { pocketsApi, pocketTypesApi } from '$lib/api/pockets';
 import type { Book, Pocket, PocketType } from '$lib/types';
 import { toastStore } from './toast.svelte';
+import { db } from '$lib/db';
 
 const ACTIVE_BOOK_KEY = 'monger_active_book_id';
 
@@ -30,6 +31,22 @@ function createBooksStore() {
 		isInitialized: false,
 		pocketTypes: []
 	});
+
+	async function cacheBooks(books: Book[]) {
+		try { if (books.length) await db.books.bulkPut(JSON.parse(JSON.stringify(books))); } catch { /* non-critical */ }
+	}
+
+	async function cachePockets(pockets: Pocket[]) {
+		try { if (pockets.length) await db.pockets.bulkPut(JSON.parse(JSON.stringify(pockets))); } catch { /* non-critical */ }
+	}
+
+	async function loadBooksFromCache(): Promise<Book[]> {
+		try { return await db.books.toArray(); } catch { return []; }
+	}
+
+	async function loadPocketsFromCache(bookId: string): Promise<Pocket[]> {
+		try { return await db.pockets.where('book_id').equals(bookId).toArray(); } catch { return []; }
+	}
 
 	return {
 		get books() {
@@ -63,51 +80,44 @@ function createBooksStore() {
 			state.isLoading = true;
 			state.error = null;
 			try {
-
 				const booksResult = await booksApi.list();
 
 				if (booksResult.data) {
 					state.books = booksResult.data.books || [];
-
-					// Restore active book from localStorage
-					if (typeof window !== 'undefined') {
-						const savedBookId = localStorage.getItem(ACTIVE_BOOK_KEY);
-						if (savedBookId) {
-							const book = state.books.find(b => b.id === savedBookId);
-							if (book) {
-								state.activeBook = book;
-								await Promise.all([
-									this.loadPockets(book.id),
-									this.loadPocketTypes(book.id)
-								]);
-							} else if (state.books.length > 0) {
-								// Saved book not found, use first book
-								state.activeBook = state.books[0];
-								localStorage.setItem(ACTIVE_BOOK_KEY, state.books[0].id);
-								await Promise.all([
-									this.loadPockets(state.books[0].id),
-									this.loadPocketTypes(state.books[0].id)
-								]);
-							}
-						} else if (state.books.length > 0) {
-							// No saved book, use first book
-							state.activeBook = state.books[0];
-							localStorage.setItem(ACTIVE_BOOK_KEY, state.books[0].id);
-							await Promise.all([
-								this.loadPockets(state.books[0].id),
-								this.loadPocketTypes(state.books[0].id)
-							]);
-						}
-					}
+					await cacheBooks(state.books);
 				} else if (booksResult.error) {
-					state.error = booksResult.error.error;
+					const cached = await loadBooksFromCache();
+					if (cached.length > 0) {
+						state.books = cached;
+					} else {
+						state.error = booksResult.error.error;
+					}
 				}
 			} catch {
-				state.error = 'Failed to load initial data';
-			} finally {
-				state.isLoading = false;
-				state.isInitialized = true;
+				const cached = await loadBooksFromCache();
+				if (cached.length > 0) {
+					state.books = cached;
+				} else {
+					state.error = 'Failed to load initial data';
+				}
 			}
+
+			// Restore active book from localStorage
+			if (typeof window !== 'undefined' && state.books.length > 0) {
+				const savedBookId = localStorage.getItem(ACTIVE_BOOK_KEY);
+				const book = savedBookId ? state.books.find(b => b.id === savedBookId) : null;
+				const activeBook = book || state.books[0];
+
+				state.activeBook = activeBook;
+				localStorage.setItem(ACTIVE_BOOK_KEY, activeBook.id);
+				await Promise.all([
+					this.loadPockets(activeBook.id),
+					this.loadPocketTypes(activeBook.id)
+				]);
+			}
+
+			state.isLoading = false;
+			state.isInitialized = true;
 		},
 
 		/**
@@ -120,11 +130,22 @@ function createBooksStore() {
 				const result = await booksApi.list();
 				if (result.data) {
 					state.books = result.data.books || [];
+					await cacheBooks(state.books);
 				} else if (result.error) {
-					state.error = result.error.error;
+					const cached = await loadBooksFromCache();
+					if (cached.length > 0) {
+						state.books = cached;
+					} else {
+						state.error = result.error.error;
+					}
 				}
 			} catch {
-				state.error = 'Failed to load books';
+				const cached = await loadBooksFromCache();
+				if (cached.length > 0) {
+					state.books = cached;
+				} else {
+					state.error = 'Failed to load books';
+				}
 			} finally {
 				state.isLoading = false;
 			}
@@ -166,11 +187,22 @@ function createBooksStore() {
 				const result = await pocketsApi.listByBook(bookId);
 				if (result.data) {
 					state.pockets = result.data.pockets || [];
+					await cachePockets(state.pockets);
 				} else if (result.error) {
-					state.error = result.error.error;
+					const cached = await loadPocketsFromCache(bookId);
+					if (cached.length > 0) {
+						state.pockets = cached;
+					} else {
+						state.error = result.error.error;
+					}
 				}
 			} catch {
-				state.error = 'Failed to load pockets';
+				const cached = await loadPocketsFromCache(bookId);
+				if (cached.length > 0) {
+					state.pockets = cached;
+				} else {
+					state.error = 'Failed to load pockets';
+				}
 			} finally {
 				state.isLoading = false;
 			}

@@ -35,6 +35,7 @@ export interface Pocket {
 	role: "owner" | "editor" | "viewer";
 	created_at: string;
 	updated_at: string;
+	version: number;
 	vault?: Vault;
 	currency?: string;
 }
@@ -78,6 +79,7 @@ export interface UpdatePocketRequest {
 	icon_slug?: string;
 	color?: string;
 	is_frozen?: boolean;
+	version: number;
 }
 
 export interface SetVaultRequest {

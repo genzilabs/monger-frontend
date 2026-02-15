@@ -6,6 +6,7 @@ export interface Category {
 	icon?: string;
 	type: 'income' | 'expense';
 	is_default: boolean;
+	version: number;
 	created_at: string;
 	subcategories?: Subcategory[];
 }
@@ -26,6 +27,7 @@ export interface CreateCategoryRequest {
 export interface UpdateCategoryRequest {
 	name?: string;
 	icon?: string;
+	version: number;
 }
 
 export interface CreateSubcategoryRequest {
