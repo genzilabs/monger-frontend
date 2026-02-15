@@ -9,4 +9,6 @@ export { categoriesApi } from './categories';
 export { notificationsApi } from './notifications';
 export { recurringApi } from './recurring';
 export { receiptsApi } from './receipts';
+export { goalsApi } from './goals';
+export { budgetsApi } from './budgets';
 
