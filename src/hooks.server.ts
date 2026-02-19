@@ -9,4 +9,10 @@ Sentry.init({
 
 // If you have existing hooks, import them and add to sequence
 export const handle = sequence(sentryHandle());
-export const handleError = handleErrorWithSentry();
+// Custom error handler to log errors explicitly (Bun/VPS debugging)
+const sentryErrorHandler = handleErrorWithSentry();
+
+export const handleError = async (input) => {
+    console.error('[SERVER ERROR]', input.error);
+    return sentryErrorHandler(input);
+};
