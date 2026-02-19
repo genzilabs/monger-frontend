@@ -62,6 +62,13 @@ export default defineConfig({
 		})
 	],
 	
+	// Server-side rendering configuration
+	ssr: {
+		// Fix for: [SERVER ERROR] error: Cannot find package 'dexie'
+		// Force bundling of Dexie for the server build
+		noExternal: ['dexie']
+	},
+	
 	// Performance optimizations
 	build: {
 		// Enable minification (esbuild is default and faster)
