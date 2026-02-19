@@ -2,10 +2,9 @@ import tailwindcss from '@tailwindcss/vite';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 import { sentrySvelteKit } from "@sentry/sveltekit";
-
 import { SvelteKitPWA } from '@vite-pwa/sveltekit';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
 	plugins: [
 		sentrySvelteKit({
 			sourceMapsUploadOptions: {
@@ -48,12 +47,42 @@ export default defineConfig({
 				]
 			},
 			workbox: {
-				globPatterns: ['client/**/*.{js,css,html,ico,png,svg,woff2}'],
+				// Fix: "Couldn't find configuration for either precaching or runtime caching"
+				// Ensure globPatterns match SvelteKit build output
+				globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+				globIgnores: ['**/node_modules/**/*', 'sw.js', 'workbox-*.js'],
+				
 				navigateFallback: null,
 				navigateFallbackDenylist: [/^\/api\//],
 				skipWaiting: true,
 				clientsClaim: true,
-				cleanupOutdatedCaches: true
+				cleanupOutdatedCaches: true,
+				
+				// Add runtime caching for resilience
+				runtimeCaching: [
+					{
+						urlPattern: ({ request }) => request.destination === 'image',
+						handler: 'CacheFirst',
+						options: {
+							cacheName: 'images',
+							expiration: {
+								maxEntries: 60,
+								maxAgeSeconds: 30 * 24 * 60 * 60 // 30 Days
+							}
+						}
+					},
+					{
+						urlPattern: ({ request }) => request.destination === 'script' || request.destination === 'style',
+						handler: 'StaleWhileRevalidate',
+						options: {
+							cacheName: 'static-resources',
+							expiration: {
+								maxEntries: 60,
+								maxAgeSeconds: 24 * 60 * 60 // 24 Hours
+							}
+						}
+					}
+				]
 			},
 			devOptions: {
 				enabled: true,
@@ -61,39 +90,26 @@ export default defineConfig({
 			}
 		})
 	],
-	
-	// Server-side rendering configuration
+
 	ssr: {
 		// Fix for: [SERVER ERROR] error: Cannot find package 'dexie'
-		// Force bundling of Dexie for the server build
-		noExternal: ['dexie']
+		// Force bundling of Dexie for the server build (production only)
+		// Conditional to avoid breaking local dev with semantic versioning errors in Vite 7
+		noExternal: mode === 'production' ? ['dexie'] : []
 	},
-	
-	// Performance optimizations
+
 	build: {
-		// Enable minification (esbuild is default and faster)
+		sourcemap: true,
 		minify: 'esbuild',
-		
-		// Code splitting - create smaller chunks
-		// Code splitting is handled automatically by Vite
-		rollupOptions: {
-            // explicit empty to clear previous config if needed, or just remove the block
-        },
-		
-		// Increase chunk size warning limit
 		chunkSizeWarningLimit: 500,
-		
-		// Target modern browsers for smaller output
 		target: 'es2020'
 	},
-	
-	// Optimize dependencies
+
 	optimizeDeps: {
 		include: ['bits-ui', 'lucide-svelte', 'clsx', 'tailwind-merge']
 	},
-	
-	// Enable esbuild optimizations
+
 	esbuild: {
-		drop: ['debugger'] // Keep console for server logs, only drop debugger
+		drop: ['debugger']
 	}
-});
+}));
