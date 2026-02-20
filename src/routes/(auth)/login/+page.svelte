@@ -49,22 +49,24 @@
 
     try {
       const result = await authApi.login({
-        email: identifier.trim(),
+        email: identifier.trim().toLowerCase(),
         password,
       });
       if (result.error) {
         // If error is "Email not verified", redirect to verify page
         if (result.error.error === "Email not verified") {
-           toastStore.error("Email belum diverifikasi. Verifikasi dulu yuk!");
-            
-            // Send new OTP
-            const otpResult = await authApi.sendOTP(identifier.trim());
-            const params = new URLSearchParams({
-              identifier: identifier.trim(),
-              cooldown: String(otpResult.data?.cooldown_seconds || 60),
-            });
-            goto(`/verify?${params.toString()}`);
-            return;
+          toastStore.error("Email belum diverifikasi. Verifikasi dulu yuk!");
+
+          // Send new OTP
+          const otpResult = await authApi.sendOTP(
+            identifier.trim().toLowerCase(),
+          );
+          const params = new URLSearchParams({
+            identifier: identifier.trim().toLowerCase(),
+            cooldown: String(otpResult.data?.cooldown_seconds || 60),
+          });
+          goto(`/verify?${params.toString()}`);
+          return;
         }
 
         error = result.error.error;
@@ -74,7 +76,7 @@
         authStore.setAuth(
           result.data.user,
           result.data.access_token,
-          result.data.refresh_token
+          result.data.refresh_token,
         );
         toastStore.success("Selamat datang kembali.");
         goto("/dashboard");
@@ -93,13 +95,13 @@
     error = "";
 
     try {
-      const result = await authApi.sendOTP(identifier.trim());
+      const result = await authApi.sendOTP(identifier.trim().toLowerCase());
       if (result.error) {
         error = result.error.error;
         return;
       }
       const params = new URLSearchParams({
-        identifier: identifier.trim(),
+        identifier: identifier.trim().toLowerCase(),
         cooldown: String(result.data?.cooldown_seconds || 60),
       });
       goto(`/verify?${params.toString()}`);
