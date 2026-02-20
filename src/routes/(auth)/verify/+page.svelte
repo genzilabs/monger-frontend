@@ -200,7 +200,7 @@
   </p>
 
   <div class="space-y-6 w-full mb-6">
-    <div class="flex-between text-sm">
+    <div class="flex items-center justify-center gap-2 text-sm">
       <span class="text-label">Masukkan 6 digit kode</span>
       {#if error && errorType === "invalid"}
         <span class="text-red-500">Kodenya salah</span>
@@ -261,7 +261,7 @@
       </Button>
     </div>
 
-    <button onclick={() => goto("/login")} class="btn-action">
+    <button onclick={() => history.back()} class="btn-action">
       <div class="flex items-center gap-3">
         <svg
           class="w-5 h-5 text-muted"
@@ -276,7 +276,7 @@
             d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
           />
         </svg>
-        <span class="text-foreground">Salah nomor?</span>
+        <span class="text-foreground">Salah Email?</span>
       </div>
       <svg
         class="w-5 h-5 text-muted"
