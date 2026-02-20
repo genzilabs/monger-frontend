@@ -156,25 +156,50 @@ function createBooksStore() {
 		 */
 		async setActiveBook(book: Book | null) {
 			state.activeBook = book;
-
-			// Persist to localStorage
-			if (typeof window !== 'undefined') {
-				if (book) {
+			if (book) {
+				// Update localStorage with new active book
+				if (typeof window !== 'undefined') {
 					localStorage.setItem(ACTIVE_BOOK_KEY, book.id);
-				} else {
+				}
+				// Load pockets for this book
+				await this.loadPockets(book.id);
+				// Also load pocket types
+				this.loadPocketTypes(book.id);
+			} else {
+				// Clear localStorage if setting to null
+				if (typeof window !== 'undefined') {
 					localStorage.removeItem(ACTIVE_BOOK_KEY);
+				}
+				state.pockets = [];
+				state.pocketTypes = [];
+				cachePockets([]);
+			}
+		},
+
+		/**
+		 * Find a book by ID and set it as active
+		 */
+		async setActiveBookById(id: string): Promise<boolean> {
+			// First check if it's already in the cached books list
+			let book = state.books.find(b => b.id === id);
+			
+			if (!book) {
+				// Fetch directly if not in local list
+				try {
+					const res = await booksApi.get(id);
+					if (res.data) {
+						book = res.data;
+					}
+				} catch {
+					return false;
 				}
 			}
 
 			if (book) {
-				await Promise.all([
-					this.loadPockets(book.id),
-					this.loadPocketTypes(book.id)
-				]);
-			} else {
-				state.pockets = [];
-				state.pocketTypes = [];
+				await this.setActiveBook(book);
+				return true;
 			}
+			return false;
 		},
 
 		/**

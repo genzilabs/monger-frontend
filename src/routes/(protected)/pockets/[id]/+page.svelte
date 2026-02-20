@@ -35,35 +35,13 @@
   const transactions = $derived(transactionsStore.transactions);
   const isLoading = $derived(transactionsStore.isLoading);
 
-  onMount(async () => {
-    if (!pocketId) return;
-    await loadData();
-  });
-
-  async function loadData() {
-    try {
-      // Find pocket in store first to show immediate data
-      const storedPocket = booksStore.pockets.find((p) => p.id === pocketId);
-      if (storedPocket) {
-        pocket = storedPocket;
-      }
-
-      // If no pocket (refresh/direct link), fetching logic would go here
-      // For now, rely on booksStore or assume user navigated from dashboard
-      if (!storedPocket && booksStore.activeBook) {
-        await booksStore.loadPockets(booksStore.activeBook.id);
-        const found = booksStore.pockets.find((p) => p.id === pocketId);
-        if (found) pocket = found;
-      }
-
-      // Load transactions into store
-      if (pocketId) {
-        await transactionsStore.loadByPocket(pocketId);
-      }
-    } catch (e) {
-      console.error(e);
+  // State binding after SSR initialization
+  $effect(() => {
+    if (pocketId && booksStore.pockets.length > 0) {
+      const found = booksStore.pockets.find((p) => p.id === pocketId);
+      if (found) pocket = found;
     }
-  }
+  });
 
   function handleTransactionClick(tx: Transaction) {
     selectedTransaction = tx;

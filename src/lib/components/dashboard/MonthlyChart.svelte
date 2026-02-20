@@ -14,7 +14,7 @@
 
   let { data, loading = false, currency = "IDR" }: Props = $props();
 
-  let canvas: HTMLCanvasElement;
+  let canvas = $state<HTMLCanvasElement>();
   let chart: Chart | null = null;
 
   function formatCurrency(cents: number): string {
@@ -93,18 +93,18 @@
               padding: 16,
               font: {
                 size: 11,
-                weight: "500",
+                weight: "bold",
               },
             },
           },
           tooltip: {
             backgroundColor: "rgba(0, 0, 0, 0.8)",
-            titleFont: { size: 12, weight: "600" },
+            titleFont: { size: 12, weight: "bold" },
             bodyFont: { size: 11 },
             padding: 10,
             cornerRadius: 8,
             callbacks: {
-              label: (context: { dataset: { label?: string }; parsed: { y: number } }) => {
+              label: (context: any) => {
                 const label = context.dataset.label || "";
                 const value = context.parsed.y;
                 return `${label}: ${formatCurrency(value * 100)}`;

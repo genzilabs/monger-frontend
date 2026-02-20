@@ -51,7 +51,16 @@ class HttpClient {
 		}
 	}
 
-	private async handleTokenRefresh(): Promise<boolean> {
+	private async handleTokenRefresh(failedToken: string | null): Promise<boolean> {
+		const currentToken = tokenStorage.getAccessToken();
+		
+		// Race condition mitigation:
+		// If the token in storage has already changed since this request failed,
+		// another concurrent request already completed the refresh. We can just retry.
+		if (failedToken && currentToken && failedToken !== currentToken) {
+			return true;
+		}
+
 		if (this.isRefreshing) {
 			return this.refreshPromise ?? Promise.resolve(false);
 		}
@@ -72,16 +81,19 @@ class HttpClient {
 			return { error: { error: 'Kamu sedang offline', code: 'NETWORK_ERROR' } };
 		}
 
+		// Queue mechanism: pause outbound requests if a refresh is already in flight.
+		if (requireAuth && this.isRefreshing && this.refreshPromise) {
+			await this.refreshPromise;
+		}
+
 		const requestHeaders: Record<string, string> = {
 			'Content-Type': 'application/json',
 			...headers
 		};
 
-		if (requireAuth) {
-			const token = tokenStorage.getAccessToken();
-			if (token) {
-				requestHeaders['Authorization'] = `Bearer ${token}`;
-			}
+		const token = tokenStorage.getAccessToken();
+		if (requireAuth && token) {
+			requestHeaders['Authorization'] = `Bearer ${token}`;
 		}
 
 		try {
@@ -93,7 +105,7 @@ class HttpClient {
 
 			// Handle 401 with token refresh
 			if (response.status === 401 && requireAuth) {
-				const refreshed = await this.handleTokenRefresh();
+				const refreshed = await this.handleTokenRefresh(token);
 				if (refreshed) {
 					const newToken = tokenStorage.getAccessToken();
 					if (newToken) {

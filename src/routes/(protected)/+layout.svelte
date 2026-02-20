@@ -148,10 +148,12 @@
         class="fixed inset-0 z-50 flex flex-col items-center justify-start pt-20 px-6 md:hidden animate-in fade-in duration-200"
       >
         <!-- Backdrop -->
-        <div
-          class="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        <button
+          type="button"
+          class="absolute inset-0 bg-black/40 backdrop-blur-sm w-full h-full cursor-default"
           onclick={() => (showBookSwitcher = false)}
-        ></div>
+          aria-label="Tutup menu buku"
+        ></button>
 
         <!-- Dropdown Content -->
         <div

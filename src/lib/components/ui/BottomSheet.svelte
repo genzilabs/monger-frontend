@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
   import { fly, fade } from "svelte/transition";
-  import { onMount, tick } from "svelte";
+  import { onMount } from "svelte";
+  import { browser } from "$app/environment";
 
   interface Props {
     open: boolean;
@@ -12,151 +13,121 @@
 
   let { open, onClose, title, children }: Props = $props();
   
-  let contentWrapper: HTMLDivElement;
-  let isFullscreen = $state(false);
+  let isMounted = $state(false);
+  let sheetRef = $state<HTMLElement | null>(null);
+
+  // Drag state
   let isDragging = $state(false);
   let startY = 0;
-  let currentDragY = $state(0);
-  let initialHeight = $state(0);
-  let isMounted = $state(false);
-  let showSheet = $state(false);
-
-  // Handle the open prop changes properly for animations
-  $effect(() => {
-    if (open && isMounted) {
-      // Small delay to ensure transition plays
-      tick().then(() => {
-        showSheet = true;
-      });
-    } else if (!open) {
-      showSheet = false;
-      isFullscreen = false;
-      currentDragY = 0;
-    }
-  });
+  let currentY = $state(0);
 
   onMount(() => {
     isMounted = true;
-    if (open) {
-      tick().then(() => {
-        showSheet = true;
-      });
-    }
   });
 
-  function handleOpenChange(isOpen: boolean) {
-    if (!isOpen) {
-      onClose();
-      isFullscreen = false;
-    }
-  }
-
-  function handlePointerDown(e: PointerEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    isDragging = true;
-    startY = e.clientY;
-    currentDragY = 0;
-    
-    if (contentWrapper) {
-      initialHeight = contentWrapper.offsetHeight;
-    }
-    
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-  }
-
-  function handlePointerMove(e: PointerEvent) {
-    if (!isDragging) return;
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const delta = e.clientY - startY;
-    currentDragY = delta;
-    
-    if (contentWrapper) {
-      if (delta > 0) {
-        // Dragging DOWN - reduce height
-        const newHeight = Math.max(initialHeight - (delta * 0.6), 100);
-        contentWrapper.style.height = `${newHeight}px`;
+  // Prevent background scrolling while open
+  $effect(() => {
+    if (browser) {
+      if (open) {
+        document.body.style.overflow = "hidden";
       } else {
-        // Dragging UP - increase the height
-        const newHeight = Math.min(initialHeight + Math.abs(delta), window.innerHeight);
-        contentWrapper.style.height = `${newHeight}px`;
+        document.body.style.overflow = "";
       }
+    }
+    
+    // Cleanup when component unmounts
+    return () => {
+      if (browser) {
+        document.body.style.overflow = "";
+      }
+    };
+  });
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === "Escape" && open) {
+      onClose();
     }
   }
 
-  function handlePointerUp(e: PointerEvent) {
+  function handleTouchStart(e: TouchEvent | MouseEvent) {
+    isDragging = true;
+    startY = "touches" in e ? e.touches[0].clientY : e.clientY;
+    currentY = 0;
+  }
+
+  function handleTouchMove(e: TouchEvent | MouseEvent) {
     if (!isDragging) return;
-    e.preventDefault();
-    e.stopPropagation();
+    
+    // Allow dragging content inside if they are scrolling, 
+    // but if we are pulling down at the top of the scroll, we drag the sheet
+    const y = "touches" in e ? e.touches[0].clientY : e.clientY;
+    const deltaY = y - startY;
+
+    // Only allow pulling down, not up past the max height
+    if (deltaY > 0) {
+      currentY = deltaY;
+      e.preventDefault(); // Prevent default scroll when dragging sheet
+    }
+  }
+
+  function handleTouchEnd() {
+    if (!isDragging) return;
     isDragging = false;
-    
-    const threshold = 50;
-    const delta = currentDragY;
-    
-    // Reset styles
-    if (contentWrapper) {
-      contentWrapper.style.height = '';
+
+    // If dragged down more than 150px, close it
+    if (currentY > 150) {
+      onClose();
     }
     
-    if (isFullscreen) {
-      if (delta > threshold) {
-        isFullscreen = false;
-      }
-    } else {
-      if (delta < -threshold) {
-        isFullscreen = true;
-      } else if (delta > threshold) {
-        onClose();
-      }
-    }
-    
-    currentDragY = 0;
+    // Snap back
+    currentY = 0;
   }
 </script>
 
-{#if showSheet}
-  <!-- Overlay with fade animation -->
-  <div 
-    class="fixed inset-0 bg-black/60 z-[110]"
-    onclick={() => onClose()}
-    transition:fade={{ duration: 200 }}
-    role="presentation"
-  ></div>
-  
-  <!-- Sheet with slide animation -->
-  <div
-    bind:this={contentWrapper}
-    class="sheet fixed bottom-0 left-0 right-0 z-[111] rounded-t-xl bg-background {isDragging ? '' : 'transition-all duration-300 ease-out'}"
-    class:fullscreen={isFullscreen}
-    transition:fly={{ y: 300, duration: 300 }}
-    role="dialog"
-    aria-modal="true"
-  >
-    <div class="mx-auto w-full max-w-md p-4 h-full flex flex-col">
-      <!-- Drag Handle -->
+<svelte:window onkeydown={handleKeydown} />
+
+{#if open && isMounted}
+  <div class="fixed inset-0 z-[110]" role="presentation">
+    <!-- Overlay -->
+    <button
+      type="button"
+      class="absolute inset-0 bg-black/60 w-full h-full border-none cursor-default"
+      onclick={onClose}
+      transition:fade={{ duration: 250 }}
+      aria-label="Close dialog"
+    ></button>
+    
+    <!-- Sheet -->
+    <div
+      bind:this={sheetRef}
+      class="absolute bottom-0 left-0 right-0 z-[111] bg-background rounded-t-[20px] max-h-[96%] flex flex-col focus:outline-none {isDragging ? '' : 'transition-transform duration-300 ease-out'}"
+      style="transform: translateY({isDragging ? currentY : 0}px);"
+      transition:fly={{ y: '100%', duration: 300, opacity: 1 }}
+      role="dialog"
+      aria-modal="true"
+    >
+      <!-- Drag handle area -->
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div 
-        class="handle-container flex items-center justify-center py-4 -mt-4 cursor-grab select-none"
-        role="slider"
-        tabindex="0"
-        aria-label="Drag to resize"
-        onpointerdown={handlePointerDown}
-        onpointermove={handlePointerMove}
-        onpointerup={handlePointerUp}
-        onpointercancel={handlePointerUp}
+        class="w-full flex justify-center pt-4 pb-2 shrink-0 cursor-grab active:cursor-grabbing touch-none"
+        onmousedown={handleTouchStart}
+        onmousemove={handleTouchMove}
+        onmouseup={handleTouchEnd}
+        onmouseleave={handleTouchEnd}
+        ontouchstart={handleTouchStart}
+        ontouchmove={handleTouchMove}
+        ontouchend={handleTouchEnd}
       >
-        <div class="h-1.5 w-12 rounded-full bg-muted pointer-events-none"></div>
+        <div class="h-1.5 w-12 rounded-full bg-muted"></div>
       </div>
       
-      {#if title}
-        <h2 class="text-xl font-bold text-foreground mb-4">
-          {title}
-        </h2>
-      {/if}
-      
-      <div class="overflow-y-auto flex-1">
-        <div class="pb-safe">
+      <div class="p-4 overflow-y-auto flex-[0_1_auto] flex flex-col w-full h-full pb-safe min-h-0">
+        {#if title}
+          <h2 class="text-xl font-bold text-foreground mb-4 shrink-0">
+            {title}
+          </h2>
+        {/if}
+        <div class="flex-1 shrink-0 pb-4">
           {@render children()}
         </div>
       </div>
@@ -165,20 +136,6 @@
 {/if}
 
 <style>
-  .handle-container {
-    touch-action: none;
-  }
-  
-  .sheet {
-    max-height: 90vh;
-  }
-  
-  .fullscreen {
-    height: 100vh;
-    max-height: 100vh;
-    border-radius: 0;
-  }
-  
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom, 1rem);
   }

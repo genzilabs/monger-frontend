@@ -17,7 +17,7 @@
 
   let { data, type, loading = false, currency = "IDR" }: Props = $props();
 
-  let canvas: HTMLCanvasElement;
+  let canvas = $state<HTMLCanvasElement>();
   let chart: Chart | null = null;
 
   // Define palettes
@@ -126,7 +126,7 @@
             borderWidth: 1,
             titleFont: {
               size: 13,
-              weight: "bold" as const,
+              weight: "bold",
               family: "'Inter', sans-serif",
             },
             bodyFont: { size: 12, family: "'Inter', sans-serif" },
@@ -135,17 +135,12 @@
             displayColors: true,
             boxPadding: 4,
             callbacks: {
-              label: (context: {
-                label?: string;
-                parsed: number;
-                dataset: { data: number[] };
-              }) => {
+              label: (context: any) => {
                 const label = context.label || "";
                 const value = context.parsed;
-                const total = context.dataset.data.reduce(
-                  (a, b) => (a as number) + (b as number),
-                  0,
-                ) as number;
+                const total = Array.isArray(context.dataset.data)
+                  ? context.dataset.data.reduce((a: number, b: number) => a + b, 0)
+                  : value;
                 const percentage = Math.round((value / total) * 100);
                 return `${label}: ${formatCurrency(value * 100)} (${percentage}%)`;
               },
