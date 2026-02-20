@@ -345,347 +345,394 @@
   {onClose}
   title={type === "transfer" ? "Transfer" : "Transaksi Baru"}
 >
-  <div class="space-y-4">
-    <!-- Type Switcher -->
-    <div
-      class="flex p-1 bg-surface rounded-full border border-border"
-      role="tablist"
-    >
-      <button
-        role="tab"
-        aria-selected={type === "income"}
-        class="flex-1 py-2.5 text-sm font-medium rounded-full transition-all duration-200 {type ===
-        'income'
-          ? 'bg-emerald-500 text-white shadow-sm'
-          : 'text-muted hover:text-foreground'}"
-        onclick={() => (type = "income")}
-      >
-        Pemasukan
-      </button>
-      <button
-        role="tab"
-        aria-selected={type === "expense"}
-        class="flex-1 py-2.5 text-sm font-medium rounded-full transition-all duration-200 {type ===
-        'expense'
-          ? 'bg-red-500 text-white shadow-sm'
-          : 'text-muted hover:text-foreground'}"
-        onclick={() => (type = "expense")}
-      >
-        Pengeluaran
-      </button>
-      <button
-        role="tab"
-        aria-selected={type === "transfer"}
-        class="flex-1 py-2.5 text-sm font-medium rounded-full transition-all duration-200 {type ===
-        'transfer'
-          ? 'bg-primary text-white shadow-sm'
-          : 'text-muted hover:text-foreground'}"
-        onclick={() => (type = "transfer")}
-      >
-        Transfer
-      </button>
-    </div>
-
-    <!-- Scan Receipt Button (only for income/expense) -->
-    {#if type !== "transfer"}
-      <button
-        type="button"
+  {#if booksStore.pockets.length === 0}
+    <div class="flex flex-col items-center justify-center py-8 text-center space-y-4">
+      <div class="bg-blue-50 p-4 rounded-full text-blue-500">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="lucide lucide-wallet"
+          ><path
+            d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"
+          /><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" /></svg
+        >
+      </div>
+      <div>
+        <h3 class="font-medium text-lg text-foreground">Belum ada Kantong</h3>
+        <p class="text-muted text-sm mt-1 max-w-xs mx-auto">
+          Kamu perlu membuat minimal satu kantong (Dompet, Bank, dll) untuk
+          mencatat transaksi.
+        </p>
+      </div>
+      <Button
+        variant="primary"
         onclick={() => {
           onClose();
-          uiStore.scanReceipt();
+          if (booksStore.activeBook) {
+            import("$app/navigation").then(({ goto }) => {
+              goto(`/books/${booksStore.activeBook.id}`);
+            });
+          }
         }}
-        class="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-xl text-primary font-medium hover:from-primary/20 hover:to-primary/10 transition-all"
       >
-        <Camera size={20} />
-        Scan Struk
-      </button>
-    {/if}
-
-    <!-- Amount -->
-    <div>
-      <label
-        for="amount"
-        class="block text-sm font-medium text-secondary mb-1.5">Jumlah</label
-      >
-      <MoneyInput id="amount" bind:value={amount} placeholder="0" />
+        Buat Kantong Baru
+      </Button>
     </div>
-
-    <!-- Transfer Fee -->
-    {#if type === "transfer"}
-      <div class="bg-surface border border-border rounded-xl p-4">
-        <div class="flex items-center justify-between">
-          <span class="text-sm font-medium text-foreground">Biaya transfer</span
-          >
-          <button
-            type="button"
-            role="switch"
-            aria-checked={includeFee}
-            aria-label="Toggle transfer fee"
-            class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 {includeFee
-              ? 'bg-primary'
-              : 'bg-muted'}"
-            onclick={() => (includeFee = !includeFee)}
-          >
-            <span
-              class="{includeFee
-                ? 'translate-x-6'
-                : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-            ></span>
-          </button>
-        </div>
-        {#if includeFee}
-          <div class="mt-3">
-            <MoneyInput bind:value={fee} placeholder="0" />
-          </div>
-        {/if}
-      </div>
-    {/if}
-
-    <!-- Name -->
-    <div>
-      <label for="name" class="block text-sm font-medium text-secondary mb-1.5"
-        >Keterangan</label
+  {:else}
+    <div class="space-y-4">
+      <!-- Type Switcher -->
+      <div
+        class="flex p-1 bg-surface rounded-full border border-border"
+        role="tablist"
       >
-      <input
-        id="name"
-        type="text"
-        bind:value={name}
-        placeholder="Isi yang kamu ingat dulu"
-        class="w-full px-4 py-3 bg-surface border border-border rounded-xl text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary"
-      />
-      <p class="text-xs text-muted mt-1.5">Bisa diedit kapan saja.</p>
-    </div>
-
-    <!-- Category Selector (only for income/expense) -->
-    {#if type !== "transfer"}
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Combobox
-          label="Kategori"
-          options={categoryOptions}
-          bind:value={categoryId}
-          onValueChange={() => (subcategoryId = "")}
-          placeholder="Pilih kategori"
-          searchPlaceholder="Cari..."
-          emptyMessage="Tidak ada kategori"
-        />
-        <Combobox
-          label="Subkategori"
-          options={subcategoryOptions}
-          bind:value={subcategoryId}
-          placeholder="Opsional"
-          searchPlaceholder="Cari..."
-          emptyMessage="Tidak ada subkategori"
-          disabled={!categoryId || subcategoryOptions.length === 0}
-        />
-      </div>
-
-      <!-- Pocket Selector(s) (non-transfer) -->
-      <Combobox
-        label="Kantong"
-        options={pocketOptions}
-        bind:value={pocketId}
-        placeholder="Pilih kantong"
-        searchPlaceholder="Cari..."
-        emptyMessage="Belum ada kantong"
-      />
-    {/if}
-
-    <!-- Transfer Specific Logic -->
-    {#if type === "transfer"}
-      <div class="space-y-4">
-        <!-- Mode Toggle -->
-        <div
-          class="flex p-1 bg-surface rounded-full border border-border"
-          role="tablist"
+        <button
+          role="tab"
+          aria-selected={type === "income"}
+          class="flex-1 py-2.5 text-sm font-medium rounded-full transition-all duration-200 {type ===
+          'income'
+            ? 'bg-emerald-500 text-white shadow-sm'
+            : 'text-muted hover:text-foreground'}"
+          onclick={() => (type = "income")}
         >
-          <button
-            role="tab"
-            aria-selected={!isP2P}
-            class="flex-1 py-2 text-xs font-medium rounded-full transition-all duration-200 {!isP2P
-              ? 'bg-[var(--color-surface-elevated)] text-foreground shadow-sm'
-              : 'text-muted hover:text-foreground'}"
-            onclick={() => (isP2P = false)}
-          >
-            Antar Kantong
-          </button>
-          <button
-            role="tab"
-            aria-selected={isP2P}
-            class="flex-1 py-2 text-xs font-medium rounded-full transition-all duration-200 {isP2P
-              ? 'bg-[var(--color-surface-elevated)] text-foreground shadow-sm'
-              : 'text-muted hover:text-foreground'}"
-            onclick={() => (isP2P = true)}
-          >
-            Kirim ke Pengguna
-          </button>
-        </div>
+          Pemasukan
+        </button>
+        <button
+          role="tab"
+          aria-selected={type === "expense"}
+          class="flex-1 py-2.5 text-sm font-medium rounded-full transition-all duration-200 {type ===
+          'expense'
+            ? 'bg-red-500 text-white shadow-sm'
+            : 'text-muted hover:text-foreground'}"
+          onclick={() => (type = "expense")}
+        >
+          Pengeluaran
+        </button>
+        <button
+          role="tab"
+          aria-selected={type === "transfer"}
+          class="flex-1 py-2.5 text-sm font-medium rounded-full transition-all duration-200 {type ===
+          'transfer'
+            ? 'bg-primary text-white shadow-sm'
+            : 'text-muted hover:text-foreground'}"
+          onclick={() => (type = "transfer")}
+        >
+          Transfer
+        </button>
+      </div>
 
-        {#if !isP2P}
-          <!-- Cross-Book Toggle -->
+      <!-- Scan Receipt Button (only for income/expense) -->
+      {#if type !== "transfer"}
+        <button
+          type="button"
+          onclick={() => {
+            onClose();
+            uiStore.scanReceipt();
+          }}
+          class="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-xl text-primary font-medium hover:from-primary/20 hover:to-primary/10 transition-all"
+        >
+          <Camera size={20} />
+          Scan Struk
+        </button>
+      {/if}
+
+      <!-- Amount -->
+      <div>
+        <label
+          for="amount"
+          class="block text-sm font-medium text-secondary mb-1.5">Jumlah</label
+        >
+        <MoneyInput id="amount" bind:value={amount} placeholder="0" />
+      </div>
+
+      <!-- Transfer Fee -->
+      {#if type === "transfer"}
+        <div class="bg-surface border border-border rounded-xl p-4">
           <div class="flex items-center justify-between">
-            <span class="text-sm text-secondary">Transfer antar buku</span>
+            <span class="text-sm font-medium text-foreground"
+              >Biaya transfer</span
+            >
             <button
               type="button"
               role="switch"
-              aria-checked={isCrossBook}
-              aria-label="Toggle cross-book transfer"
-              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 {isCrossBook
+              aria-checked={includeFee}
+              aria-label="Toggle transfer fee"
+              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 {includeFee
                 ? 'bg-primary'
                 : 'bg-muted'}"
-              onclick={() => (isCrossBook = !isCrossBook)}
+              onclick={() => (includeFee = !includeFee)}
             >
               <span
-                class="{isCrossBook
+                class="{includeFee
                   ? 'translate-x-6'
                   : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
               ></span>
             </button>
           </div>
-        {/if}
+          {#if includeFee}
+            <div class="mt-3">
+              <MoneyInput bind:value={fee} placeholder="0" />
+            </div>
+          {/if}
+        </div>
+      {/if}
 
-        <div class="grid grid-cols-1 gap-4">
-          <!-- From Section -->
+      <!-- Name -->
+      <div>
+        <label
+          for="name"
+          class="block text-sm font-medium text-secondary mb-1.5"
+          >Keterangan</label
+        >
+        <input
+          id="name"
+          type="text"
+          bind:value={name}
+          placeholder="Isi yang kamu ingat dulu"
+          class="w-full px-4 py-3 bg-surface border border-border rounded-xl text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary"
+        />
+        <p class="text-xs text-muted mt-1.5">Bisa diedit kapan saja.</p>
+      </div>
+
+      <!-- Category Selector (only for income/expense) -->
+      {#if type !== "transfer"}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Combobox
+            label="Kategori"
+            options={categoryOptions}
+            bind:value={categoryId}
+            onValueChange={() => (subcategoryId = "")}
+            placeholder="Pilih kategori"
+            searchPlaceholder="Cari..."
+            emptyMessage="Tidak ada kategori"
+          />
+          <Combobox
+            label="Subkategori"
+            options={subcategoryOptions}
+            bind:value={subcategoryId}
+            placeholder="Opsional"
+            searchPlaceholder="Cari..."
+            emptyMessage="Tidak ada subkategori"
+            disabled={!categoryId || subcategoryOptions.length === 0}
+          />
+        </div>
+
+        <!-- Pocket Selector(s) (non-transfer) -->
+        <Combobox
+          label="Kantong"
+          options={pocketOptions}
+          bind:value={pocketId}
+          placeholder="Pilih kantong"
+          searchPlaceholder="Cari..."
+          emptyMessage="Belum ada kantong"
+        />
+      {/if}
+
+      <!-- Transfer Specific Logic -->
+      {#if type === "transfer"}
+        <div class="space-y-4">
+          <!-- Mode Toggle -->
           <div
-            class="space-y-3 p-4 bg-primary/5 rounded-xl border border-primary/20"
+            class="flex p-1 bg-surface rounded-full border border-border"
+            role="tablist"
           >
-            <span
-              class="text-xs font-semibold text-primary uppercase tracking-wide"
-              >Dari</span
+            <button
+              role="tab"
+              aria-selected={!isP2P}
+              class="flex-1 py-2 text-xs font-medium rounded-full transition-all duration-200 {!isP2P
+                ? 'bg-[var(--color-surface-elevated)] text-foreground shadow-sm'
+                : 'text-muted hover:text-foreground'}"
+              onclick={() => (isP2P = false)}
             >
-            {#if isCrossBook && !isP2P}
-              <BookSelector
-                label="Buku"
-                bind:value={fromBookId}
-                onValueChange={(val) => {
-                  fromBookId = val;
-                }}
-              />
-            {/if}
-
-            <Combobox
-              label="Kantong"
-              options={pocketOptions}
-              bind:value={pocketId}
-              placeholder="Pilih kantong asal"
-              searchPlaceholder="Cari..."
-              emptyMessage="Belum ada kantong"
-            />
+              Antar Kantong
+            </button>
+            <button
+              role="tab"
+              aria-selected={isP2P}
+              class="flex-1 py-2 text-xs font-medium rounded-full transition-all duration-200 {isP2P
+                ? 'bg-[var(--color-surface-elevated)] text-foreground shadow-sm'
+                : 'text-muted hover:text-foreground'}"
+              onclick={() => (isP2P = true)}
+            >
+              Kirim ke Pengguna
+            </button>
           </div>
 
-          <!-- Swap Button (Only for Internal) -->
           {#if !isP2P}
-            <div class="flex justify-center -my-2 relative z-10">
+            <!-- Cross-Book Toggle -->
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-secondary">Transfer antar buku</span>
               <button
                 type="button"
-                class="p-2 bg-surface border border-border rounded-full hover:bg-border transition-colors"
-                title="Tukar kantong"
-                onclick={() => {
-                  const tempPocket = pocketId;
-                  pocketId = toPocketId;
-                  toPocketId = tempPocket;
-
-                  if (isCrossBook) {
-                    const tempBook = fromBookId;
-                    fromBookId = toBookId;
-                    toBookId = tempBook;
-                  }
-                }}
-                aria-label="Tukar kantong"
+                role="switch"
+                aria-checked={isCrossBook}
+                aria-label="Toggle cross-book transfer"
+                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 {isCrossBook
+                  ? 'bg-primary'
+                  : 'bg-muted'}"
+                onclick={() => (isCrossBook = !isCrossBook)}
               >
-                <svg
-                  class="w-5 h-5 text-muted"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
-                  />
-                </svg>
+                <span
+                  class="{isCrossBook
+                    ? 'translate-x-6'
+                    : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+                ></span>
               </button>
             </div>
           {/if}
 
-          <!-- To Section -->
-          <div
-            class="space-y-3 p-4 bg-emerald-500/5 rounded-xl border border-emerald-500/20"
-          >
-            <span
-              class="text-xs font-semibold text-emerald-600 uppercase tracking-wide"
-              >Ke</span
+          <div class="grid grid-cols-1 gap-4">
+            <!-- From Section -->
+            <div
+              class="space-y-3 p-4 bg-primary/5 rounded-xl border border-primary/20"
             >
-            {#if isP2P}
-              <div>
-                <label
-                  for="recipient"
-                  class="block text-sm font-medium text-secondary mb-1.5"
-                  >Email penerima</label
-                >
-                <input
-                  id="recipient"
-                  type="email"
-                  bind:value={recipientEmail}
-                  placeholder="email@contoh.com"
-                  class="w-full px-4 py-3 bg-surface border border-border rounded-xl text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary"
+              <span
+                class="text-xs font-semibold text-primary uppercase tracking-wide"
+                >Dari</span
+              >
+              {#if isCrossBook && !isP2P}
+                <BookSelector
+                  label="Buku"
+                  bind:value={fromBookId}
+                  onValueChange={(val) => {
+                    fromBookId = val;
+                  }}
                 />
-              </div>
-            {:else}
-              {#if isCrossBook}
-                <BookSelector label="Buku" bind:value={toBookId} />
               {/if}
 
               <Combobox
                 label="Kantong"
-                options={toPocketOptions}
-                bind:value={toPocketId}
-                placeholder={isLoadingToPockets
-                  ? "Memuat..."
-                  : "Pilih kantong tujuan"}
+                options={pocketOptions}
+                bind:value={pocketId}
+                placeholder="Pilih kantong asal"
                 searchPlaceholder="Cari..."
-                emptyMessage={isLoadingToPockets
-                  ? "Memuat..."
-                  : "Belum ada kantong"}
-                disabled={isLoadingToPockets ||
-                  (!isCrossBook ? false : !toBookId)}
+                emptyMessage="Belum ada kantong"
               />
+            </div>
+
+            <!-- Swap Button (Only for Internal) -->
+            {#if !isP2P}
+              <div class="flex justify-center -my-2 relative z-10">
+                <button
+                  type="button"
+                  class="p-2 bg-surface border border-border rounded-full hover:bg-border transition-colors"
+                  title="Tukar kantong"
+                  onclick={() => {
+                    const tempPocket = pocketId;
+                    pocketId = toPocketId;
+                    toPocketId = tempPocket;
+
+                    if (isCrossBook) {
+                      const tempBook = fromBookId;
+                      fromBookId = toBookId;
+                      toBookId = tempBook;
+                    }
+                  }}
+                  aria-label="Tukar kantong"
+                >
+                  <svg
+                    class="w-5 h-5 text-muted"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+                    />
+                  </svg>
+                </button>
+              </div>
             {/if}
+
+            <!-- To Section -->
+            <div
+              class="space-y-3 p-4 bg-emerald-500/5 rounded-xl border border-emerald-500/20"
+            >
+              <span
+                class="text-xs font-semibold text-emerald-600 uppercase tracking-wide"
+                >Ke</span
+              >
+              {#if isP2P}
+                <div>
+                  <label
+                    for="recipient"
+                    class="block text-sm font-medium text-secondary mb-1.5"
+                    >Email penerima</label
+                  >
+                  <input
+                    id="recipient"
+                    type="email"
+                    bind:value={recipientEmail}
+                    placeholder="email@contoh.com"
+                    class="w-full px-4 py-3 bg-surface border border-border rounded-xl text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              {:else}
+                {#if isCrossBook}
+                  <BookSelector label="Buku" bind:value={toBookId} />
+                {/if}
+
+                <Combobox
+                  label="Kantong"
+                  options={toPocketOptions}
+                  bind:value={toPocketId}
+                  placeholder={isLoadingToPockets
+                    ? "Memuat..."
+                    : "Pilih kantong tujuan"}
+                  searchPlaceholder="Cari..."
+                  emptyMessage={isLoadingToPockets
+                    ? "Memuat..."
+                    : "Belum ada kantong"}
+                  disabled={isLoadingToPockets ||
+                    (!isCrossBook ? false : !toBookId)}
+                />
+              {/if}
+            </div>
           </div>
         </div>
-      </div>
-    {/if}
-
-    <!-- Date -->
-    <div>
-      <label for="date" class="block text-sm font-medium text-secondary mb-1.5"
-        >Tanggal</label
-      >
-      <input
-        id="date"
-        type="datetime-local"
-        bind:value={date}
-        class="w-full px-4 py-3 bg-surface border border-border rounded-xl text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary"
-      />
-    </div>
-  </div>
-
-  <div class="flex gap-3 mt-6">
-    <Button variant="secondary" fullWidth onclick={onClose}>Batal</Button>
-    <Button
-      variant="primary"
-      fullWidth
-      loading={isSubmitting}
-      onclick={handleSubmit}
-    >
-      {#if type === "transfer"}
-        Transfer
-      {:else if type === "income"}
-        Simpan Pemasukan
-      {:else}
-        Simpan Pengeluaran
       {/if}
-    </Button>
-  </div>
+
+      <!-- Date -->
+      <div>
+        <label
+          for="date"
+          class="block text-sm font-medium text-secondary mb-1.5"
+          >Tanggal</label
+        >
+        <input
+          id="date"
+          type="datetime-local"
+          bind:value={date}
+          class="w-full px-4 py-3 bg-surface border border-border rounded-xl text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary"
+        />
+      </div>
+    </div>
+
+    <div class="flex gap-3 mt-6">
+      <Button variant="secondary" fullWidth onclick={onClose}>Batal</Button>
+      <Button
+        variant="primary"
+        fullWidth
+        loading={isSubmitting}
+        onclick={handleSubmit}
+      >
+        {#if type === "transfer"}
+          Transfer
+        {:else if type === "income"}
+          Simpan Pemasukan
+        {:else}
+          Simpan Pengeluaran
+        {/if}
+      </Button>
+    </div>
+  {/if}
 </ResponsiveModal>

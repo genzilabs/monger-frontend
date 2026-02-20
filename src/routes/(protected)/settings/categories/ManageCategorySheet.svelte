@@ -68,7 +68,11 @@
     isLoading = true;
     try {
       if (categoryToEdit) {
-        await categoriesApi.update(categoryToEdit.id, formData);
+        await categoriesApi.update(categoryToEdit.id, {
+          name: formData.name,
+          icon: formData.icon,
+          version: categoryToEdit.version,
+        });
         toastStore.success('Kategori berhasil diperbarui');
       } else if (booksStore.activeBook) {
         await categoriesApi.create(booksStore.activeBook.id, formData);

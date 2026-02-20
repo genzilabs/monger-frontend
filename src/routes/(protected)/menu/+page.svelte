@@ -13,6 +13,8 @@
     PaperPlaneIcon,
     MessageIcon,
     ChevronRightIcon,
+    TargetIcon,
+    PieChartIcon,
   } from "$lib/icons";
   import { getLatestVersion } from "$lib/data/updates";
   import { authStore } from "$lib/stores";
@@ -61,6 +63,20 @@
           icon: RepeatIcon,
           color: "text-teal-600",
           bg: "bg-teal-100",
+        },
+        {
+          label: "Goals",
+          href: "/goals",
+          icon: TargetIcon,
+          color: "text-cyan-600",
+          bg: "bg-cyan-100",
+        },
+        {
+          label: "Anggaran",
+          href: "/budgets",
+          icon: PieChartIcon,
+          color: "text-fuchsia-600",
+          bg: "bg-fuchsia-100",
         },
         {
           label: "Undangan",

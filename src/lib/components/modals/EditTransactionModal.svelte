@@ -667,6 +667,7 @@
         related_pocket_id: finalRelatedPocketId,
         pocket_id: finalPocketId,
         exclude_from_analytics: excludeFromAnalytics,
+        version: transaction.version,
       });
 
       if (result.data) {

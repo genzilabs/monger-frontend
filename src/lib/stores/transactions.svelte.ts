@@ -1,13 +1,3 @@
-/**
- * Transactions Store - Enterprise-grade state management
- * 
- * Features:
- * - Optimistic updates
- * - Error handling with rollback
- * - Loading states per operation
- * - Transaction list management
- */
-
 import { transactionsApi, type ListByBookOptions } from '$lib/api/transactions';
 import type {
 	Transaction,
@@ -15,6 +5,8 @@ import type {
 	CreateTransferRequest
 } from '$lib/types/transaction';
 import { toastStore } from './toast.svelte';
+import { db } from '$lib/db';
+import { networkStatus } from '$lib/sync/networkStatus.svelte';
 
 interface TransactionsState {
 	transactions: Transaction[];
@@ -39,17 +31,38 @@ function createTransactionsStore() {
 		activeContext: null
 	});
 
+	async function cacheTransactions(transactions: Transaction[]) {
+		try {
+			if (transactions.length) {
+				await db.transactions.bulkPut(JSON.parse(JSON.stringify(transactions)));
+			}
+		} catch {
+			// Dexie failures are non-critical
+		}
+	}
+
+	async function loadFromCache(bookId: string): Promise<Transaction[]> {
+		try {
+			const pockets = await db.pockets.where('book_id').equals(bookId).toArray();
+			const pocketIds = pockets.map(p => p.id);
+			if (pocketIds.length === 0) return [];
+			return await db.transactions
+				.where('pocket_id')
+				.anyOf(pocketIds)
+				.reverse()
+				.sortBy('updated_at');
+		} catch {
+			return [];
+		}
+	}
+
 	return {
-		// Getters
 		get transactions() { return state.transactions; },
 		get isLoading() { return state.isLoading; },
 		get isCreating() { return state.isCreating; },
 		get error() { return state.error; },
 		get hasMore() { return state.hasMore; },
 
-		/**
-		 * Load transactions for a pocket
-		 */
 		async loadByPocket(pocketId: string, options: ListByBookOptions = {}, reset = true) {
 			state.isLoading = true;
 			state.error = null;
@@ -71,7 +84,6 @@ function createTransactionsStore() {
 				}
 
 				if (result.data) {
-					// API returns { transactions: [], next_cursor?, has_more }
 					const response = result.data;
 					const newTransactions = response.transactions || [];
 
@@ -83,6 +95,8 @@ function createTransactionsStore() {
 
 					state.hasMore = response.has_more ?? (newTransactions.length >= state.limit);
 					state.offset += newTransactions.length;
+
+					await cacheTransactions(newTransactions);
 				}
 
 				return state.transactions;
@@ -94,9 +108,6 @@ function createTransactionsStore() {
 			}
 		},
 
-		/**
-		 * Load transactions for a book
-		 */
 		async loadByBook(bookId: string, options: ListByBookOptions = {}, reset = true) {
 			state.isLoading = true;
 			state.error = null;
@@ -108,6 +119,13 @@ function createTransactionsStore() {
 			}
 
 			try {
+				if (networkStatus.isOffline) {
+					const cached = await loadFromCache(bookId);
+					state.transactions = cached;
+					state.hasMore = false;
+					return cached;
+				}
+
 				const result = await transactionsApi.listByBook(bookId, {
 					limit: state.limit,
 					...options
@@ -118,7 +136,6 @@ function createTransactionsStore() {
 				}
 
 				if (result.data) {
-					// API returns { transactions: [], next_cursor?, has_more }
 					const response = result.data;
 					const newTransactions = response.transactions || [];
 
@@ -130,10 +147,20 @@ function createTransactionsStore() {
 
 					state.hasMore = response.has_more ?? (newTransactions.length >= state.limit);
 					state.offset += newTransactions.length;
+
+					await cacheTransactions(newTransactions);
 				}
 
 				return state.transactions;
 			} catch (e: any) {
+				if (e.message === 'Network error' || e.message?.includes('fetch')) {
+					const cached = await loadFromCache(bookId);
+					if (cached.length) {
+						state.transactions = cached;
+						state.error = null;
+						return cached;
+					}
+				}
 				state.error = e.message || 'Failed to load transactions';
 				return [];
 			} finally {
@@ -141,38 +168,25 @@ function createTransactionsStore() {
 			}
 		},
 
-		/**
-		 * Refresh current transaction list
-		 */
 		async refresh() {
 			if (!state.activeContext) return;
 
 			if (state.activeContext.type === 'pocket') {
 				return this.loadByPocket(state.activeContext.id, {}, true);
 			} else {
-				// For book, we might lose filters if not stored, 
-				// but for now simple refresh is better than nothing.
-				// Ideally we should store active filters too.
 				return this.loadByBook(state.activeContext.id, {}, true);
 			}
 		},
 
-		/**
-		 * Load more transactions (pagination)
-		 */
 		async loadMoreByPocket(pocketId: string) {
 			if (!state.hasMore || state.isLoading) return;
 			return this.loadByPocket(pocketId, {}, false);
 		},
 
-		/**
-		 * Create transaction with optimistic update
-		 */
 		async createTransaction(data: CreateTransactionRequest) {
 			state.isCreating = true;
 			state.error = null;
 
-			// Create optimistic transaction
 			const optimisticId = `temp-${Date.now()}`;
 			const optimisticTx: Transaction = {
 				id: optimisticId,
@@ -184,10 +198,10 @@ function createTransactionsStore() {
 				category_id: data.category_id,
 				subcategory_id: data.subcategory_id,
 				created_at: new Date().toISOString(),
-				updated_at: new Date().toISOString()
+				updated_at: new Date().toISOString(),
+				version: 0
 			};
 
-			// Optimistically add to list (ensure transactions is an array)
 			const currentTxs = Array.isArray(state.transactions) ? state.transactions : [];
 			state.transactions = [optimisticTx, ...currentTxs];
 
@@ -202,13 +216,14 @@ function createTransactionsStore() {
 					state.transactions = state.transactions.map(tx =>
 						tx.id === optimisticId ? result.data! : tx
 					);
+
+					await cacheTransactions([result.data]);
 					toastStore.success('Transaksi berhasil dibuat!');
 					return result.data;
 				}
 
 				return null;
 			} catch (e: any) {
-				// Rollback optimistic update
 				state.transactions = state.transactions.filter(tx => tx.id !== optimisticId);
 				state.error = e.message || 'Failed to create transaction';
 				toastStore.error('Gagal membuat transaksi');
@@ -218,9 +233,6 @@ function createTransactionsStore() {
 			}
 		},
 
-		/**
-		 * Create transfer between pockets
-		 */
 		async createTransfer(data: CreateTransferRequest) {
 			state.isCreating = true;
 			state.error = null;
@@ -243,14 +255,8 @@ function createTransactionsStore() {
 			}
 		},
 
-		/**
-		 * Delete transaction with optimistic update
-		 */
 		async deleteTransaction(id: string) {
-			// Store for rollback
 			const previousTransactions = [...state.transactions];
-
-			// Optimistically remove
 			state.transactions = state.transactions.filter(tx => tx.id !== id);
 
 			try {
@@ -260,10 +266,10 @@ function createTransactionsStore() {
 					throw new Error(result.error.error || 'Failed to delete transaction');
 				}
 
+				try { await db.transactions.delete(id); } catch { /* non-critical */ }
 				toastStore.success('Transaksi dihapus');
 				return true;
 			} catch (e: any) {
-				// Rollback
 				state.transactions = previousTransactions;
 				state.error = e.message || 'Failed to delete transaction';
 				toastStore.error('Gagal menghapus transaksi');
@@ -271,16 +277,10 @@ function createTransactionsStore() {
 			}
 		},
 
-		/**
-		 * Clear error
-		 */
 		clearError() {
 			state.error = null;
 		},
 
-		/**
-		 * Reset store state
-		 */
 		reset() {
 			state.transactions = [];
 			state.isLoading = false;

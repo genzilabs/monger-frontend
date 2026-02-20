@@ -25,6 +25,7 @@ export interface Transaction {
 	dest_pocket?: Pocket;
 	created_at: string;
 	updated_at: string;
+	version: number;
 	// Populated for display (optional)
 	category?: Category;
 	subcategory?: Subcategory;
@@ -58,6 +59,7 @@ export interface UpdateTransactionRequest {
 	related_pocket_id?: string;
 	pocket_id?: string;
 	exclude_from_analytics?: boolean;
+	version: number;
 }
 
 export interface CreateTransferRequest {

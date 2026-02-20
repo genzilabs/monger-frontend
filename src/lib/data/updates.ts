@@ -19,6 +19,20 @@ export interface Update {
 
 export const UPDATES: Update[] = [
   {
+    version: "0.7.0-alpha",
+    date: "2026-02-16",
+    title: "Goals & Anggaran",
+    description: "Sekarang kamu bisa menetapkan target keuangan dan mengatur batas pengeluaran per kategori setiap bulan.",
+    changes: [
+      { text: "Buat goal tabungan dengan target nominal dan deadline" },
+      { text: "Hubungkan goal ke pocket agar progress otomatis terupdate" },
+      { text: "Catat kontribusi manual ke goal" },
+      { text: "Atur anggaran bulanan per kategori pengeluaran" },
+      { text: "Lihat progress pengeluaran dan peringatan jika melebihi batas" },
+      { text: "Akses Goals dan Anggaran dari menu Pengelolaan" },
+    ],
+  },
+  {
     version: "0.6.0-alpha",
     date: "2026-02-08",
     title: "Menu Baru dan Perbaikan Bug",

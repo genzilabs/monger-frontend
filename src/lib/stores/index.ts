@@ -10,3 +10,5 @@ export { booksStore } from './books.svelte';
 export { updatesStore } from './updates.svelte';
 export { privacyStore } from './privacy.svelte';
 export { onboardingStore } from './onboarding.svelte';
+export { goalsStore } from './goals.svelte';
+export { budgetsStore } from './budgets.svelte';

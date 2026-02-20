@@ -68,6 +68,10 @@ class HttpClient {
 	async request<T>(endpoint: string, config: RequestConfig = {}): Promise<ApiResult<T>> {
 		const { method = 'GET', body, headers = {}, requireAuth = false } = config;
 
+		if (typeof navigator !== 'undefined' && !navigator.onLine) {
+			return { error: { error: 'Kamu sedang offline', code: 'NETWORK_ERROR' } };
+		}
+
 		const requestHeaders: Record<string, string> = {
 			'Content-Type': 'application/json',
 			...headers

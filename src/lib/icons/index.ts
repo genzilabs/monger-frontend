@@ -40,3 +40,5 @@ export { default as MessageIcon } from './MessageIcon.svelte';
 export { default as GlobeIcon } from 'lucide-svelte/icons/globe';
 export { default as HeartIcon } from 'lucide-svelte/icons/heart';
 export { default as UsersIcon } from 'lucide-svelte/icons/users';
+export { default as TargetIcon } from './TargetIcon.svelte';
+export { default as PieChartIcon } from './PieChartIcon.svelte';
