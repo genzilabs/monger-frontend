@@ -21,28 +21,15 @@
   import { untrack } from "svelte";
   import { SlidersIcon } from "$lib/icons";
 
+  import { createTransactionListState } from "./transactionListState.svelte";
+
   // Tab state
   type TabType = "daily" | "monthly" | "total" | "calendar";
   let activeTab = $state<TabType>("daily");
 
-  // State
-  let transactions = $state<Transaction[]>([]);
-  let isLoading = $state(false);
-  let error = $state<string | null>(null);
-  let hasMore = $state(true);
+  const listState = createTransactionListState();
 
-  // Filter state
-  let selectedPocketId = $state<string | null>(null);
-  let selectedType = $state<"all" | "income" | "expense" | "transfer">("all");
-  let selectedCategoryId = $state<string | null>(null);
-  let searchQuery = $state("");
-  let startDate = $state("");
-  let endDate = $state("");
   let showFilterModal = $state(false);
-
-  // Cursor pagination state
-  let nextCursor = $state<string | undefined>(undefined);
-  const limit = 50; // Load more for grouping purposes
 
   // Track loaded book to prevent duplicate fetches
   let loadedBookId = $state<string | null>(null);
@@ -70,100 +57,18 @@
   }
 
   function handleTransactionUpdated() {
-    loadTransactions(true);
+    listState.load(true);
   }
 
   function handleTransactionDeleted() {
-    loadTransactions(true);
-  }
-
-  async function loadTransactions(reset = false) {
-    const activeBook = booksStore.activeBook;
-    if (!activeBook) return;
-
-    if (reset) {
-      nextCursor = undefined;
-      transactions = [];
-      hasMore = true;
-    }
-
-    isLoading = true;
-    error = null;
-
-    try {
-      const options: ListByBookOptions = {
-        limit,
-        cursor: reset ? undefined : nextCursor,
-        search: searchQuery || undefined,
-        type: selectedType !== "all" ? selectedType : undefined,
-        categoryId: selectedCategoryId || undefined,
-        startDate: startDate || undefined,
-        endDate: endDate || undefined,
-      };
-
-      let result;
-
-      if (selectedPocketId) {
-        result = await transactionsApi.listByPocket(selectedPocketId, options);
-      } else {
-        result = await transactionsApi.listByBook(activeBook.id, options);
-      }
-
-      if (result.data) {
-        const response = result.data;
-        const newTxs = response.transactions || [];
-
-        if (reset) {
-          transactions = newTxs;
-        } else {
-          transactions = [...transactions, ...newTxs];
-        }
-
-        // Update cursor and hasMore from response
-        nextCursor = response.next_cursor;
-        hasMore = response.has_more;
-      } else if (result.error) {
-        error = result.error.error;
-      }
-    } catch (e: any) {
-      error = e.message || "Gagal memuat transaksi";
-    } finally {
-      isLoading = false;
-    }
-  }
-
-  function handleFilterApply(filters: {
-    pocketId: string | null;
-    type: "all" | "income" | "expense" | "transfer";
-    categoryId: string | null;
-    search: string;
-    startDate: string;
-    endDate: string;
-  }) {
-    selectedPocketId = filters.pocketId;
-    selectedType = filters.type;
-    selectedCategoryId = filters.categoryId;
-    searchQuery = filters.search;
-    startDate = filters.startDate;
-    endDate = filters.endDate;
-    loadTransactions(true);
+    listState.load(true);
   }
 
   function loadMore() {
-    if (!isLoading && hasMore) {
-      loadTransactions(false);
+    if (!listState.isLoading && listState.hasMore) {
+      listState.load(false);
     }
   }
-
-  // Check if any filters are active
-  const hasActiveFilters = $derived(
-    selectedPocketId !== null ||
-      selectedType !== "all" ||
-      selectedCategoryId !== null ||
-      searchQuery !== "" ||
-      startDate !== "" ||
-      endDate !== "",
-  );
 
   // Track if period has been initialized
   let periodInitialized = $state(false);
@@ -183,7 +88,7 @@
         // Load categories for the filter modal
         untrack(() => categoriesStore.load(currentBookId));
         // Load transactions - PeriodSummary will set dates and reload if needed
-        untrack(() => loadTransactions(true));
+        untrack(() => listState.load(true));
       }
     }
   });
@@ -195,7 +100,7 @@
     if (trigger > untrack(() => lastRefreshTrigger)) {
       lastRefreshTrigger = trigger;
       // Reload transactions
-      untrack(() => loadTransactions(true));
+      untrack(() => listState.load(true));
     }
   });
 
@@ -203,26 +108,17 @@
   // These views need all transactions for proper aggregation
   $effect(() => {
     const tab = activeTab;
-    const hasError = error;
+    const hasError = listState.error;
 
     if (
       (tab === "monthly" || tab === "total" || tab === "calendar") &&
-      hasMore &&
-      !isLoading &&
+      listState.hasMore &&
+      !listState.isLoading &&
       !hasError
     ) {
-      untrack(() => loadAllTransactions());
+      untrack(() => listState.loadAllRemaining());
     }
   });
-
-  // Function to load all remaining transactions
-  async function loadAllTransactions() {
-    while (hasMore && !isLoading && !error) {
-      await loadTransactions(false);
-      if (error) break;
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }
-  }
 
   const tabs = [
     { id: "daily" as TabType, label: "Harian" },
@@ -248,21 +144,25 @@
       <!-- Filter Button -->
       <button
         onclick={() => (showFilterModal = true)}
-        class="flex items-center gap-2 px-3 py-2 bg-surface border border-border rounded-xl text-sm font-medium text-secondary hover:text-foreground hover:border-primary/50 transition-all {hasActiveFilters
+        class="relative flex items-center gap-2 px-3 py-2 bg-surface border border-border rounded-xl text-sm font-medium text-secondary hover:text-foreground hover:border-primary/50 transition-all {listState.hasActiveFilters
           ? 'border-primary text-primary'
           : ''}"
       >
         <SlidersIcon size={16} />
         <span>Filter</span>
-        {#if hasActiveFilters}
-          <span class="w-2 h-2 rounded-full bg-primary"></span>
+        {#if listState.hasActiveFilters}
+          <span
+            class="absolute top-0 right-0 h-2.5 w-2.5 rounded-full bg-primary"
+          ></span>
         {/if}
       </button>
     </div>
-    <p class="text-secondary text-sm mt-1">
+
+    <!-- Period Filter (Current Selected Book / Pocket / Filter) -->
+    <p class="text-xs text-muted mt-2">
       {#if booksStore.activeBook}
-        {#if selectedPocketId}
-          {booksStore.pockets.find((p) => p.id === selectedPocketId)?.name ||
+        {#if listState.selectedPocketId}
+          {booksStore.pockets.find((p) => p.id === listState.selectedPocketId)?.name ||
             "Kantong"}
         {:else}
           {booksStore.activeBook.name}
@@ -290,68 +190,60 @@
     </div>
 
     <!-- Period Summary Section -->
-    <PeriodSummary
-      {transactions}
-      currency={booksStore.activeBook?.base_currency}
-      loading={isLoading}
-      onPeriodChange={(start, end) => {
-        // Update date filters when period navigation changes
-        startDate = start;
-        endDate = end;
-        // Store period dates for calendar view - parse as local dates
-        // Format is "YYYY-MM-DD", split and create local date
-        const [startYear, startMonth, startDay] = start.split("-").map(Number);
-        const [endYear, endMonth, endDay] = end.split("-").map(Number);
-        currentPeriodStart = new Date(startYear, startMonth - 1, startDay);
-        currentPeriodEnd = new Date(endYear, endMonth - 1, endDay);
-        periodInitialized = true;
-        loadTransactions(true);
-      }}
-    />
+    {#if activeTab === "daily"}
+      <PeriodSummary
+        transactions={listState.transactions}
+        currency={booksStore.activeBook?.base_currency}
+        loading={listState.isLoading}
+        onPeriodChange={(startStr, endStr) => {
+          currentPeriodStart = new Date(startStr);
+          currentPeriodEnd = new Date(endStr);
+          periodInitialized = true;
+          listState.load(true);
+        }}
+      />
+    {:else}
+      <PeriodSummary
+        transactions={listState.transactions}
+        currency={booksStore.activeBook?.base_currency}
+        loading={listState.isLoading}
+        onPeriodChange={(startStr, endStr) => {
+          currentPeriodStart = new Date(startStr);
+          currentPeriodEnd = new Date(endStr);
+          periodInitialized = true;
+          listState.load(true);
+        }}
+      />
+    {/if}
 
     <!-- Tab Content -->
     <div class="min-h-[200px]">
       {#if activeTab === "daily"}
         <DailyTransactionList
-          {transactions}
+          transactions={listState.transactions}
           currency={booksStore.activeBook?.base_currency}
-          loading={isLoading}
+          loading={listState.isLoading}
           onTransactionClick={openDetail}
+          {loadMore}
+          hasMore={listState.hasMore}
         />
-
-        <!-- Load More for Daily -->
-        {#if hasMore && transactions.length > 0}
-          <div class="pt-4 text-center">
-            <button
-              onclick={loadMore}
-              disabled={isLoading}
-              class="px-6 py-2 text-sm font-medium text-primary bg-primary/10 rounded-full hover:bg-primary/20 transition-colors disabled:opacity-50"
-            >
-              {#if isLoading}
-                Memuat...
-              {:else}
-                Muat Lebih Banyak
-              {/if}
-            </button>
-          </div>
-        {/if}
       {:else if activeTab === "monthly"}
         <MonthlyTransactionSummary
-          {transactions}
+          transactions={listState.transactions}
           currency={booksStore.activeBook?.base_currency}
-          loading={isLoading}
+          loading={listState.isLoading}
         />
       {:else if activeTab === "total"}
         <TransactionTotalSummary
-          {transactions}
+          transactions={listState.transactions}
           currency={booksStore.activeBook?.base_currency}
-          loading={isLoading}
+          loading={listState.isLoading}
         />
       {:else if activeTab === "calendar"}
         <CalendarView
-          {transactions}
+          transactions={listState.transactions}
           currency={booksStore.activeBook?.base_currency}
-          loading={isLoading}
+          loading={listState.isLoading}
           periodStart={currentPeriodStart}
           periodEnd={currentPeriodEnd}
         />
@@ -384,13 +276,17 @@
   open={showFilterModal}
   onClose={() => (showFilterModal = false)}
   pockets={booksStore.pockets}
-  {selectedPocketId}
-  {selectedType}
-  {selectedCategoryId}
-  {searchQuery}
-  {startDate}
-  {endDate}
-  onApply={handleFilterApply}
+  selectedPocketId={listState.selectedPocketId}
+  selectedType={listState.selectedType}
+  selectedCategoryId={listState.selectedCategoryId}
+  searchQuery={listState.searchQuery}
+  startDate={listState.startDate}
+  endDate={listState.endDate}
+  onApply={listState.applyFilters}
+  onReset={() => {
+    listState.resetFilters();
+    listState.load(true);
+  }}
 />
 
 <!-- Transaction Detail Sheet -->

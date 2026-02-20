@@ -7,6 +7,12 @@ declare namespace App {
 	// interface Platform {}
 }
 
+declare namespace svelteHTML {
+	interface HTMLAttributes<T> {
+		onoutclick?: (e: CustomEvent<any> | MouseEvent) => void;
+	}
+}
+
 declare module '$env/static/public' {
 	export const PUBLIC_API_URL: string;
 }

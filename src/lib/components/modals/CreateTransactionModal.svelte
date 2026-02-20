@@ -30,45 +30,14 @@
     defaultPocketId?: string;
   }
 
-  let {
-    open,
-    onClose,
-    defaultType = "expense",
-    defaultPocketId,
-  }: Props = $props();
+  import { createTransactionFormState } from "./transactionForm.svelte";
+  import TransactionTypeSwitcher from "./TransactionTypeSwitcher.svelte";
+  import IncomeExpenseForm from "./IncomeExpenseForm.svelte";
+  import TransferForm from "./TransferForm.svelte";
 
-  let name = $state("");
-  let amount = $state("");
-  let type = $state<"income" | "expense" | "transfer">(defaultType);
-  let pocketId = $state(defaultPocketId || ""); // Acts as "From Pocket" for transfers
-  let toPocketId = $state(""); // "To Pocket" for transfers
-  let categoryId = $state("");
-  let subcategoryId = $state("");
+  let { open, onClose, defaultType = "expense", defaultPocketId }: Props = $props();
 
-  // Cross-book transfer state
-  let isCrossBook = $state(false);
-  let fromBookId = $state("");
-  let toBookId = $state("");
-
-  let fromBookPockets = $state<Pocket[]>([]);
-  let isLoadingFromPockets = $state(false);
-
-  let toBookPockets = $state<Pocket[]>([]);
-  let isLoadingToPockets = $state(false);
-
-  // P2P State
-  let isP2P = $state(false);
-  let recipientEmail = $state("");
-
-  function getLocalDateTime() {
-    const now = new Date();
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    return now.toISOString().slice(0, 16);
-  }
-
-  let date = $state(getLocalDateTime());
-
-  let isSubmitting = $state(false);
+  const form = createTransactionFormState();
 
   // Use categories from the store (with caching)
   const categories = $derived(categoriesStore.categories);
@@ -81,99 +50,50 @@
         if (booksStore.activeBook?.id) {
           categoriesStore.load(booksStore.activeBook.id); // Uses caching
         }
-        type = defaultType;
+        form.reset();
+        form.type = defaultType;
 
         // Reset book selection
         if (booksStore.activeBook) {
-          fromBookId = booksStore.activeBook.id;
-          toBookId = booksStore.activeBook.id;
+          form.fromBookId = booksStore.activeBook.id;
+          form.toBookId = booksStore.activeBook.id;
         }
 
-        // Default to first pocket if available and none selected
+        // Set default pocket if provided, else use first active pocket
         if (defaultPocketId) {
-          pocketId = defaultPocketId;
-        } else if (!pocketId && booksStore.pockets.length > 0) {
-          pocketId = booksStore.pockets[0].id;
+          form.pocketId = defaultPocketId;
+        } else if (booksStore.pockets.length > 0) {
+          form.pocketId = booksStore.pockets[0].id;
         }
 
-        // Default destination pocket (try to pick a different one if possible)
-        if (booksStore.pockets.length > 1 && !toPocketId) {
-          const other = booksStore.pockets.find((p) => p.id !== pocketId);
-          if (other) toPocketId = other.id;
-        } else if (booksStore.pockets.length > 0 && !toPocketId) {
-          toPocketId = booksStore.pockets[0].id;
+        if (booksStore.pockets.length > 0) {
+          form.toPocketId = booksStore.pockets[0].id;
         }
-
-        // update date to now
-        if (!date) date = getLocalDateTime();
       });
     }
   });
 
   // Load pockets when toBookId changes
   $effect(() => {
-    if (type === "transfer" && toBookId) {
-      untrack(async () => {
-        // If same book as active, use store pockets
-        if (booksStore.activeBook && toBookId === booksStore.activeBook.id) {
-          toBookPockets = booksStore.pockets;
-          return;
-        }
-
-        // Otherwise fetch pockets for that book
-        isLoadingToPockets = true;
-        try {
-          const result = await pocketsApi.listByBook(toBookId);
-          if (result.data) {
-            toBookPockets = result.data.pockets;
-            // Clear selection if not in new list
-            if (!toBookPockets.find((p) => p.id === toPocketId)) {
-              toPocketId = "";
-            }
-          }
-        } catch (e) {
-          console.error("Failed to load pockets for To Book", e);
-          toastStore.error("Failed to load pockets for selected book");
-        } finally {
-          isLoadingToPockets = false;
-        }
+    if (form.type === "transfer" && form.toBookId) {
+      untrack(() => {
+        form.loadPocketsForBook(form.toBookId, true);
       });
     }
   });
 
   // Load pockets when fromBookId changes
   $effect(() => {
-    if (type === "transfer" && fromBookId) {
-      untrack(async () => {
-        // If same book as active, use store pockets
-        if (booksStore.activeBook && fromBookId === booksStore.activeBook.id) {
-          fromBookPockets = booksStore.pockets;
-          return;
-        }
-
-        // Otherwise fetch pockets for that book
-        isLoadingFromPockets = true;
-        try {
-          const result = await pocketsApi.listByBook(fromBookId);
-          if (result.data) {
-            fromBookPockets = result.data.pockets;
-            // Clear selection if not in new list
-            if (!fromBookPockets.find((p) => p.id === pocketId)) {
-              pocketId = "";
-            }
-          }
-        } catch (e) {
-          console.error("Failed to load pockets for From Book", e);
-        } finally {
-          isLoadingFromPockets = false;
-        }
+    if (form.type === "transfer" && form.fromBookId) {
+      untrack(() => {
+        form.loadPocketsForBook(form.fromBookId, false);
       });
     }
   });
 
   // Filter categories by current type
   const filteredCategories = $derived(
-    type === "transfer" ? [] : categories.filter((c) => c.type === type),
+    form.type === "transfer" ? [] : categories.filter((c) => c.type === form.type),
   );
 
   // Transform categories to ComboboxOption format
@@ -187,23 +107,23 @@
 
   // Get subcategories for selected category
   const selectedCategory = $derived(
-    categories.find((c) => c.id === categoryId),
+    categories.find((c) => c.id === form.categoryId),
   );
 
   const subcategories = $derived(selectedCategory?.subcategories || []);
 
   // Transform subcategories to ComboboxOption format
   const subcategoryOptions = $derived<ComboboxOption[]>(
-    subcategories.map((s) => ({
-      value: s.id,
-      label: s.name,
+    subcategories.map((sc) => ({
+      value: sc.id,
+      label: sc.name,
     })),
   );
 
   // Transform pockets to ComboboxOption format (for FROM pocket)
   const pocketOptions = $derived<ComboboxOption[]>(
-    (isCrossBook && fromBookId && fromBookId !== booksStore.activeBook?.id
-      ? fromBookPockets
+    (form.isCrossBook && form.fromBookId && form.fromBookId !== booksStore.activeBook?.id
+      ? form.fromBookPockets
       : booksStore.pockets
     ).map((p) => ({
       value: p.id,
@@ -214,136 +134,35 @@
 
   // Transform TO pockets options (depends on selected book)
   const toPocketOptions = $derived<ComboboxOption[]>(
-    toBookPockets.map((p) => ({
+    form.toBookPockets.map((p) => ({
       value: p.id,
       label: p.name,
       icon: "💰",
     })),
   );
 
-  // Reset category when type changes
+  // Auto-clear invalid state
   $effect(() => {
-    if (type === "transfer") {
-      categoryId = "";
-      subcategoryId = "";
-    } else {
-      // Check if current category matches new type
-      const currentCat = categories.find((c) => c.id === categoryId);
-      if (currentCat && currentCat.type !== type) {
-        categoryId = "";
-        subcategoryId = "";
+    if (form.type && form.categoryId) {
+      const currentCat = categories.find((c) => c.id === form.categoryId);
+      if (currentCat && currentCat.type !== form.type) {
+        form.categoryId = "";
+        form.subcategoryId = "";
       }
     }
   });
 
-  // Fee Logic
-  let includeFee = $state(false);
-  let fee = $state("");
-
   async function handleSubmit() {
-    if (!name || !amount) return;
-
-    isSubmitting = true;
-    const amountCents = Math.round(parseFloat(amount) * 100);
-    const feeCents = includeFee && fee ? Math.round(parseFloat(fee) * 100) : 0;
-
-    let success = false;
-    const isoDate = new Date(date).toISOString();
-
-    if (type === "transfer") {
-      if (!pocketId) {
-        isSubmitting = false;
-        return;
-      }
-
-      if (isP2P) {
-        if (!recipientEmail) return;
-        try {
-          await p2pApi.create({
-            sender_pocket_id: pocketId,
-            recipient_email: recipientEmail,
-            amount_cents: amountCents,
-            fee_cents: feeCents,
-            name: name,
-            description: "",
-          });
-          success = true;
-        } catch (e) {
-          console.error(e);
-          toastStore.error("Failed to send transfer request");
-          success = false;
-        }
-      } else {
-        if (!toPocketId) {
-          isSubmitting = false;
-          return;
-        }
-        success = await transactionsStore.createTransfer({
-          from_pocket_id: pocketId,
-          to_pocket_id: toPocketId,
-          name: name,
-          amount_cents: amountCents,
-          fee_cents: feeCents,
-          date: isoDate,
-          description: "",
-        });
-      }
-    } else {
-      if (!pocketId) {
-        isSubmitting = false;
-        return;
-      }
-      const tx = await transactionsStore.createTransaction({
-        pocket_id: pocketId,
-        name: name,
-        amount_cents: amountCents,
-        type: type as "income" | "expense",
-        date: isoDate,
-        category_id: categoryId || undefined,
-        subcategory_id: subcategoryId || undefined,
-      });
-      success = !!tx;
-    }
-
-    isSubmitting = false;
-
+    const success = await form.submit();
     if (success) {
-      // Refresh pockets to update balance
-      if (booksStore.activeBook) {
-        await booksStore.loadPockets(booksStore.activeBook.id);
-      }
-      // Refresh transaction list
-      await transactionsStore.refresh();
-      // Signal other pages to refresh their local state
-      uiStore.triggerTransactionRefresh();
-
-      resetForm();
       onClose();
     }
-  }
-
-  function resetForm() {
-    name = "";
-    amount = "";
-    type = defaultType;
-    toPocketId = "";
-    categoryId = "";
-    subcategoryId = "";
-    includeFee = false;
-    fee = "";
-    isCrossBook = false;
-    isP2P = false;
-    recipientEmail = "";
-    fromBookId = booksStore.activeBook?.id || "";
-    toBookId = booksStore.activeBook?.id || "";
-    date = getLocalDateTime();
   }
 </script>
 
 <ResponsiveModal
   {open}
   {onClose}
-  title={type === "transfer" ? "Transfer" : "Transaksi Baru"}
 >
   {#if booksStore.pockets.length === 0}
     <div class="flex flex-col items-center justify-center py-8 text-center space-y-4">
@@ -376,8 +195,9 @@
         onclick={() => {
           onClose();
           if (booksStore.activeBook) {
+            const bookId = booksStore.activeBook.id;
             import("$app/navigation").then(({ goto }) => {
-              goto(`/books/${booksStore.activeBook.id}`);
+              goto(`/books/${bookId}`);
             });
           }
         }}
@@ -386,59 +206,45 @@
       </Button>
     </div>
   {:else}
+    <div class="sticky top-0 z-10 bg-background flex items-center justify-between gap-2 border-b border-border/50 -mt-4 -mx-4 px-4 pt-2 pb-3 mb-4 md:-mt-6 md:-mx-6 md:px-6 md:pt-2">
+      <h2 class="text-xl font-bold text-foreground">
+        {form.type === "transfer" ? "Transfer" : "Transaksi Baru"}
+      </h2>
+      <TransactionTypeSwitcher {form} />
+    </div>
+    
     <div class="space-y-4">
-      <!-- Type Switcher -->
-      <div
-        class="flex p-1 bg-surface rounded-full border border-border"
-        role="tablist"
-      >
-        <button
-          role="tab"
-          aria-selected={type === "income"}
-          class="flex-1 py-2.5 text-sm font-medium rounded-full transition-all duration-200 {type ===
-          'income'
-            ? 'bg-emerald-500 text-white shadow-sm'
-            : 'text-muted hover:text-foreground'}"
-          onclick={() => (type = "income")}
-        >
-          Pemasukan
-        </button>
-        <button
-          role="tab"
-          aria-selected={type === "expense"}
-          class="flex-1 py-2.5 text-sm font-medium rounded-full transition-all duration-200 {type ===
-          'expense'
-            ? 'bg-red-500 text-white shadow-sm'
-            : 'text-muted hover:text-foreground'}"
-          onclick={() => (type = "expense")}
-        >
-          Pengeluaran
-        </button>
-        <button
-          role="tab"
-          aria-selected={type === "transfer"}
-          class="flex-1 py-2.5 text-sm font-medium rounded-full transition-all duration-200 {type ===
-          'transfer'
-            ? 'bg-primary text-white shadow-sm'
-            : 'text-muted hover:text-foreground'}"
-          onclick={() => (type = "transfer")}
-        >
-          Transfer
-        </button>
-      </div>
 
       <!-- Scan Receipt Button (only for income/expense) -->
-      {#if type !== "transfer"}
+      {#if form.type !== "transfer"}
         <button
           type="button"
           onclick={() => {
             onClose();
             uiStore.scanReceipt();
           }}
-          class="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-xl text-primary font-medium hover:from-primary/20 hover:to-primary/10 transition-all"
+          class="w-full flex items-center justify-center gap-2 py-3 px-4 bg-primary/10 text-primary rounded-xl font-medium hover:bg-primary/20 transition-colors"
         >
-          <Camera size={20} />
-          Scan Struk
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+            />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+            />
+          </svg>
+          Scan Struk dengan AI
         </button>
       {/if}
 
@@ -448,11 +254,11 @@
           for="amount"
           class="block text-sm font-medium text-secondary mb-1.5">Jumlah</label
         >
-        <MoneyInput id="amount" bind:value={amount} placeholder="0" />
+        <MoneyInput id="amount" bind:value={form.amount} placeholder="0" />
       </div>
 
       <!-- Transfer Fee -->
-      {#if type === "transfer"}
+      {#if form.type === "transfer"}
         <div class="bg-surface border border-border rounded-xl p-4">
           <div class="flex items-center justify-between">
             <span class="text-sm font-medium text-foreground"
@@ -460,24 +266,25 @@
             >
             <button
               type="button"
-              role="switch"
-              aria-checked={includeFee}
-              aria-label="Toggle transfer fee"
-              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 {includeFee
+              aria-label="Toggle include transfer fee"
+              class="{form.includeFee
                 ? 'bg-primary'
-                : 'bg-muted'}"
-              onclick={() => (includeFee = !includeFee)}
+                : 'bg-border'} relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+              onclick={() => {
+                form.includeFee = !form.includeFee;
+                if (!form.includeFee) form.fee = "";
+              }}
             >
               <span
-                class="{includeFee
+                class="{form.includeFee
                   ? 'translate-x-6'
                   : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
               ></span>
             </button>
           </div>
-          {#if includeFee}
+          {#if form.includeFee}
             <div class="mt-3">
-              <MoneyInput bind:value={fee} placeholder="0" />
+              <MoneyInput bind:value={form.fee} placeholder="0" />
             </div>
           {/if}
         </div>
@@ -493,246 +300,54 @@
         <input
           id="name"
           type="text"
-          bind:value={name}
-          placeholder="Isi yang kamu ingat dulu"
+          bind:value={form.name}
+          placeholder="Cth: Makan Siang, Beli Pulsa, dsb"
           class="w-full px-4 py-3 bg-surface border border-border rounded-xl text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <p class="text-xs text-muted mt-1.5">Bisa diedit kapan saja.</p>
       </div>
 
-      <!-- Category Selector (only for income/expense) -->
-      {#if type !== "transfer"}
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Combobox
-            label="Kategori"
-            options={categoryOptions}
-            bind:value={categoryId}
-            onValueChange={() => (subcategoryId = "")}
-            placeholder="Pilih kategori"
-            searchPlaceholder="Cari..."
-            emptyMessage="Tidak ada kategori"
-          />
-          <Combobox
-            label="Subkategori"
-            options={subcategoryOptions}
-            bind:value={subcategoryId}
-            placeholder="Opsional"
-            searchPlaceholder="Cari..."
-            emptyMessage="Tidak ada subkategori"
-            disabled={!categoryId || subcategoryOptions.length === 0}
-          />
-        </div>
-
-        <!-- Pocket Selector(s) (non-transfer) -->
-        <Combobox
-          label="Kantong"
-          options={pocketOptions}
-          bind:value={pocketId}
-          placeholder="Pilih kantong"
-          searchPlaceholder="Cari..."
-          emptyMessage="Belum ada kantong"
+      <!-- Category & Pocket Selectors (only for income/expense) -->
+      {#if form.type !== "transfer"}
+        <IncomeExpenseForm
+          {form}
+          {categoryOptions}
+          {subcategoryOptions}
+          {pocketOptions}
         />
       {/if}
 
       <!-- Transfer Specific Logic -->
-      {#if type === "transfer"}
-        <div class="space-y-4">
-          <!-- Mode Toggle -->
-          <div
-            class="flex p-1 bg-surface rounded-full border border-border"
-            role="tablist"
-          >
-            <button
-              role="tab"
-              aria-selected={!isP2P}
-              class="flex-1 py-2 text-xs font-medium rounded-full transition-all duration-200 {!isP2P
-                ? 'bg-[var(--color-surface-elevated)] text-foreground shadow-sm'
-                : 'text-muted hover:text-foreground'}"
-              onclick={() => (isP2P = false)}
-            >
-              Antar Kantong
-            </button>
-            <button
-              role="tab"
-              aria-selected={isP2P}
-              class="flex-1 py-2 text-xs font-medium rounded-full transition-all duration-200 {isP2P
-                ? 'bg-[var(--color-surface-elevated)] text-foreground shadow-sm'
-                : 'text-muted hover:text-foreground'}"
-              onclick={() => (isP2P = true)}
-            >
-              Kirim ke Pengguna
-            </button>
-          </div>
-
-          {#if !isP2P}
-            <!-- Cross-Book Toggle -->
-            <div class="flex items-center justify-between">
-              <span class="text-sm text-secondary">Transfer antar buku</span>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={isCrossBook}
-                aria-label="Toggle cross-book transfer"
-                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 {isCrossBook
-                  ? 'bg-primary'
-                  : 'bg-muted'}"
-                onclick={() => (isCrossBook = !isCrossBook)}
-              >
-                <span
-                  class="{isCrossBook
-                    ? 'translate-x-6'
-                    : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-                ></span>
-              </button>
-            </div>
-          {/if}
-
-          <div class="grid grid-cols-1 gap-4">
-            <!-- From Section -->
-            <div
-              class="space-y-3 p-4 bg-primary/5 rounded-xl border border-primary/20"
-            >
-              <span
-                class="text-xs font-semibold text-primary uppercase tracking-wide"
-                >Dari</span
-              >
-              {#if isCrossBook && !isP2P}
-                <BookSelector
-                  label="Buku"
-                  bind:value={fromBookId}
-                  onValueChange={(val) => {
-                    fromBookId = val;
-                  }}
-                />
-              {/if}
-
-              <Combobox
-                label="Kantong"
-                options={pocketOptions}
-                bind:value={pocketId}
-                placeholder="Pilih kantong asal"
-                searchPlaceholder="Cari..."
-                emptyMessage="Belum ada kantong"
-              />
-            </div>
-
-            <!-- Swap Button (Only for Internal) -->
-            {#if !isP2P}
-              <div class="flex justify-center -my-2 relative z-10">
-                <button
-                  type="button"
-                  class="p-2 bg-surface border border-border rounded-full hover:bg-border transition-colors"
-                  title="Tukar kantong"
-                  onclick={() => {
-                    const tempPocket = pocketId;
-                    pocketId = toPocketId;
-                    toPocketId = tempPocket;
-
-                    if (isCrossBook) {
-                      const tempBook = fromBookId;
-                      fromBookId = toBookId;
-                      toBookId = tempBook;
-                    }
-                  }}
-                  aria-label="Tukar kantong"
-                >
-                  <svg
-                    class="w-5 h-5 text-muted"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
-                    />
-                  </svg>
-                </button>
-              </div>
-            {/if}
-
-            <!-- To Section -->
-            <div
-              class="space-y-3 p-4 bg-emerald-500/5 rounded-xl border border-emerald-500/20"
-            >
-              <span
-                class="text-xs font-semibold text-emerald-600 uppercase tracking-wide"
-                >Ke</span
-              >
-              {#if isP2P}
-                <div>
-                  <label
-                    for="recipient"
-                    class="block text-sm font-medium text-secondary mb-1.5"
-                    >Email penerima</label
-                  >
-                  <input
-                    id="recipient"
-                    type="email"
-                    bind:value={recipientEmail}
-                    placeholder="email@contoh.com"
-                    class="w-full px-4 py-3 bg-surface border border-border rounded-xl text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-              {:else}
-                {#if isCrossBook}
-                  <BookSelector label="Buku" bind:value={toBookId} />
-                {/if}
-
-                <Combobox
-                  label="Kantong"
-                  options={toPocketOptions}
-                  bind:value={toPocketId}
-                  placeholder={isLoadingToPockets
-                    ? "Memuat..."
-                    : "Pilih kantong tujuan"}
-                  searchPlaceholder="Cari..."
-                  emptyMessage={isLoadingToPockets
-                    ? "Memuat..."
-                    : "Belum ada kantong"}
-                  disabled={isLoadingToPockets ||
-                    (!isCrossBook ? false : !toBookId)}
-                />
-              {/if}
-            </div>
-          </div>
-        </div>
+      {#if form.type === "transfer"}
+        <TransferForm {form} />
       {/if}
 
-      <!-- Date -->
+      <!-- Date Time Input -->
       <div>
         <label
           for="date"
           class="block text-sm font-medium text-secondary mb-1.5"
-          >Tanggal</label
+          >Tanggal & Waktu</label
         >
         <input
           id="date"
           type="datetime-local"
-          bind:value={date}
-          class="w-full px-4 py-3 bg-surface border border-border rounded-xl text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary"
+          bind:value={form.date}
+          class="w-full px-4 py-3 bg-surface border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
         />
+      </div>
+
+      <div class="pt-4">
+        <Button
+          type="submit"
+          class="w-full font-bold text-base py-3"
+          loading={form.isSubmitting}
+          disabled={!form.name || !form.amount || (form.type !== "transfer" && !form.pocketId)}
+        >
+          Simpan Transaksi
+        </Button>
       </div>
     </div>
 
-    <div class="flex gap-3 mt-6">
-      <Button variant="secondary" fullWidth onclick={onClose}>Batal</Button>
-      <Button
-        variant="primary"
-        fullWidth
-        loading={isSubmitting}
-        onclick={handleSubmit}
-      >
-        {#if type === "transfer"}
-          Transfer
-        {:else if type === "income"}
-          Simpan Pemasukan
-        {:else}
-          Simpan Pengeluaran
-        {/if}
-      </Button>
-    </div>
   {/if}
 </ResponsiveModal>

@@ -10,6 +10,8 @@
         currency?: string;
         loading?: boolean;
         onTransactionClick?: (tx: Transaction) => void;
+        loadMore?: () => void;
+        hasMore?: boolean;
     }
 
     let {
@@ -17,6 +19,8 @@
         currency = "IDR",
         loading = false,
         onTransactionClick,
+        loadMore,
+        hasMore = false,
     }: Props = $props();
 
     interface DateGroup {
@@ -26,6 +30,7 @@
         expense: number;
         income: number;
     }
+
 
     function getDateKey(dateStr: string): string {
         return new Date(dateStr).toISOString().split("T")[0];
@@ -265,5 +270,22 @@
                 </div>
             </div>
         {/each}
+        
+        <!-- Load More for Daily -->
+        {#if hasMore && transactions.length > 0}
+            <div class="pt-4 text-center">
+                <button
+                    onclick={loadMore}
+                    disabled={loading}
+                    class="px-6 py-2 text-sm font-medium text-primary bg-primary/10 rounded-full hover:bg-primary/20 transition-colors disabled:opacity-50"
+                >
+                    {#if loading}
+                        Memuat...
+                    {:else}
+                        Muat Lebih Banyak
+                    {/if}
+                </button>
+            </div>
+        {/if}
     {/if}
 </div>

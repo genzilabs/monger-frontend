@@ -18,77 +18,17 @@
     type CategoryBreakdown,
   } from "$lib/api/transactions";
   import "driver.js/dist/driver.css";
+  import { createDashboardState } from "./dashboardState.svelte";
 
   // Modal state
   let showCreatePocketModal = $state(false);
 
-  // Monthly summary state
-  let monthlyIncome = $state(0);
-  let monthlyExpense = $state(0);
-  let summaryLoading = $state(true);
-
-  // Chart state
-  let incomeBreakdown = $state<CategoryBreakdown[]>([]);
-  let expenseBreakdown = $state<CategoryBreakdown[]>([]);
-  let chartLoading = $state(true);
+  const dashboardState = createDashboardState();
 
   // Computed values
   let totalBalance = $derived(
     booksStore.pockets.reduce((sum, p) => sum + p.balance_cents, 0),
   );
-
-  async function loadDashboardData() {
-    if (!booksStore.activeBook) return;
-
-    summaryLoading = true;
-    chartLoading = true;
-    const now = new Date();
-    const month = now.getMonth() + 1;
-    const year = now.getFullYear();
-
-    try {
-      // Parallel requests for summary and breakdown
-      const [summaryRes, incomeRes, expenseRes] = await Promise.all([
-        transactionsApi.getMonthlySummary(
-          booksStore.activeBook.id,
-          month,
-          year,
-        ),
-        transactionsApi.getCategoryBreakdown(
-          booksStore.activeBook.id,
-          "income",
-          month,
-          year,
-        ),
-        transactionsApi.getCategoryBreakdown(
-          booksStore.activeBook.id,
-          "expense",
-          month,
-          year,
-        ),
-      ]);
-
-      if (summaryRes.data) {
-        monthlyIncome = summaryRes.data.summary.total_income;
-        monthlyExpense = summaryRes.data.summary.total_expense;
-      }
-
-      if (incomeRes.data) incomeBreakdown = incomeRes.data;
-      if (expenseRes.data) expenseBreakdown = expenseRes.data;
-    } catch (e) {
-      console.error("Failed to load dashboard data:", e);
-    } finally {
-      summaryLoading = false;
-      chartLoading = false;
-    }
-  }
-
-  // Re-fetch when activeBook changes
-  $effect(() => {
-    if (booksStore.activeBook?.id) {
-      loadDashboardData();
-    }
-  });
 
   // Expose for debugging
   if (typeof window !== "undefined") {
@@ -104,7 +44,7 @@
     const hasPockets = booksStore.pockets.length > 0;
     // We don't easily know if user has transactions without API call,
     // so check based on income/expense being non-zero after load
-    const hasTransactions = monthlyIncome > 0 || monthlyExpense > 0;
+    const hasTransactions = dashboardState.monthlyIncome > 0 || dashboardState.monthlyExpense > 0;
 
     console.log(
       "[Dashboard] Onboarding check - isInitialized:",
@@ -169,19 +109,19 @@
         balance={totalBalance}
         currency={booksStore.activeBook.base_currency}
         bookName={booksStore.activeBook.name}
-        income={monthlyIncome}
-        expense={monthlyExpense}
-        loading={booksStore.isLoading || summaryLoading}
+        income={dashboardState.monthlyIncome}
+        expense={dashboardState.monthlyExpense}
+        loading={booksStore.isLoading || dashboardState.summaryLoading}
       />
     </div>
 
     <!-- 3. Category Breakdown Chart -->
     <div id="expense-chart">
       <CategoryBreakdownCard
-        {incomeBreakdown}
-        {expenseBreakdown}
+        incomeBreakdown={dashboardState.incomeBreakdown}
+        expenseBreakdown={dashboardState.expenseBreakdown}
         currency={booksStore.activeBook.base_currency}
-        loading={chartLoading}
+        loading={dashboardState.chartLoading}
       />
     </div>
 

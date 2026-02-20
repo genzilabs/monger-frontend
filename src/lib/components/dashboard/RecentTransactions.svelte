@@ -5,7 +5,11 @@
   import { goto } from "$app/navigation";
   import type { Transaction } from "$lib/types/transaction";
   import { untrack } from "svelte";
-  import { calculateSignificance } from "$lib/utils/significance";
+  import {
+    groupRecentTransactions,
+    getSignificanceForGroups,
+    type DateGroup
+  } from "$lib/utils/transactionGrouping";
 
   let isLoading = $derived(transactionsStore.isLoading);
 
@@ -21,165 +25,16 @@
     await transactionsStore.loadByBook(bookId);
   }
 
-  interface DateGroup {
-    label: string;
-    fullDate: string;
-    dateKey: string;
-    transactions: Transaction[];
-    income: number;
-    expense: number;
-  }
-
-  // Parse date string to local date
-  // For UTC datetime strings (ending in Z or with timezone offset),
-  // we convert to local time first, then extract the local date
-  function parseLocalDate(dateStr: string): Date {
-    // If it's just a date (YYYY-MM-DD), parse as local time (midnight local)
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-      const [year, month, day] = dateStr.split("-").map(Number);
-      return new Date(year, month - 1, day);
-    }
-    // For datetime strings (with time/timezone), parse as-is to get correct local date
-    // new Date() will convert UTC to local timezone automatically
-    const date = new Date(dateStr);
-    // Return a new date with just the local date components (midnight local)
-    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  }
-
-  function getDateKey(dateStr: string): string {
-    const date = parseLocalDate(dateStr);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  }
-
-  function getDateInfo(
-    dateStr: string,
-  ): { label: string; fullDate: string; dateKey: string } | null {
-    const date = parseLocalDate(dateStr);
-    const now = new Date();
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const twoDaysAgo = new Date();
-    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-
-    const isToday = date.toDateString() === now.toDateString();
-    const isYesterday = date.toDateString() === yesterday.toDateString();
-    const isTwoDaysAgo = date.toDateString() === twoDaysAgo.toDateString();
-
-    const fullDate = date.toLocaleDateString("id-ID", {
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-    });
-
-    const dateKey = getDateKey(dateStr);
-
-    if (isToday) return { label: "Hari ini", fullDate, dateKey };
-    if (isYesterday) return { label: "Kemarin", fullDate, dateKey };
-    if (isTwoDaysAgo) return { label: fullDate, fullDate, dateKey };
-    return null;
-  }
-
   // Filter transactions to show recent activity (Today, Yesterday, and up to 2 days ago)
-  const recentGroups = $derived.by(() => {
-    const groupsMap: Record<string, DateGroup> = {};
-    const now = new Date();
+  const recentGroups = $derived(groupRecentTransactions(transactionsStore.transactions || []));
+  
+  // Calculate significance map based on the active groups
+  const significanceMap = $derived(getSignificanceForGroups(recentGroups));
 
-    // Create date boundaries
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
-    const twoDaysAgo = new Date(today);
-    twoDaysAgo.setDate(today.getDate() - 2);
-
-    const txList = transactionsStore.transactions;
-    if (!Array.isArray(txList)) {
-      return [];
-    }
-
-    const sorted = [...txList].sort(
-      (a, b) =>
-        parseLocalDate(b.date).getTime() - parseLocalDate(a.date).getTime(),
-    );
-
-    for (const tx of sorted) {
-      const txDate = parseLocalDate(tx.date);
-      const txDateOnly = new Date(
-        txDate.getFullYear(),
-        txDate.getMonth(),
-        txDate.getDate(),
-      );
-
-      // Check if transaction is within the last 3 days (including today)
-      const isToday = txDateOnly.getTime() === today.getTime();
-      const isYesterday = txDateOnly.getTime() === yesterday.getTime();
-      const isTwoDaysAgo = txDateOnly.getTime() === twoDaysAgo.getTime();
-
-      if (isToday || isYesterday || isTwoDaysAgo) {
-        const dateKey = getDateKey(tx.date);
-        const fullDate = txDate.toLocaleDateString("id-ID", {
-          weekday: "short",
-          day: "numeric",
-          month: "short",
-        });
-
-        let label: string;
-        if (isToday) label = "Hari ini";
-        else if (isYesterday) label = "Kemarin";
-        else label = fullDate;
-
-        if (!groupsMap[dateKey]) {
-          groupsMap[dateKey] = {
-            label,
-            fullDate,
-            dateKey,
-            transactions: [],
-            income: 0,
-            expense: 0,
-          };
-        }
-        groupsMap[dateKey].transactions.push(tx);
-        if (tx.type === "income") {
-          groupsMap[dateKey].income += tx.amount_cents;
-        } else if (tx.type === "expense") {
-          groupsMap[dateKey].expense += tx.amount_cents;
-        }
-      }
-    }
-    // Return sorted by date (newest first)
-    return Object.values(groupsMap).sort(
-      (a, b) => new Date(b.dateKey).getTime() - new Date(a.dateKey).getTime(),
-    );
-  });
-
-  // Build a lookup map for previous day's values
-  const previousDayValues = $derived.by(() => {
-    const map: Record<string, { expense: number; income: number }> = {};
-    for (let i = 0; i < recentGroups.length - 1; i++) {
-      const current = recentGroups[i];
-      const previous = recentGroups[i + 1];
-      map[current.dateKey] = {
-        expense: previous.expense,
-        income: previous.income,
-      };
-    }
-    return map;
-  });
-
-  // Calculate significance for a group
   function getSignificance(group: DateGroup) {
-    const prev = previousDayValues[group.dateKey];
-    if (!prev) {
-      return {
-        expense: { isSignificant: false, direction: "none" as const },
-        income: { isSignificant: false, direction: "none" as const },
-      };
-    }
-    return {
-      expense: calculateSignificance(group.expense, prev.expense),
-      income: calculateSignificance(group.income, prev.income),
+    return significanceMap[group.dateKey] || {
+      expense: { isSignificant: false, direction: "none" },
+      income: { isSignificant: false, direction: "none" }
     };
   }
 

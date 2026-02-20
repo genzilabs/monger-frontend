@@ -72,17 +72,3 @@ export interface CreateTransferRequest {
 	description?: string;
 }
 
-export interface PendingTransfer {
-  id: string;
-  sender_name?: string;
-  sender_email?: string;
-  sender_pocket_name?: string;
-  recipient_email?: string;
-  amount_cents: number;
-  fee_cents: number;
-  name: string;
-  description?: string;
-  status: 'pending' | 'accepted' | 'rejected' | 'cancelled' | 'expired';
-  created_at: string;
-  expires_at?: string;
-}

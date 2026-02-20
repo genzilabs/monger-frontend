@@ -51,26 +51,9 @@
     { id: "expenses", label: "Pengeluaran" },
   ];
 
-  onMount(async () => {
-    if (!bookId) {
-      goto("/dashboard");
-      return;
-    }
-
-    // If the book is already active, just ensure pockets are loaded
-    if (booksStore.activeBook?.id === bookId) {
-      return;
-    }
-
-    // Otherwise, fetch and set the book as active
-    const result = await booksApi.get(bookId);
-    if (result.data) {
-      await booksStore.setActiveBook(result.data);
-    } else {
-      goto("/dashboard");
-    }
-
-    // Load member count for UI state
+  onMount(() => {
+    // Book has already been loaded by `+page.ts` router loader.
+    // Load member count for UI state async to avoid blocking render.
     loadMemberCount();
   });
 

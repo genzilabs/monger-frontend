@@ -29,6 +29,7 @@
             startDate: string;
             endDate: string;
         }) => void;
+        onReset?: () => void;
     }
 
     let {
@@ -42,6 +43,7 @@
         startDate,
         endDate,
         onApply,
+        onReset,
     }: Props = $props();
 
     // Local state for editing
@@ -99,6 +101,7 @@
         localSearch = "";
         localStartDate = "";
         localEndDate = "";
+        onReset?.();
     }
 
     const typeOptions = [
